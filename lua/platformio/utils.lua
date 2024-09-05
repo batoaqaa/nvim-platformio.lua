@@ -53,6 +53,7 @@ function M.ToggleTerminal(command, direction, title)
 					buffer = t.bufnr,
 					callback = function()
 						-- do clean and proper toggleterm shutdown
+						t.set_mode(t, "n")
 						vim.keymap.del("t", ":", { buffer = t.bufnr })
 						vim.keymap.del("t", "<Esc>", { buffer = t.bufnr })
 						vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, buffer = 0 })
