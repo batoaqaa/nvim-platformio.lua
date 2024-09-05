@@ -14,32 +14,70 @@ end
 local function pathmul(n)
 	return ".." .. string.rep("/..", n)
 end
+
 ----------------------------------------------------------------------------------------
+local platformio = vim.api.nvim_create_augroup("platformio", { clear = true })
 function M.ToggleTerminal(command, direction, title)
+	--
 	local Terminal = require("toggleterm.terminal").Terminal
 	local terminal = Terminal:new({
 		cmd = command,
 		direction = direction,
 		close_on_exit = false,
-		on_create = function(t)
+
+		on_open = function(t)
+			--Only to set Piomon toggleterm winbar title/message
 			if title then
 				vim.api.nvim_set_hl(0, "MyWinBar", { bg = "#e4bf0e", fg = "#0012d9" })
-				local value = "%#MyWinBar#" .. title .. "%*"
-				vim.api.nvim_set_option_value("winbar", value, { scope = "local", win = t.window })
-				t.display_name = value
-			end
+				local winBarTitle = "%#MyWinBar#" .. title .. "%*"
 
-			local platformio = vim.api.nvim_create_augroup("platformio", { clear = true })
-			vim.api.nvim_create_autocmd({ "QuitPre" }, {
-				group = platformio, --fmt_group,
-				desc = "close terminl",
-				callback = function()
-					local wbuf = vim.api.nvim_win_get_buf(0)
-					if wbuf == t.bufnr then
-						vim.api.nvim_buf_delete(wbuf, { force = true })
-					end
-				end,
-			})
+				vim.api.nvim_set_option_value("winbar", winBarTitle, { scope = "local", win = t.window })
+
+				-- Following necessary to solve that some time winbar not showing
+				vim.schedule(function()
+					vim.api.nvim_set_option_value("winbar", winBarTitle, { scope = "local", win = t.window })
+				end)
+			end
+		end,
+		on_create = function(t)
+			--Only to set Piomon toggleterm winbar title/message
+			if title then
+				--set toggleterm to be in insert mode
+				t.set_mode(t, "i")
+				vim.keymap.set("t", "<Esc>", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
+				vim.keymap.set("t", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
+
+				vim.api.nvim_create_autocmd({ "QuitPre" }, {
+					group = platformio,
+					desc = "shutdown terminl",
+					buffer = t.bufnr,
+					callback = function()
+						-- do clean and proper toggleterm shutdown
+						vim.keymap.del("t", ":", { buffer = t.bufnr })
+						vim.keymap.del("t", "<Esc>", { buffer = t.bufnr })
+						vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, buffer = 0 })
+						t.shutdown(t)
+						--
+						-- clear autommmand when quit
+						vim.api.nvim_clear_autocmds({ group = "platformio" })
+					end,
+				})
+
+				vim.api.nvim_create_autocmd("ModeChanged", {
+					-- Autocommand for modechanges of toggleterm buffer
+					group = platformio,
+					buffer = t.bufnr,
+					callback = function()
+						local old_mode = vim.v.event.old_mode
+						local new_mode = vim.v.event.new_mode
+						if new_mode == "nt" and old_mode == "c" then
+							-- after entering normal terminal mode comming back from command line mode,
+							-- below force terminal buffer to enter insert mode
+							t.set_mode(t, "i")
+						end
+					end,
+				})
+			end
 		end,
 	})
 	terminal:toggle()
