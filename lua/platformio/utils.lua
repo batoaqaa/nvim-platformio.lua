@@ -28,9 +28,11 @@ function M.ToggleTerminal(command, direction, title)
 		on_open = function(t)
 			--Only to set Piomon toggleterm winbar title/message
 			if title then
-				vim.api.nvim_set_hl(0, "MyWinBar", { bg = "#e4bf0e", fg = "#0012d9" })
-				local winBarTitle = "%#MyWinBar#" .. title .. "%*"
+				-- local hl = vim.api.nvim_get_hl(0, { name = "CurSearch" })
+				local hl = { bg = "#e4cf0e", fg = "#0012d9" }
+				vim.api.nvim_set_hl(0, "MyWinBar", { bg = hl.bg, fg = hl.fg })
 
+				local winBarTitle = "%#MyWinBar#" .. title .. "%*"
 				vim.api.nvim_set_option_value("winbar", winBarTitle, { scope = "local", win = t.window })
 
 				-- Following necessary to solve that some time winbar not showing
@@ -39,11 +41,14 @@ function M.ToggleTerminal(command, direction, title)
 				end)
 			end
 		end,
+
 		on_create = function(t)
 			--Only to set Piomon toggleterm winbar title/message
 			if title then
 				--set toggleterm to be in insert mode
 				t.set_mode(t, "i")
+
+				-- keymap toggleterm "Esc" and ":" keys to go command line
 				vim.keymap.set("t", "<Esc>", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
 				vim.keymap.set("t", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
 
