@@ -49,23 +49,40 @@ function M.ToggleTerminal(command, direction, title)
 				t.set_mode(t, "i")
 
 				-- keymap toggleterm "Esc" and ":" keys to go command line
-				vim.keymap.set("t", "<Esc>", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
+				vim.keymap.set("t", "<Esc>", [[<C-\><C-n>k]], { noremap = true, buffer = t.bufnr })
+				vim.keymap.set("n", "<Esc>", [[<C-\><C-n>a]], { noremap = true, buffer = t.bufnr })
+				vim.keymap.set("n", "<C-c>", [[<C-\><C-n>a<C-c>]], { noremap = true, buffer = t.bufnr })
 				vim.keymap.set("t", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
+				vim.keymap.set("n", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
 
-				vim.api.nvim_create_autocmd({ "QuitPre" }, {
+				vim.api.nvim_create_autocmd("BufUnload", {
+					group = platformio,
+					desc = "toggleterm buffer unloaded",
+					buffer = t.bufnr,
+					callback = function(args)
+						vim.keymap.del({ "n", "t" }, ":", { buffer = args.buf })
+						vim.keymap.del({ "n", "t" }, "<Esc>", { buffer = args.buf })
+
+						vim.keymap.del("n", "<C-c>", { buffer = args.buf })
+						vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, buffer = 0 })
+
+						-- clear autommmand when quit
+						vim.api.nvim_clear_autocmds({ group = "platformio" })
+					end,
+				})
+
+				vim.api.nvim_create_autocmd("QuitPre", {
 					group = platformio,
 					desc = "shutdown terminl",
 					buffer = t.bufnr,
 					callback = function()
+						vim.api.nvim_exec_autocmds(
+							"BufUnload",
+							{ group = platformio, buffer = t.bufnr, data = t.bufnr }
+						)
 						-- do clean and proper toggleterm shutdown
 						t.set_mode(t, "n")
-						vim.keymap.del("t", ":", { buffer = t.bufnr })
-						vim.keymap.del("t", "<Esc>", { buffer = t.bufnr })
-						vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, buffer = 0 })
 						t.shutdown(t)
-						--
-						-- clear autommmand when quit
-						vim.api.nvim_clear_autocmds({ group = "platformio" })
 					end,
 				})
 
