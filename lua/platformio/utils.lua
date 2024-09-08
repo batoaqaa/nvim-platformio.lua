@@ -43,10 +43,10 @@ function M.ToggleTerminal(command, direction, title)
 		end,
 
 		on_create = function(t)
+			t.set_mode(t, "i")
 			--Only to set Piomon toggleterm winbar title/message
 			if title then
 				--set toggleterm to be in insert mode
-				t.set_mode(t, "i")
 
 				-- keymap toggleterm "Esc" and ":" keys to go command line
 				vim.keymap.set("t", "<Esc>", [[<C-\><C-n>k]], { noremap = true, buffer = t.bufnr })
