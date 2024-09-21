@@ -55,6 +55,15 @@ function M.ToggleTerminal(command, direction, title)
 				vim.keymap.set("t", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
 				vim.keymap.set("n", ":", [[<C-\><C-n>:]], { noremap = true, buffer = t.bufnr })
 
+				vim.api.nvim_create_autocmd("BufEnter", {
+					group = platformio,
+					desc = "toggleterm buffer entered",
+					buffer = t.bufnr,
+					callback = function(args)
+						t.set_mode(t, "i")
+					end,
+				})
+
 				vim.api.nvim_create_autocmd("BufUnload", {
 					group = platformio,
 					desc = "toggleterm buffer unloaded",
