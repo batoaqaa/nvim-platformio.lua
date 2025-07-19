@@ -34,9 +34,34 @@ return {
   'anurag3301/nvim-platformio.lua',
   -- cmd = { 'Pioinit', 'Piorun', 'Piocmdh', 'Piocmdf', 'Piolib', 'Piomon', 'Piodebug', 'Piodb' },
 
-  -- to use cond; first time you create project folder, you should create empty platformio.ini file
-  cond = function() -- start/load nvim-platformio when platformio.ini file exist in cwd
-    return vim.fn.filereadable('platformio.ini') == 1
+
+  -- optional: cond used to enable/disable platformio
+  -- based on existance of platformio.ini file and .pio folder in cwd.
+  -- You can enable platformio plugin, using :PioEnable command
+  cond = function()
+    local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' })
+    if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
+      -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
+      vim.g.platformioRootDir = platformioRootDir
+    elseif (vim.uv or vim.loop).fs_stat(vim.fn.stdpath('data') .. '/lazy/nvim-platformio.lua') == nil then
+      -- if nvim-platformio not installed, enable plugin to install it first time
+      vim.g.platformioRootDir = vim.fn.getcwd()
+    else                                                       -- if nvim-platformio.lua installed but disabled, create PioEnable command
+      vim.api.nvim_create_user_command('PioEnable', function() --available only if no platformio.ini and .pio in cwd
+        vim.api.nvim_create_autocmd('User', {
+          pattern = 'LazyRestore',
+          once = true,
+          callback = function()
+            vim.notify('PlatformIO restored', vim.log.levels.INFO, { title = 'PlatformIO' })
+            pcall(require, 'platformio')
+          end,
+        })
+        vim.g.platformioRootDir = vim.fn.getcwd()
+        vim.notify('PlatformIO enable start ...', vim.log.levels.INFO, { title = 'PlatformIO' })
+        require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
+      end, {})
+    end
+    return vim.g.platformioRootDir ~= nil
   end,
 
   -- dependencies are always lazy-loaded unless specified otherwise
