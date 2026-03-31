@@ -4,7 +4,9 @@ local uv = vim.loop
 local boilerplate = {}
 
 boilerplate['arduino'] = {
-  src_path = 'src',
+
+  -- local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' }) -- cwd and parents
+  src_path = vim.fn.getcwd() .. 'src',
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
@@ -20,7 +22,7 @@ void loop() {
 }
 
 boilerplate['.clangd'] = {
-  src_path = './',
+  src_path = vim.fn.getcwd(),
   filename = '.clangd',
   content = [[
 CompileFlags:
@@ -63,6 +65,7 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework)
+  print('here')
   local entry = boilerplate[framework]
   if not entry then
     return
