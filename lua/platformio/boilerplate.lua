@@ -20,7 +20,7 @@ void loop() {
 }
 
 boilerplate['.clangd'] = {
-  src_path = '.',
+  src_path = './',
   filename = '.clangd',
   content = [[
 CompileFlags:
