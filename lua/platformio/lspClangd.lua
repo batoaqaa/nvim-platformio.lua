@@ -134,7 +134,7 @@ local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({})
   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-  boilerplate_gen([[.clangd]])
+  -- boilerplate_gen([[.clangd]])
 end
 
 local config = require('platformio').config
