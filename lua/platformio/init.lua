@@ -1,10 +1,15 @@
 local M = {}
 M.config = {
-  lsp = 'ccls',
-  menu_key = nil,
-  menu_name = 'PlatformIO',
+  lspClangd = {
+    enabled = false,
+    attach = {
+      enabled = false,
+      keymaps = false,
+    },
+  },
+  menu_key = '<leader>\\', -- replace this menu key  to your convenience
+  menu_name = 'PlatformIO', -- replace this menu name to your convenience
   debug = false,
-  clangd_source = 'ccls',
 
   menu_bindings = {
     { node = 'item', desc = '[L]ist terminals', shortcut = 'l', command = 'PioTermList' },
@@ -85,8 +90,6 @@ M.config = {
         { node = 'item', desc = '[U]pgrade PlatformIO Core', shortcut = 'u', command = 'Piocmdf upgrade' },
       },
     },
-    --   }, --
-    -- }, --
   },
 }
 
@@ -151,53 +154,96 @@ local function validateMenu(menu)
   return true
 end
 
+local function flatten(t, parent_key, result)
+  result = result or {}
+  for k, v in pairs(t) do
+    local key = parent_key and (parent_key .. '.' .. k) or k
+    if type(v) == 'table' then
+      flatten(v, key, result)
+    else
+      result[key] = v
+    end
+  end
+  return result
+end
+
 function M.setup(user_config)
+  -- print(vim.inspect(flatten(user_config)))
+  -- if vim.fn.has('nvim-0.11') == 1 then
+  --   vim.validate('config', user_config, 'table')
+  --   vim.validate('config.layout', user_config.layout, 'table')
+  -- else
+  --   vim.validate({
+  --     config = { user_config, 'table' },
+  --     layout = { user_config.layout, 'table' },
+  --   })
+  -- end
+
   if next(user_config) ~= nil then
-    local valid_keys = {
-      lsp = true,
-      menu_key = true,
-      menu_name = true,
-      menu_bindings = true,
-      debug = true,
-      clangd_source = true,
-    }
-    local err = false
-    for key, value in pairs(user_config or {}) do
-      if not valid_keys[key] then
-        local error_message = string.format('Invalid PlatformIO settings key-value: %s = "%s"', key, value)
-        vim.api.nvim_echo({ { error_message, 'ErrorMsg' } }, true, {})
-        err = true
-      end
-    end
-    if user_config.lsp and not (user_config.lsp == 'ccls' or user_config.lsp == 'clangd') then
-      vim.api.nvim_echo(
-        { { 'Invalid PlatformIO lsp "' .. user_config.lsp .. '", {allowed "clangd" or "ccls"} (default "' .. M.config.lsp .. '" will be used)', 'ErrorMsg' } },
-        true,
-        {}
-      )
-      user_config.lsp = M.config.lsp
-    end
-    if user_config.lsp == 'clangd' then
-      if user_config.clangd_source ~= 'ccls' and user_config.clangd_source ~= 'compiledb' then
-        vim.api.nvim_echo(
-          { { 'Invalid clangd source {allowed "ccls" or "compiledb"} (default "' .. M.config.clangd_source .. '" will be used)', 'ErrorMsg' } },
-          true,
-          {}
-        )
-        user_config.clangd_source = M.config.clangd_source
+    if next(user_config.lspClangd) ~= nil then
+      vim.validate('lspClangd', user_config.lspClangd.enabled, 'boolean', true)
+      if user_config.lspClangd.attach then
+        vim.validate('lspAttach', user_config.lspClangd.attach, 'table', true)
+        vim.validate('lspAttachEnabled', user_config.lspClangd.attach.enabled, 'boolean', true)
+        vim.validate('lspKeymaps', user_config.lspClangd.attach.keyMaps, 'boolean', true)
       end
     end
 
-    if not err then -- if no error, merge user_config to M.config
-      if user_config.menu_bindings then
-        if not validateMenu(user_config.menu_bindings) then
-          user_config.menu_bindings = nil -- if validation error, cancel merging menu_bindings with M.config
-          -- else
-          --   print('good validation')
-        end
+    vim.validate('menu_key', user_config.lspClangd_enable, 'string', true)
+    vim.validate('menu_name', user_config.menu_name, 'string', true)
+    vim.validate('debug', user_config.debug, 'boolean', true)
+    vim.validate('menu_bindings', user_config.menu_bindings, 'table', true)
+    -- local valid_keys = {
+    --   lspClangd_enabled = true,
+    --   lspAttach_enabled = true,
+    --   -- lsp = true,
+    --   menu_key = true,
+    --   menu_name = true,
+    --   menu_bindings = true,
+    --   debug = true,
+    --   -- clangd_source = true,
+    -- }
+    -- local err = false
+    -- for key, value in pairs(user_config or {}) do
+    --   if not valid_keys[key] then
+    --     local error_message = string.format('Invalid PlatformIO settings key-value: %s = "%s"', key, value)
+    --     vim.api.nvim_echo({ { error_message, 'ErrorMsg' } }, true, {})
+    --     err = true
+    --   end
+    -- end
+    -- if user_config.lspClangd_enabled and not (user_config.lspClangd_enabled == false or user_config.lspClangd_enabled == true) then
+    --   vim.api.nvim_echo(
+    --     { { 'Invalid PlatformIO lsp "' .. user_config.lspClangd_enabled .. '", {allowed "false" or "true"} (default "disabled" will be used)', 'ErrorMsg' } },
+    --     true,
+    --     {}
+    --   )
+    --   user_config.lspClangd_enabled = M.config.lspClangd_enabled
+    -- end
+    --
+    -- if user_config.lspAttach_enabled and not (user_config.lspAttach_enabled == false or user_config.lspAttach_enabled == true) then
+    --   vim.api.nvim_echo(
+    --     { { 'Invalid PlatformIO lsp "' .. user_config.lspAttach_enabled .. '", {allowed "false" or "true"} (default "disabled" will be used)', 'ErrorMsg' } },
+    --     true,
+    --     {}
+    --   )
+    --   user_config.lspAttach_enabled = M.config.lspAttach_enabled
+    -- end
+
+    -- if not err then -- if no error, merge user_config to M.config
+    if user_config.menu_bindings then
+      if not validateMenu(user_config.menu_bindings) then
+        user_config.menu_bindings = nil -- if validation error, cancel merging menu_bindings with M.config
+        -- else
+        --   print('good validation')
       end
-      M.config = vim.tbl_deep_extend('force', M.config, user_config or {})
     end
+    M.config = vim.tbl_deep_extend('force', M.config, user_config or {})
+    -- end
+  end
+
+  if M.config.lspClangd.enabled == true then
+    vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
+    require('platformio.lspClangd')
   end
 
   require('platformio.piomenu').piomenu(M.config)
