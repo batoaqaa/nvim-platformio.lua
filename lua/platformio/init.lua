@@ -182,7 +182,7 @@ function M.setup(user_config)
   end
 
   if M.config.lspClangd.enabled == true then
-    vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
+    -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
     require('platformio.lspClangd')
   end
 
