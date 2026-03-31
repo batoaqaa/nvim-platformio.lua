@@ -4,6 +4,7 @@ local uv = vim.loop
 local boilerplate = {}
 
 boilerplate['arduino'] = {
+  src_path = 'src',
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
@@ -18,13 +19,56 @@ void loop() {
 ]],
 }
 
+boilerplate['.clangd'] = {
+  src_path = '.',
+  filename = '.clangd',
+  content = [[
+CompileFlags:
+  Remove: [
+      -misc-definitions-in-headers,
+      -fno-tree-switch-conversion,
+      -mtext-section-literals,
+      -mlong-calls,
+      -mlongcalls,
+      -fstrict-volatile-bitfields,
+      -free*,
+      -fipa-pta*,
+      -march=*,
+      -mabi=*,
+      -mcpu=*,
+    ]
+Diagnostics:
+  Suppress: [
+      "misc-definitions-in-headers",
+      "pp_including_mainfile_in_preamble",
+      "misc-unused-using-decls",
+      "unused-includes",
+    ]
+  ClangTidy:
+    Remove: [
+        readability-*,
+        cert-err58-cpp,
+        llvmlibc-*,
+        fuchsia-*,
+        hicpp-avoid-c-arrays,
+        cppcoreguidelines-*,
+        llvm-*,
+        google-*,
+        bugprone-*,
+        hicpp-vararg,
+        modernize-*,
+      ]
+
+]],
+}
+
 function M.boilerplate_gen(framework)
   local entry = boilerplate[framework]
   if not entry then
     return
   end
 
-  local src_path = 'src'
+  local src_path = entry.src_path
   local stat = uv.fs_stat(src_path)
 
   if not stat or stat.type ~= 'directory' then

@@ -19,6 +19,7 @@ vim.opt.shiftround = true -- Round indent
 vim.opt.shiftwidth = 2 -- Size of an indent
 vim.opt.smartindent = true -- Insert indents automatically
 vim.opt.expandtab = true -- Use spaces instead of tabs
+vim.opt.clipboard = vim.env.SSH_TTY and '' or 'unnamedplus' -- Sync with system clipboard
 
 vim.g.have_nerd_font = true
 vim.g.mapleader = ' '
