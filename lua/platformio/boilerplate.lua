@@ -73,9 +73,11 @@ function M.boilerplate_gen(framework)
   local src_path = entry.src_path
   local stat = uv.fs_stat(src_path)
 
+  print('0 ' .. entry.src_path)
   if not stat or stat.type ~= 'directory' then
     return
   end
+  print('1 ' .. entry.src_path)
 
   local handle = uv.fs_scandir(src_path)
   if handle then
@@ -89,6 +91,7 @@ function M.boilerplate_gen(framework)
       end
     end
   end
+  print('2 ' .. entry.src_path)
 
   print(entry.content)
   local file_path = src_path .. '/' .. entry.filename
