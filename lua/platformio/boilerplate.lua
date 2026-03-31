@@ -93,7 +93,7 @@ function M.boilerplate_gen(framework)
   if not fd then
     return
   end
-
+  print(entry.content)
   uv.fs_write(fd, entry.content)
   uv.fs_close(fd)
 end
