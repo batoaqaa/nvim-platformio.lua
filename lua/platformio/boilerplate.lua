@@ -6,7 +6,7 @@ local boilerplate = {}
 boilerplate['arduino'] = {
 
   -- local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' }) -- cwd and parents
-  src_path = '.', --vim.fn.getcwd() .. 'src',
+  src_path = './src', --vim.fn.getcwd() .. 'src',
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
@@ -22,7 +22,7 @@ void loop() {
 }
 
 boilerplate['.clangd'] = {
-  src_path = '.', --vim.fn.getcwd(),
+  src_path = './src', --vim.fn.getcwd(),
   filename = '.clangd',
   content = [[
 CompileFlags:
