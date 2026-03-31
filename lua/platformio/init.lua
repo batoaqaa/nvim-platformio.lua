@@ -181,7 +181,8 @@ function M.setup(user_config)
 
   if next(user_config) ~= nil then
     if next(user_config.lspClangd) ~= nil then
-      vim.validate('lspClangd', user_config.lspClangd.enabled, 'boolean', true)
+      vim.validate('lspClangd', user_config.lspClangd, 'table', true)
+      vim.validate('lspClangdEnabled', user_config.lspClangd.enabled, 'boolean', true)
       if user_config.lspClangd.attach then
         vim.validate('lspAttach', user_config.lspClangd.attach, 'table', true)
         vim.validate('lspAttachEnabled', user_config.lspClangd.attach.enabled, 'boolean', true)
