@@ -65,7 +65,7 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework)
-  print('here')
+  print(framework)
   local entry = boilerplate[framework]
   if not entry then
     return
