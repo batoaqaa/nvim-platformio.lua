@@ -179,6 +179,7 @@ function M.setup(user_config)
   --   })
   -- end
 
+  print(vim.inspect(user_config))
   if next(user_config) ~= nil then
     if next(user_config.lspClangd) ~= nil then
       vim.validate('lspClangd', user_config.lspClangd, 'table', true)
