@@ -91,12 +91,12 @@ function M.boilerplate_gen(framework)
     end
   end
 
+  print(entry.content)
   local file_path = src_path .. '/' .. entry.filename
   local fd = uv.fs_open(file_path, 'w', 420)
   if not fd then
     return
   end
-  print(entry.content)
   uv.fs_write(fd, entry.content)
   uv.fs_close(fd)
 end
