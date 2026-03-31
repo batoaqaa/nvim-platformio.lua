@@ -69,7 +69,7 @@ function M.boilerplate_gen(framework)
   if not entry then
     return
   end
-  print(entry.content)
+  print(entry.src_path)
 
   local src_path = entry.src_path
   local stat = uv.fs_stat(src_path)
