@@ -154,32 +154,7 @@ local function validateMenu(menu)
   return true
 end
 
-local function flatten(t, parent_key, result)
-  result = result or {}
-  for k, v in pairs(t) do
-    local key = parent_key and (parent_key .. '.' .. k) or k
-    if type(v) == 'table' then
-      flatten(v, key, result)
-    else
-      result[key] = v
-    end
-  end
-  return result
-end
-
 function M.setup(user_config)
-  -- print(vim.inspect(flatten(user_config)))
-  -- if vim.fn.has('nvim-0.11') == 1 then
-  --   vim.validate('config', user_config, 'table')
-  --   vim.validate('config.layout', user_config.layout, 'table')
-  -- else
-  --   vim.validate({
-  --     config = { user_config, 'table' },
-  --     layout = { user_config.layout, 'table' },
-  --   })
-  -- end
-
-  print(vim.inspect(user_config))
   if next(user_config) ~= nil then
     if next(user_config.lspClangd) ~= nil then
       vim.validate('lspClangd', user_config.lspClangd, 'table', true)
@@ -195,43 +170,7 @@ function M.setup(user_config)
     vim.validate('menu_name', user_config.menu_name, 'string', true)
     vim.validate('debug', user_config.debug, 'boolean', true)
     vim.validate('menu_bindings', user_config.menu_bindings, 'table', true)
-    -- local valid_keys = {
-    --   lspClangd_enabled = true,
-    --   lspAttach_enabled = true,
-    --   -- lsp = true,
-    --   menu_key = true,
-    --   menu_name = true,
-    --   menu_bindings = true,
-    --   debug = true,
-    --   -- clangd_source = true,
-    -- }
-    -- local err = false
-    -- for key, value in pairs(user_config or {}) do
-    --   if not valid_keys[key] then
-    --     local error_message = string.format('Invalid PlatformIO settings key-value: %s = "%s"', key, value)
-    --     vim.api.nvim_echo({ { error_message, 'ErrorMsg' } }, true, {})
-    --     err = true
-    --   end
-    -- end
-    -- if user_config.lspClangd_enabled and not (user_config.lspClangd_enabled == false or user_config.lspClangd_enabled == true) then
-    --   vim.api.nvim_echo(
-    --     { { 'Invalid PlatformIO lsp "' .. user_config.lspClangd_enabled .. '", {allowed "false" or "true"} (default "disabled" will be used)', 'ErrorMsg' } },
-    --     true,
-    --     {}
-    --   )
-    --   user_config.lspClangd_enabled = M.config.lspClangd_enabled
-    -- end
-    --
-    -- if user_config.lspAttach_enabled and not (user_config.lspAttach_enabled == false or user_config.lspAttach_enabled == true) then
-    --   vim.api.nvim_echo(
-    --     { { 'Invalid PlatformIO lsp "' .. user_config.lspAttach_enabled .. '", {allowed "false" or "true"} (default "disabled" will be used)', 'ErrorMsg' } },
-    --     true,
-    --     {}
-    --   )
-    --   user_config.lspAttach_enabled = M.config.lspAttach_enabled
-    -- end
 
-    -- if not err then -- if no error, merge user_config to M.config
     if user_config.menu_bindings then
       if not validateMenu(user_config.menu_bindings) then
         user_config.menu_bindings = nil -- if validation error, cancel merging menu_bindings with M.config
@@ -240,7 +179,6 @@ function M.setup(user_config)
       end
     end
     M.config = vim.tbl_deep_extend('force', M.config, user_config or {})
-    -- end
   end
 
   if M.config.lspClangd.enabled == true then
