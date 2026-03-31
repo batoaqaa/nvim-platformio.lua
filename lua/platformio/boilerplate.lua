@@ -72,7 +72,6 @@ function M.boilerplate_gen(framework)
   --
   local file_path = entry.src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
-    vim.print('file exists')
     return
   end
   --
