@@ -6,7 +6,7 @@ local boilerplate = {}
 boilerplate['arduino'] = {
 
   -- local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' }) -- cwd and parents
-  src_path = './src', --vim.fn.getcwd() .. 'src',
+  src_path = vim.fn.getcwd() .. '/src',
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
@@ -22,7 +22,7 @@ void loop() {
 }
 
 boilerplate['.clangd'] = {
-  src_path = './src', --vim.fn.getcwd(),
+  src_path = vim.fn.getcwd(),
   filename = '.clangd',
   content = [[
 CompileFlags:
@@ -69,39 +69,13 @@ function M.boilerplate_gen(framework)
   if not entry then
     return
   end
-
-  local src_path = entry.src_path
-  local stat = uv.fs_stat(src_path)
-
-  print('0 ' .. entry.src_path)
-  if not stat or stat.type ~= 'directory' then
+  --
+  local file_path = entry.src_path .. '/' .. entry.filename
+  if vim.uv.fs_stat(file_path) then
+    vim.print('file exists')
     return
   end
-  print('1 ' .. entry.src_path)
-
-  local handle = uv.fs_scandir(src_path)
-  if handle then
-    while true do
-      local name, type_str = uv.fs_scandir_next(handle)
-      if not name then
-        break
-      end
-
-      -- Process the entry
-      if type_str == 'directory' then
-        print('Found directory: ' .. name)
-      elseif type_str == 'file' then
-        print('Found file: ' .. name)
-      end
-      -- if name ~= '.' and name ~= '..' then
-      --   return
-      -- end
-    end
-  end
-  print('2 ' .. entry.src_path)
-
-  print(entry.content)
-  local file_path = src_path .. '/' .. entry.filename
+  --
   local fd = uv.fs_open(file_path, 'w', 420)
   if not fd then
     return
