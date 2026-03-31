@@ -65,12 +65,11 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework)
-  print(framework)
   local entry = boilerplate[framework]
-  print(entry.content)
   if not entry then
     return
   end
+  print(entry.content)
 
   local src_path = entry.src_path
   local stat = uv.fs_stat(src_path)
