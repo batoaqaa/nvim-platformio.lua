@@ -82,13 +82,20 @@ function M.boilerplate_gen(framework)
   local handle = uv.fs_scandir(src_path)
   if handle then
     while true do
-      local name = uv.fs_scandir_next(handle)
+      local name, type_str = uv.fs_scandir_next(handle)
       if not name then
         break
       end
-      if name ~= '.' and name ~= '..' then
-        return
+
+      -- Process the entry
+      if type_str == 'directory' then
+        print('Found directory: ' .. name)
+      elseif type_str == 'file' then
+        print('Found file: ' .. name)
       end
+      -- if name ~= '.' and name ~= '..' then
+      --   return
+      -- end
     end
   end
   print('2 ' .. entry.src_path)
