@@ -33,7 +33,7 @@ end, {
 })
 
 -- Piomon
-piolsserial.sync_ttylist()
+-- piolsserial.sync_ttylist()
 vim.api.nvim_create_user_command('Piomon', function(opts)
   local args = opts.fargs
   require('platformio.piomon').piomon(args)
