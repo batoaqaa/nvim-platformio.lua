@@ -77,13 +77,14 @@ boilerplate_gen([[.clang_format]])
 
 local cmd = { 'clangd' }
 
-local path = vim.fn.getcwd()
-local fname = string.format('%s\\.clangd_cmd', path)
+-- local path = vim.fn.getcwd()
+-- local fname = string.format('%s\\.clangd_cmd', path)
+local fname = string.format('%s\\.clangd_cmd', vim.g.platformioRootDir)
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
     cmd = result
-    -- print(vim.inspect(cmd))
+    print(vim.inspect(cmd))
   end
 end
 
