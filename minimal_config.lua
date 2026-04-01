@@ -258,6 +258,7 @@ if not vim.uv.fs_stat(pynvim_env) then
   vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
   if not isWindows then
     os.execute('chmod 755 -R ' .. pynvim_bin)
+    vim.fn.system({ 'source', pynvim_bin, 'activate' })
   end
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
