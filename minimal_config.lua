@@ -102,25 +102,25 @@ local plugins = {
         use_nvim_cmp_as_default = false,
         nerd_font_variant = 'mono',
       },
-      -- completion = {
-      --   accept = {
-      --     auto_brackets = {
-      --       enabled = true,
-      --     },
-      --   },
-      --   menu = {
-      --     draw = {
-      --       treesitter = { 'lsp' },
-      --     },
-      --   },
-      --   documentation = {
-      --     auto_show = true,
-      --     auto_show_delay_ms = 200,
-      --   },
-      --   ghost_text = {
-      --     enabled = vim.g.ai_cmp,
-      --   },
-      -- },
+      completion = {
+        accept = {
+          auto_brackets = {
+            enabled = true,
+          },
+        },
+        menu = {
+          draw = {
+            treesitter = { 'lsp' },
+          },
+        },
+        documentation = {
+          auto_show = true,
+          auto_show_delay_ms = 200,
+        },
+        ghost_text = {
+          enabled = vim.g.ai_cmp,
+        },
+      },
       sources = {
         default = { 'lsp', 'path', 'snippets', 'buffer' },
       },
@@ -156,7 +156,7 @@ local plugins = {
         ['<PageUp>'] = { 'scroll_documentation_up', 'fallback' },
         ['<PageDown>'] = { 'scroll_documentation_down', 'fallback' },
       },
-      completion = { list = { selection = 'manual' } },
+      -- completion = { list = { selection = 'manual' } },
       -- keymap = {
       --   preset = 'super-tab',
       --   -- ['<Tab>'] = { 'insert_next' },
