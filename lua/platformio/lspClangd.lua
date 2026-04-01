@@ -66,7 +66,7 @@ end)
 
 require('mason-lspconfig').setup({
   ensure_installed = { 'clangd' },
-  -- automatic_enable = true, -- this will automatically enable LSP servers after install
+  automatic_enable = true, -- this will automatically enable LSP servers after install
 })
 
 -----------------------------------------------------------------------------------------
@@ -78,8 +78,8 @@ boilerplate_gen([[.clang_format]])
 local cmd = { 'clangd' }
 
 -- local path = vim.fn.getcwd()
--- local fname = string.format('%s\\.clangd_cmd', path)
-local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
+local fname = string.format('%s/.clangd_cmd', vim.fn.getcw())
+-- local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
