@@ -32,7 +32,7 @@ end
 -- List of packages you want Mason to ensure are installed
 local ensure_installed = {
   'clang-format',
-  'biome',
+  -- 'biome',
 }
 
 -- call mason-registry function to install or ensure formatters/linters are installed
