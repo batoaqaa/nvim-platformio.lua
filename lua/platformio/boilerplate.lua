@@ -46,9 +46,9 @@ clangd
 ]],
 }
 
-boilerplate['.clang_format'] = {
+boilerplate['.clang-format'] = {
   src_path = vim.fn.getcwd(),
-  filename = '.clang_format',
+  filename = '.clang-format',
   content = [[
 ---
 Language:        Cpp
