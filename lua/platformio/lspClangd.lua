@@ -84,7 +84,7 @@ if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
     cmd = result
-    print(vim.inspect(cmd))
+    -- print(vim.inspect(cmd))
   end
 end
 
