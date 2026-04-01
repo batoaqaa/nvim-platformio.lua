@@ -127,6 +127,7 @@ if mok then
   mason_lspconfig.setup({})
 end
 
+require('platformio.piolsp').piolsp()
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
   require('platformio.lspAttach')
