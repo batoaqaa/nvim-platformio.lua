@@ -233,7 +233,7 @@ else
   platformio_core_dir = vim.env.HOME .. '/.platformio'
   pynvim_env = platformio_core_dir .. '/nenv'
   pynvim_bin = pynvim_env .. '/bin'
-  pynvim_python = pynvim_bin .. '/python'
+  pynvim_python = pynvim_bin .. '/python3'
   pynvim_activate = 'source' .. pynvim_bin .. '/activate'
 end
 
@@ -255,11 +255,14 @@ end
 
 -- local expand_dir = vim.fn.expand(pynvim_env)
 if not vim.uv.fs_stat(pynvim_env) then
-  vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
   if not isWindows then
-    print('here')
-    os.execute('chmod 755 -R ' .. pynvim_bin)
+    vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
+    vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
+    -- os.execute('chmod 755 -R ' .. pynvim_bin)
     vim.fn.system({ 'source', pynvim_bin, 'activate' })
+  else
+    vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
+    vim.fn.system({ pynvim_activate })
   end
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
