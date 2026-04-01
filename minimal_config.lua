@@ -234,7 +234,7 @@ else
   pynvim_env = platformio_core_dir .. '/nenv'
   pynvim_bin = pynvim_env .. '/bin'
   pynvim_python = pynvim_bin .. '/python3'
-  pynvim_activate = 'source' .. pynvim_bin .. '/activate'
+  pynvim_activate = pynvim_bin .. '/activate'
 end
 
 vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
@@ -259,7 +259,7 @@ if not vim.uv.fs_stat(pynvim_env) then
     vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
     -- os.execute('chmod 755 -R ' .. pynvim_bin)
-    vim.fn.system({ 'source', pynvim_bin, 'activate' })
+    vim.fn.system({ 'source', pynvim_activate })
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
     vim.fn.system({ pynvim_activate })
