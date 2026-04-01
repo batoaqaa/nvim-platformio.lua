@@ -207,7 +207,7 @@ require('lazy').setup(plugins, {
 ----------------------------------------------------------------------------------------
 
 vim.api.nvim_create_autocmd('User', {
-  pattern = 'LazyDone', -- Triggers after the UI enters and startup time is calculated
+  pattern = 'LazyVimStarted', -- Triggers after the UI enters and startup time is calculated
   desc = 'Update lazy.nvim plugins in the background',
   callback = function()
     print('here')
