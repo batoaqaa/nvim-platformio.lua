@@ -27,7 +27,7 @@ vim.g.maplocalleader = ' '
 
 local isWindows = jit.os == 'Windows'
 if not isWindows then
-  vim.opt.shell = '/bin/bash' -- or '/bin/zsh', '/usr/bin/fish', etc.
+  vim.g.shell = '/bin/bash' -- or '/bin/zsh', '/usr/bin/fish', etc.
   vim.g.shellcmdflag = '-c' -- Executes the command passed as a string
   vim.g.shellpipe = '|' -- Pipes output of external commands
   vim.g.shellredir = '> ' -- Redirects output of external commands
