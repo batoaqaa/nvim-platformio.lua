@@ -21,6 +21,31 @@ void loop() {
 ]],
 }
 
+boilerplate['.clangd_cmd'] = {
+  src_path = vim.fn.getcwd(),
+  filename = '.clangd_cmd',
+  content = [[
+clangd
+--all-scopes-completion
+--background-index
+--clang-tidy
+--compile_args_from=filesystem
+--compile-commands-dir=.
+--enable-config
+--completion-parse=always
+--completion-style=detailed
+--header-insertion=iwyu
+--header-insertion-decorators
+-j=12
+--log=verbose
+--offset-encoding=utf-8
+--pch-storage=memory
+--pretty
+--query-driver=**
+--ranking-model=decision_forest
+]],
+}
+
 boilerplate['.clangd'] = {
   src_path = vim.fn.getcwd(),
   filename = '.clangd',

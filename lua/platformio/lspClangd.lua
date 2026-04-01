@@ -1,36 +1,41 @@
 ---------------------------------------------------------------------------------
+local ok, result
+ok, result = pcall(require, 'fidget')
+if ok then
+  result.setup({})
+end
+
+-----------------------------------------------------------------------------------------
+ok, result = pcall(require, 'trouble')
+if ok then
+  result.setup({})
+end
+
+-----------------------------------------------------------------------------------------
 -- INFO: Mason packages install for lint and formater
-
-local fok, fidget = pcall(require, 'fidget')
-if fok then
-  fidget.setup({})
-end
-
-local tok, trouble = pcall(require, 'trouble')
-if tok then
-  trouble.setup({})
-end
-
 -- mason.setup()
-local mason = require('mason')
-
-mason.setup({
-  PATH = 'append',
-  ui = {
-    border = 'single',
-    icons = {
-      package_installed = '✓',
-      package_pending = '➜',
-      package_uninstalled = '✗',
+ok, result = pcall(require, 'mason')
+if ok then
+  result.setup({
+    PATH = 'append',
+    ui = {
+      border = 'single',
+      icons = {
+        package_installed = '✓',
+        package_pending = '➜',
+        package_uninstalled = '✗',
+      },
     },
-  },
-})
+  })
+end
+
 -- List of packages you want Mason to ensure are installed
 local ensure_installed = {
-  -- 'clang-format',
+  'clang-format',
+  'biome',
 }
 
--- Mason function to install or ensure formatters/linters are installed
+-- call mason-registry function to install or ensure formatters/linters are installed
 local mr = require('mason-registry')
 mr.refresh(function()
   for _, tool in ipairs(ensure_installed) do
@@ -64,32 +69,13 @@ require('mason-lspconfig').setup({
   -- automatic_enable = true, -- this will automatically enable LSP servers after install
 })
 
-local cmd = {
-  'clangd',
-  '--all-scopes-completion',
-  '--background-index',
-  '--clang-tidy',
-  '--compile_args_from=filesystem',
-  '--compile-commands-dir=.', -- so this is in default directory (parent of /src) no need for it.
-  '--enable-config',
-  '--completion-parse=always',
-  '--completion-style=detailed',
-  '--header-insertion=iwyu',
-  '--header-insertion-decorators',
-  '-j=12',
-  '--log=verbose', -- for debugging
-  --   '--log=error',
-  '--offset-encoding=utf-8',
-  '--pch-storage=memory',
-  '--pretty',
-  '--query-driver=**',
-  '--ranking-model=decision_forest',
-}
+-----------------------------------------------------------------------------------------
+local cmd = { 'clangd' }
 
 local path = vim.fn.getcwd()
 local fname = string.format('%s\\.clangd_cmd', path)
 if vim.fn.filereadable(fname) == 1 then
-  local ok, result = pcall(vim.fn.readfile, fname)
+  ok, result = pcall(vim.fn.readfile, fname)
   if ok then
     cmd = result
     -- print(vim.inspect(cmd))
@@ -97,11 +83,11 @@ if vim.fn.filereadable(fname) == 1 then
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-local bok, _ = pcall(require, 'blink')
-if bok then
+ok, _ = pcall(require, 'blink')
+if ok then
   capabilities = vim.tbl_deep_extend('force', capabilities, require('blink.cmp').get_lsp_capabilities({}, false))
 end
----@type vim.lsp.Config
+
 local clangd = {
   cmd = cmd,
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
@@ -135,6 +121,7 @@ if mok then
   mason_lspconfig.setup({})
   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   boilerplate_gen([[.clangd]])
+  boilerplate_gen([[.clangd_cmd]])
 end
 
 local config = require('platformio').config

@@ -181,12 +181,12 @@ function M.setup(user_config)
     M.config = vim.tbl_deep_extend('force', M.config, user_config or {})
   end
 
+  require('platformio.piomenu').piomenu(M.config)
+
   if M.config.lspClangd.enabled == true then
     -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
     require('platformio.lspClangd')
   end
-
-  require('platformio.piomenu').piomenu(M.config)
 end
 
 return M

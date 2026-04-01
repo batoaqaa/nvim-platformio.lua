@@ -13,6 +13,7 @@ local function escape_flags(flags)
     -- Escape parentheses (common in include paths)
     escaped = escaped:gsub('%(', '\\(')
     escaped = escaped:gsub('%)', '\\)')
+    escaped = escaped:gsub('%s+', '\\ ')
     table.insert(escaped_flags, escaped)
   end
 
@@ -92,8 +93,10 @@ local function gitignore_lsp_configs(config_file)
   end
 
   file = io.open(gitignore_path, 'a')
-  file:write(config_file .. '\n')
-  file:close()
+  if file then
+    file:write(config_file .. '\n')
+    file:close()
+  end
 end
 
 function M.gen_clangd_config()
@@ -102,6 +105,11 @@ function M.gen_clangd_config()
 end
 
 function M.piolsp()
+  if not utils.pio_install_check() then
+    return
+  end
+  utils.cd_pioini()
+
   if config.lsp == 'clangd' and config.clangd_source == 'compiledb' then
     utils.shell_cmd_blocking('pio run -t compiledb')
     gitignore_lsp_configs('compile_commands.json')
@@ -117,7 +125,14 @@ function M.piolsp()
     end
   end
   vim.notify('LSP config generation completed!', vim.log.levels.INFO)
-  vim.cmd('LspRestart')
+
+  if vim.fn.has('nvim-0.12') then
+    if #vim.lsp.get_clients() > 0 then
+      vim.cmd('lsp restart')
+    end
+  else
+    vim.cmd('LspRestart')
+  end
 end
 
 return M

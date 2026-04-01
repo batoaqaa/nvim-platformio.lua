@@ -324,20 +324,22 @@ function M.file_exists(name)
   end
 end
 
-function M.get_pioini_path()
+function M.set_platformioRootDir()
+  if vim.g.platformioRootDir ~= nil then
+    return
+  end
   for _, path in pairs(paths) do
     if M.file_exists(path .. '/platformio.ini') then
-      return path
+      vim.g.platformioRootDir = path
+      return
     end
   end
+  vim.notify('Could not find platformio.ini, run :Pioinit to create a new project', vim.log.levels.ERROR)
 end
 
 function M.cd_pioini()
-  if vim.g.platformioRootDir ~= nil then
-    vim.cmd('cd ' .. vim.g.platformioRootDir)
-  else
-    vim.cmd('cd ' .. M.get_pioini_path())
-  end
+  M.set_platformioRootDir()
+  vim.cmd('cd ' .. vim.g.platformioRootDir)
 end
 
 function M.pio_install_check()
