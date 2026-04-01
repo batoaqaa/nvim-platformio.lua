@@ -206,6 +206,19 @@ require('lazy').setup(plugins, {
 })
 ----------------------------------------------------------------------------------------
 
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'LazyDone', -- Triggers after the UI enters and startup time is calculated
+  desc = 'Update lazy.nvim plugins in the background',
+  callback = function()
+    require('lazy').sync({
+      wait = false, -- Makes the operation asynchronous
+      show = false, -- Prevents the Lazy UI from automatically opening
+    })
+    -- You can add a notification here if you like
+    -- vim.notify("Lazy plugins sync started in background", vim.log.levels.INFO)
+  end,
+})
+
 -- platformio config
 local pioConfig = {
   lspClangd = {
