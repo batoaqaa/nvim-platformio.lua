@@ -73,6 +73,7 @@ require('mason-lspconfig').setup({
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 boilerplate_gen([[.clangd]])
 boilerplate_gen([[.clangd_cmd]])
+boilerplate_gen([[.clang_format]])
 
 local cmd = { 'clangd' }
 
