@@ -10,6 +10,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- vim.lsp.set_log_level 'trace'
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
       vim.api.nvim_echo({ { 'Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr, 'Info' } }, true, {})
+
       ------------------------------------------------------------------
       if client.name == 'clangd' then
         vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
@@ -27,6 +28,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
           end, bufnr)
         end, { desc = 'Switch between source/header' })
       end
+
       ------------------------------------------------------------------
       --- Skip this if you are using blink
       local bok, _ = pcall(require, 'blink')
@@ -68,14 +70,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
         --
       end
 
-      -- if lspKeymaps enabled
+      ------------------------------------------------------------------
       local config = require('platformio').config
       if config.lspClangd.attach.keymaps then
         local lspkeymaps = require('platformio.lspkeymaps')
         lspkeymaps.lspKeymaps(client, bufnr)
       end
     end
-    --
+
+    ------------------------------------------------------------------
     vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
       signs = true,
       underline = true,
@@ -85,7 +88,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
       },
       update_in_insert = true,
     })
-    --
+
+    ------------------------------------------------------------------
     vim.cmd([[autocmd FileType * set formatoptions-=ro]])
     --
   end,
