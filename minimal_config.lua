@@ -276,7 +276,18 @@ if not vim.uv.fs_stat(pynvim_env) then
     vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
     -- os.execute('chmod 755 -R ' .. pynvim_bin)
-    vim.fn.system({ 'source', pynvim_activate })
+    -- vim.fn.system({ 'source', pynvim_activate })
+
+    local handle = io.popen('source ' .. pynvim_activate, 'r')
+    if not handle then
+      print('failed to run command')
+    end
+
+    if handle then
+      local result = handle:read('*a')
+      handle:close()
+      print(result)
+    end
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
     vim.fn.system({ pynvim_activate })
