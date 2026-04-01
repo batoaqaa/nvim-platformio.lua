@@ -70,11 +70,11 @@ return {
 
     dependencies = {
         { 'akinsho/toggleterm.nvim' },
-      { 'nvim-telescope/telescope.nvim' },
-      { 'nvim-telescope/telescope-ui-select.nvim' },
-      { 'nvim-lua/plenary.nvim' },
-      { 'folke/which-key.nvim' },
-      {
+        { 'nvim-telescope/telescope.nvim' },
+        { 'nvim-telescope/telescope-ui-select.nvim' },
+        { 'nvim-lua/plenary.nvim' },
+        { 'folke/which-key.nvim' },
+        {
         'mason-org/mason-lspconfig.nvim',
         dependencies = {
           { 'mason-org/mason.nvim' },
