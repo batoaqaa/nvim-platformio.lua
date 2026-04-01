@@ -235,6 +235,7 @@ else
   pynvim_bin = pynvim_env .. '/bin'
   pynvim_python = pynvim_bin .. '/python3'
   pynvim_activate = pynvim_bin .. '/activate'
+  print(pynvim_activate)
 end
 
 vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
