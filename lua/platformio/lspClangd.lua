@@ -73,6 +73,7 @@ require('mason-lspconfig').setup({
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 boilerplate_gen([[.clangd]])
 boilerplate_gen([[.clangd_cmd]])
+
 local cmd = { 'clangd' }
 
 local path = vim.fn.getcwd()
@@ -127,13 +128,5 @@ end
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
   require('platformio.lspAttach')
-end
-
-if vim.fn.has('nvim-0.12') then
-  if #vim.lsp.get_clients() > 0 then
-    vim.cmd('lsp restart')
-  end
-else
-  vim.cmd('LspRestart')
 end
 ----------------------------------------------------------------------------------
