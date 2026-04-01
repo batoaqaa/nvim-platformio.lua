@@ -277,7 +277,7 @@ if not vim.uv.fs_stat(pynvim_env) then
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
     -- os.execute('chmod 755 -R ' .. pynvim_bin)
     -- vim.fn.system({ 'source', pynvim_activate })
-    os.execute('source ' .. pynvim_activate)
+    -- os.execute('source ' .. pynvim_activate)
 
     -- local handle = io.popen('source ' .. pynvim_activate, 'r')
     -- if not handle then
