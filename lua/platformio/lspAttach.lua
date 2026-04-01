@@ -73,7 +73,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
       ------------------------------------------------------------------
       local config = require('platformio').config
       if config.lspClangd.attach.keymaps then
-        local lspkeymaps = require('platformio.lspkeymaps')
+        local lspkeymaps = require('platformio.lspKeymaps')
         lspkeymaps.lspKeymaps(client, bufnr)
       end
     end

@@ -236,7 +236,7 @@ vim.api.nvim_create_autocmd('User', {
 })
 
 -----------------------------------------------------------------------------------------
-local isWindows = jit.os == 'Windows'
+-- local isWindows = jit.os == 'Windows'
 --
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
 if isWindows then
@@ -283,7 +283,6 @@ if not vim.uv.fs_stat(pynvim_env) then
     -- if not handle then
     --   print('failed to run command')
     -- end
-    --
     -- if handle then
     --   local result = handle:read('*a')
     --   handle:close()
@@ -291,8 +290,9 @@ if not vim.uv.fs_stat(pynvim_env) then
     -- end
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
-    vim.fn.system({ pynvim_activate })
+    -- vim.fn.system({ pynvim_activate })
   end
+
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'neovim' })
