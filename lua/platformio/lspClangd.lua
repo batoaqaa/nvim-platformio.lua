@@ -39,11 +39,11 @@ local ensure_installed = {
 local mr = require('mason-registry')
 mr.refresh(function()
   for _, tool in ipairs(ensure_installed) do
-    local ok, p = pcall(mr.get_package, tool)
-    if ok and p then
-      if not p:is_installed() then
-        if not p:is_installing() then
-          p:install({}, function(success, _)
+    ok, result = pcall(mr.get_package, tool)
+    if ok and result then
+      if not result:is_installed() then
+        if not result:is_installing() then
+          result:install({}, function(success, _)
             if not success then
               vim.defer_fn(function()
                 vim.notify(tool .. ' failed to install', vim.log.levels.ERROR)
