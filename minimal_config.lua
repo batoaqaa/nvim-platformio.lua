@@ -25,6 +25,21 @@ vim.g.have_nerd_font = true
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+local isWindows = jit.os == 'Windows'
+if not isWindows then
+  vim.g.shellcmdflag = '-c' -- Executes the command passed as a string
+  vim.g.shellpipe = '|' -- Pipes output of external commands
+  vim.g.shellredir = '> ' -- Redirects output of external commands
+else
+  vim.g.shell = vim.fn.executable('pwsh') and 'pwsh' or 'powershell'
+  vim.g.shellcmdflag =
+    '-NoLogo -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues[Out-File:Encoding]=utf8;Remove-Alias -Force -ErrorAction SilentlyContinue tee;'
+  vim.g.shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
+  vim.g.shellpipe = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
+  vim.g.shellquote = ''
+  vim.g.shellxquote = ''
+end
+
 -- Toggle virtual_text off when on the line with the error
 vim.diagnostic.config({
   virtual_lines = true,
