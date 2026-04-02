@@ -6,7 +6,6 @@ local boilerplate = {}
 boilerplate['arduino'] = {
 
   -- local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' }) -- cwd and parents
-  src_path = vim.fn.getcwd() .. '/src',
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
@@ -22,7 +21,6 @@ void loop() {
 }
 
 boilerplate['.clangd_cmd'] = {
-  src_path = vim.fn.getcwd(),
   filename = '.clangd_cmd',
   content = [[
 clangd
@@ -47,7 +45,6 @@ clangd
 }
 
 boilerplate['.clang-format'] = {
-  src_path = vim.fn.getcwd(),
   filename = '.clang-format',
   content = [[
 ---
@@ -299,8 +296,9 @@ WhitespaceSensitiveMacros:
 ]],
 }
 
+-- local home = vim.env.HOME
+-- print(home)
 boilerplate['.clangd'] = {
-  src_path = vim.fn.getcwd(),
   filename = '.clangd',
   content = [[
 CompileFlags:
@@ -342,13 +340,13 @@ Diagnostics:
 ]],
 }
 
-function M.boilerplate_gen(framework)
+function M.boilerplate_gen(framework, src_path)
   local entry = boilerplate[framework]
   if not entry then
     return
   end
   --
-  local file_path = entry.src_path .. '/' .. entry.filename
+  local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
     return
   end
