@@ -271,6 +271,7 @@ if not vim.uv.fs_stat(pynvim_env) then
     vim.cmd.source(pynvim_activate)
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
+    print('create venv')
   end
 
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
@@ -280,7 +281,9 @@ if not vim.uv.fs_stat(pynvim_env) then
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'isort' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'scons' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'yamllint' })
+  print('before')
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'platformio' })
+  print('after')
   -- vim.fn.system({ 'pip', 'install', '-U', 'platformio' })
 end
 ------------------------
