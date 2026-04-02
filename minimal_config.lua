@@ -191,6 +191,18 @@ local plugins = {
   -- },
   --
   {
+    'famiu/bufdelete.nvim',
+    keys = {
+      {
+        '<leader>bd',
+        function()
+          require('bufdelete').bufdelete(0, true)
+        end,
+        desc = 'Delete buffer',
+      },
+    },
+  },
+  {
     'akinsho/bufferline.nvim',
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
