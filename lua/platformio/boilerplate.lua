@@ -3,7 +3,7 @@ local uv = vim.loop
 
 local boilerplate = {}
 
-boilerplate['Arduino'] = {
+boilerplate['arduino'] = {
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
