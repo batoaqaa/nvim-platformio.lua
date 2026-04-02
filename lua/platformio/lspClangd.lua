@@ -129,6 +129,14 @@ if mok then
 end
 
 -- require('platformio.piolsp').piolsp()
+if vim.fn.has('nvim-0.12') then
+  if #vim.lsp.get_clients() > 0 then
+    vim.cmd('lsp restart')
+  end
+else
+  vim.cmd('LspRestart')
+end
+
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
   require('platformio.lspAttach')
