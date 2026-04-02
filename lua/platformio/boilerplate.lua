@@ -346,6 +346,7 @@ function M.boilerplate_gen(framework, src_path)
     return
   end
   --
+  print(src_path)
   local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
     return
