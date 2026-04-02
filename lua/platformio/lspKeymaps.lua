@@ -85,11 +85,11 @@ function K.lspKeymaps(client, bufnr)
     end, '[W]orkspace [L]ist folders')
   end
   --
-  if client.supports_method('textDocument/switchSourceHeader') then
+  if client:supports_method('textDocument/switchSourceHeader') then
     bufkeymap('n', 'glws', '<cmd>LspClangdSwitchSourceHeader<cr>', '[S]witch Source/Header (C/C++)')
   end
 
-  if client.supports_method('textDocument/formatting') then
+  if client:supports_method('textDocument/formatting') then
     -- if client.server_capabilities.documentFormattingProvider then
     bufkeymap({ 'n', 'x' }, 'glf', function()
       vim.lsp.buf.format({ bufnr = bufnr, async = true })
