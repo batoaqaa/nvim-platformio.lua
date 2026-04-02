@@ -61,8 +61,8 @@ local function pick_framework(board_details)
           local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
           -- .. utils.extra
           utils.ToggleTerminal(command, 'float', function()
-            vim.cmd(':PioLSP')
             boilerplate_gen(selected_framework, vim.g.platformioRootDir)
+            vim.cmd(':PioLSP')
           end)
         end)
         return true
