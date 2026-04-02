@@ -223,7 +223,10 @@ local plugins = {
     -- config = true,
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
-  { 'famiu/bufdelete.nvim', config = true },
+  { 'famiu/bufdelete.nvim',
+    config = function()
+      require('bufdelete ').setup({})
+    end,
   {
     'nvim-tree/nvim-tree.lua',
     version = '*',
