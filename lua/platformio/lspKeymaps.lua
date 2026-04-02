@@ -102,23 +102,23 @@ function K.lspKeymaps(client, bufnr)
     -- })
     -- --
     -- LSP format the current buffer on save
-    --local fmt_group = vim.api.nvim_create_augroup('autoformat_cmds', { clear = true })
-    --   vim.api.nvim_create_autocmd('BufWritePre', {
-    --     buffer = buf_number,
-    --     group = get_augroup(client),
-    --     desc = 'Fromat current buffer',
-    --     callback = function()
-    --       vim.lsp.buf.format {
-    --         bufnr = buf_number,
-    --         async = false,
-    --         timeout_ms = 10000,
-    --         id = client.id,
-    --         filter = function(c)
-    --           return c.id == client.id
-    --         end,
-    --       }
-    --     end,
-    --   })
+    local fmt_group = vim.api.nvim_create_augroup('autoformat_cmds', { clear = true })
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      buffer = bufnr,
+      group = fmt_group,
+      desc = 'Fromat current buffer',
+      callback = function()
+        vim.lsp.buf.format({
+          bufnr = bufnr,
+          async = false,
+          timeout_ms = 10000,
+          id = client.id,
+          filter = function(c)
+            return c.id == client.id
+          end,
+        })
+      end,
+    })
   end
   --
   if client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
