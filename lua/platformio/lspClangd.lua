@@ -30,39 +30,39 @@ if ok then
 end
 
 -- List of packages you want Mason to ensure are installed
-local ensure_installed = {
-  'clang-format',
-  -- 'biome',
-}
-
--- call mason-registry function to install or ensure formatters/linters are installed
-local mr = require('mason-registry')
-mr.refresh(function()
-  for _, tool in ipairs(ensure_installed) do
-    ok, result = pcall(mr.get_package, tool)
-    if ok and result then
-      if not result:is_installed() then
-        if not result:is_installing() then
-          result:install({}, function(success, _)
-            if not success then
-              vim.defer_fn(function()
-                vim.notify(tool .. ' failed to install', vim.log.levels.ERROR)
-              end, 0)
-            end
-          end)
-        else
-          vim.defer_fn(function()
-            vim.notify(tool .. ' already installed', vim.log.levels.WARN)
-          end, 0)
-        end
-      end
-    else
-      vim.defer_fn(function()
-        vim.notify('Failed to get package: ' .. tool, vim.log.levels.WARN)
-      end, 0)
-    end
-  end
-end)
+-- local ensure_installed = {
+--   'clang-format',
+--   -- 'biome',
+-- }
+--
+-- -- call mason-registry function to install or ensure formatters/linters are installed
+-- local mr = require('mason-registry')
+-- mr.refresh(function()
+--   for _, tool in ipairs(ensure_installed) do
+--     ok, result = pcall(mr.get_package, tool)
+--     if ok and result then
+--       if not result:is_installed() then
+--         if not result:is_installing() then
+--           result:install({}, function(success, _)
+--             if not success then
+--               vim.defer_fn(function()
+--                 vim.notify(tool .. ' failed to install', vim.log.levels.ERROR)
+--               end, 0)
+--             end
+--           end)
+--         else
+--           vim.defer_fn(function()
+--             vim.notify(tool .. ' already installed', vim.log.levels.WARN)
+--           end, 0)
+--         end
+--       end
+--     else
+--       vim.defer_fn(function()
+--         vim.notify('Failed to get package: ' .. tool, vim.log.levels.WARN)
+--       end, 0)
+--     end
+--   end
+-- end)
 
 require('mason-lspconfig').setup({
   ensure_installed = { 'clangd' },
