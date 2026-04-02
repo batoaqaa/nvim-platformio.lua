@@ -273,24 +273,17 @@ if not vim.uv.fs_stat(pynvim_env) then
     vim.fn.system('source ' .. pynvim_activate)
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
+    vim.fn.system(pynvim_activate)
   end
 
-  local output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
-  print('pip: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
-  print('pynvim: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'neovim' })
-  print('neovim: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'debugpy' })
-  print('debugpy: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'isort' })
-  print('isort: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'scons' })
-  print('scons: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'yamllint' })
-  print('yamllint: ' .. output)
-  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'platformio' })
-  print('platformio: ' .. output)
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'neovim' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'debugpy' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'isort' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'scons' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'yamllint' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'platformio' })
   -- vim.fn.system({ 'pip', 'install', '-U', 'platformio' })
 end
 ------------------------
