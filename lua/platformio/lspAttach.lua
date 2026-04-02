@@ -36,12 +36,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
         if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
           vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
         end
-        vim.diagnostic.config({
-          current_line = true,
-          virtual_lines = {
-            current_line = true,
-          },
-        })
+        -- vim.diagnostic.config({
+        --   current_line = true,
+        --   virtual_lines = {
+        --     current_line = true,
+        --   },
+        -- })
         vim.cmd([[set completeopt+=noselect]])
       end
 
