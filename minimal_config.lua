@@ -70,15 +70,53 @@ vim.diagnostic.config({
   },
 })
 
-vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
-vim.keymap.set('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+local keymap = function(mode, lhs, rhs, opts)
+  local options = { silent = true } --noremap = true by default in vim.keymap.set
+  if opts then
+    options = vim.tbl_extend('force', options, opts or {})
+  end
+  vim.keymap.set(mode, lhs, rhs, options)
+end
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+--  See `:help wincmd` for a list of all window commands
+keymap('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+keymap('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+keymap('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- Resize with arrows
+keymap('n', '<C-Up>', ':resize -2<CR>')
+keymap('n', '<C-Down>', ':resize +2<CR>')
+keymap('n', '<C-Left>', ':vertical resize -2<CR>')
+keymap('n', '<C-Right>', ':vertical resize +2<CR>')
+
+keymap('n', '<leader>bb', ':bprevious<CR>', { desc = '[B]efore Buffer' })
+keymap('n', '<leader>ba', ':bnext<CR>', { desc = '[A]fter Buffer' })
+keymap('n', '<leader>bs', ':ball<CR>', { desc = '[S]how AllOpened Buffers' })
+keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' })
+keymap('n', '<leader>bd', '<Cmd>bdelete<CR>', { desc = '[D]elete Buffer' })
+keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
+keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
+keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
+keymap('n', '<leader>bl', '<Cmd>BufferLineCloseLeft<CR>', { desc = 'Delete Buffers to the Left' })
+keymap('n', '<S-h>', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
+keymap('n', '<S-l>', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
+keymap('n', '[b', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
+keymap('n', ']b', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
+keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
+keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
+
+keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+
+-- Keybinds to make split navigation easier.
+--  Use CTRL+<hjkl> to switch between windows
+keymap('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+keymap('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+keymap('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 
 local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
@@ -156,21 +194,8 @@ local plugins = {
     'akinsho/bufferline.nvim',
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
-    config = function()
-      require('bufferline').setup({
-        options = {
-          mode = 'buffers', -- set to "tabs" to only show tabpages instead
-          offsets = {
-            {
-              filetype = 'nvim-tree',
-              text = 'File Explorer', -- | function ,
-              text_align = 'left', -- | "center" | "right"
-              separator = true,
-            },
-          },
-        },
-      })
-    end,
+    config = true,
+    -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
   {
     'nvim-tree/nvim-tree.lua',
