@@ -237,6 +237,12 @@ function M.ToggleTerminal(command, direction, exit_callback)
       else
         vim.api.nvim_set_current_win(0)
       end
+      -- print('exit:')
+      -- exit_callback()
+    end,
+
+    -- INFO: on_exit()
+    on_exit = function(t)
       print('exit:')
       exit_callback()
     end,

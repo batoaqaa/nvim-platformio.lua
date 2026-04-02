@@ -3,9 +3,7 @@ local uv = vim.loop
 
 local boilerplate = {}
 
-boilerplate['arduino'] = {
-
-  -- local platformioRootDir = vim.fs.root(vim.fn.getcwd(), { 'platformio.ini' }) -- cwd and parents
+boilerplate['Arduino'] = {
   filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
