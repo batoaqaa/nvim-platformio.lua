@@ -119,7 +119,6 @@ function M.ToggleTerminal(command, direction, exit_callback)
   local closeOnexit = false
   if type(exit_callback) == 'function' then
     closeOnexit = true
-    print('closeOnexit')
   else
     exit_callback = function() end
   end

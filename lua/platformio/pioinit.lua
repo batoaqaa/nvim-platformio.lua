@@ -48,65 +48,69 @@ end
 local function pick_framework(board_details)
   local opts = {}
   pickers
-    .new(opts, {
-      prompt_title = 'frameworks',
-      finder = finders.new_table({
-        results = board_details['frameworks'],
-      }),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          local selected_framework = selection[1]
-          local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. ' && exit"'
-          -- .. utils.extra
-          utils.ToggleTerminal(command, 'float', function()
-            boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-            vim.cmd(':PioLSP')
+      .new(opts, {
+        prompt_title = 'frameworks',
+        finder = finders.new_table({
+          results = board_details['frameworks'],
+        }),
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            local selected_framework = selection[1]
+            local command = 'pio project init --board '
+                .. board_details['id']
+                .. ' --project-option "framework='
+                .. selected_framework
+                .. '" && exit && echo "done"'
+            -- .. utils.extra
+            utils.ToggleTerminal(command, 'float', function()
+              boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+              vim.cmd(':PioLSP')
+            end)
           end)
-        end)
-        return true
-      end,
-      sorter = telescope_conf.generic_sorter(opts),
-    })
-    :find()
+          return true
+        end,
+        sorter = telescope_conf.generic_sorter(opts),
+      })
+      :find()
 end
 
 local function pick_board(json_data)
   local opts = {}
   pickers
-    .new(opts, {
-      prompt_title = 'Boards',
-      finder = finders.new_table({
-        results = json_data,
-        entry_maker = opts.entry_maker or boardentry_maker(opts),
-      }),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          pick_framework(selection['value']['data'])
-        end)
-        return true
-      end,
-      previewer = previewers.new_buffer_previewer({
-        title = 'Board Info',
-        define_preview = function(self, entry, _)
-          local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
-          local bufnr = self.state.bufnr
-          vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
-          vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
-          vim.defer_fn(function()
-            local win = self.state.winid
-            vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
-            vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
-            vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
-          end, 0)
+      .new(opts, {
+        prompt_title = 'Boards',
+        finder = finders.new_table({
+          results = json_data,
+          entry_maker = opts.entry_maker or boardentry_maker(opts),
+        }),
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            pick_framework(selection['value']['data'])
+          end)
+          return true
         end,
-      }),
-      sorter = telescope_conf.generic_sorter(opts),
-    })
-    :find()
+        previewer = previewers.new_buffer_previewer({
+          title = 'Board Info',
+          define_preview = function(self, entry, _)
+            local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
+            local bufnr = self.state.bufnr
+            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
+            vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
+            vim.defer_fn(function()
+              local win = self.state.winid
+              vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
+              vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
+              vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
+            end, 0)
+          end,
+        }),
+        sorter = telescope_conf.generic_sorter(opts),
+      })
+      :find()
 end
 
 function M.pioinit()
