@@ -210,7 +210,15 @@ local plugins = {
       require('bufferline').setup({})
     end,
     options = {
-      mode = 'buffers', -- set to "tabs" to only show tabpages instead
+      -- mode = 'buffers', -- set to "tabs" to only show tabpages instead
+      offsets = {
+        {
+          filetype = 'NvimTree',
+          text = 'File Explorer',
+          text_align = 'left', -- options: "left", "center", "right"
+          separator = true,
+        },
+      },
     },
     -- config = true,
     -- config = true is shorthand for config = function() require('bufferline').setup() end
