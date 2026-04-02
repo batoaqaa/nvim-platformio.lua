@@ -119,6 +119,7 @@ function M.ToggleTerminal(command, direction, exit_callback)
   local closeOnexit = false
   if type(exit_callback) == 'function' then
     closeOnexit = true
+    print('closeOnexit')
   else
     exit_callback = function() end
   end
@@ -190,7 +191,7 @@ function M.ToggleTerminal(command, direction, exit_callback)
         background = 'NormalFloat',
       },
     },
-    close_on_exit = closeOnexit,
+    close_on_exit = true, --closeOnexit,
 
     -- INFO: on_open()
     on_open = function(t)
