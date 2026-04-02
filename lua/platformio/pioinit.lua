@@ -62,7 +62,7 @@ local function pick_framework(board_details)
           -- .. utils.extra
           utils.ToggleTerminal(command, 'float', function()
             vim.cmd(':PioLSP')
-            boilerplate_gen(selected_framework)
+            boilerplate_gen(selected_framework, vim.g.platformioRootDir)
           end)
         end)
         return true
