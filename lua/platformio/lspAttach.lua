@@ -34,15 +34,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
       local bok, _ = pcall(require, 'blink')
       if not bok then
         if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
-          vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+          vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
         end
+
         -- vim.diagnostic.config({
         --   current_line = true,
         --   virtual_lines = {
         --     current_line = true,
         --   },
         -- })
-        vim.cmd([[set completeopt+=noselect]])
+        -- vim.cmd([[set completeopt+=noselect]])
       end
 
       ------------------------------------------------------------------
