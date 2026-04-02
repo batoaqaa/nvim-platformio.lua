@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
             current_line = true,
           },
         })
-        vim.cmd([[set completeopt+=noselect]])
+        -- vim.cmd([[set completeopt+=noselect]])
       end
 
       ------------------------------------------------------------------
