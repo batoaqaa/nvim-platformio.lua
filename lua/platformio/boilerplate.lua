@@ -339,7 +339,7 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework, src_path)
-  print(src_path .. '/' .. framework)
+  -- print(src_path .. '/' .. framework)
   local entry = boilerplate[framework]
   if not entry then
     return
