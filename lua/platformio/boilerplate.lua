@@ -341,12 +341,12 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework, src_path)
+  print(src_path)
   local entry = boilerplate[framework]
   if not entry then
     return
   end
   --
-  print(src_path)
   local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
     return
