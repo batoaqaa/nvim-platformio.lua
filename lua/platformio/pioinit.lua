@@ -58,7 +58,7 @@ local function pick_framework(board_details)
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
-          local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
+          local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. ' && exit"'
           -- .. utils.extra
           utils.ToggleTerminal(command, 'float', function()
             boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
