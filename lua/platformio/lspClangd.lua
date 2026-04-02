@@ -80,7 +80,6 @@ local cmd = { 'clangd' }
 
 -- local path = vim.fn.getcwd()
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
--- local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
