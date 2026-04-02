@@ -192,16 +192,16 @@ local plugins = {
   --
   --
 
-  {
-    'akinsho/bufferline.nvim',
-    config = function()
-      require('bufferline').setup({
-        options = {
-          mode = 'tabs',
-        },
-      })
-    end,
-  },
+  -- {
+  --   'akinsho/bufferline.nvim',
+  --   config = function()
+  --     require('bufferline').setup({
+  --       options = {
+  --         mode = "tabs",
+  --       },
+  --     })
+  --   end
+  -- },
   {
     'famiu/bufdelete.nvim',
     keys = {
@@ -213,6 +213,13 @@ local plugins = {
         desc = 'Delete buffer',
       },
     },
+  },
+  {
+    'akinsho/bufferline.nvim',
+    version = '*',
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = true,
+    -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
   {
     'nvim-tree/nvim-tree.lua',
