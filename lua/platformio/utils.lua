@@ -44,9 +44,9 @@ end
 local function getPreviousWindow(orig_window)
   local prev = {
     orig_window = orig_window,
-    term = nil,    --active terminal
-    cli = nil,     --cli terminal
-    mon = nil,     --mon terminal
+    term = nil, --active terminal
+    cli = nil, --cli terminal
+    mon = nil, --mon terminal
     float = false, --is active terminal direction float
   }
   local terms = require('toggleterm.terminal').get_all(true)
@@ -87,7 +87,7 @@ local function send(term, cmd)
   vim.fn.chansend(term.job_id, cmd .. M.enter())
   if vim.api.nvim_buf_is_loaded(term.bufnr) and vim.api.nvim_buf_is_valid(term.bufnr) then
     if term.window and vim.api.nvim_win_is_valid(term.window) then --vim.ui.term_has_open_win(term) then
-      vim.api.nvim_set_current_win(term.window)                    -- terminal focus
+      vim.api.nvim_set_current_win(term.window) -- terminal focus
       vim.api.nvim_buf_call(term.bufnr, function()
         local mode = vim.api.nvim_get_mode().mode
         if mode == 'n' or mode == 'nt' then
@@ -217,13 +217,13 @@ function M.ToggleTerminal(command, direction, exit_callback)
       if config.debug then
         local name_splt = M.strsplit(t.display_name, ':')
         vim.api.nvim_echo({
-          { 'ToggleTerm ',                           'MoreMsg' },
-          { '(Term name: ' .. name_splt[1] .. ')',   'MoreMsg' },
+          { 'ToggleTerm ', 'MoreMsg' },
+          { '(Term name: ' .. name_splt[1] .. ')', 'MoreMsg' },
           { '(Prev win ID: ' .. name_splt[2] .. ')', 'MoreMsg' },
-          { '(Term Win ID: ' .. t.window .. ')',     'MoreMsg' },
-          { '(Term Buffer#: ' .. t.bufnr .. ')',     'MoreMsg' },
-          { '(Term id: ' .. t.id .. ')',             'MoreMsg' },
-          { '(Job ID: ' .. t.job_id .. ')',          'MoreMsg' },
+          { '(Term Win ID: ' .. t.window .. ')', 'MoreMsg' },
+          { '(Term Buffer#: ' .. t.bufnr .. ')', 'MoreMsg' },
+          { '(Term id: ' .. t.id .. ')', 'MoreMsg' },
+          { '(Job ID: ' .. t.job_id .. ')', 'MoreMsg' },
         }, true, {})
       end
     end,
@@ -237,12 +237,12 @@ function M.ToggleTerminal(command, direction, exit_callback)
       else
         vim.api.nvim_set_current_win(0)
       end
-      -- print('exit:')
+      print('close:')
       -- exit_callback()
     end,
 
     -- INFO: on_exit()
-    on_exit = function(t)
+    on_exit = function(_)
       print('exit:')
       exit_callback()
     end,
@@ -350,8 +350,7 @@ function M.cd_pioini()
 end
 
 function M.pio_install_check()
-  local handel = (jit.os == 'Windows') and assert(io.popen('where.exe pio 2>./nul')) or
-  assert(io.popen('which pio 2>/dev/null'))
+  local handel = (jit.os == 'Windows') and assert(io.popen('where.exe pio 2>./nul')) or assert(io.popen('which pio 2>/dev/null'))
   local pio_path = assert(handel:read('*a'))
   handel:close()
 
