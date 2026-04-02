@@ -157,7 +157,19 @@ local plugins = {
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
     config = function()
-      require('bufferline').setup({})
+      require('bufferline').setup({
+        options = {
+          mode = 'buffers', -- set to "tabs" to only show tabpages instead
+          offsets = {
+            {
+              filetype = 'nvim-tree',
+              text = 'File Explorer', -- | function ,
+              text_align = 'left', -- | "center" | "right"
+              separator = true,
+            },
+          },
+        },
+      })
     end,
   },
   {
