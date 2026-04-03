@@ -1,10 +1,7 @@
--- pick a temp root
-local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
+local isWindows = jit.os == 'Windows'
 
-vim.env.XDG_DATA_HOME = tmp .. '/data'
-vim.env.XDG_CACHE_HOME = tmp .. '/cache'
-vim.env.XDG_STATE_HOME = tmp .. '/state'
-
+----------------------------------------------------------------------------------------
+-- INFO: Set options
 -- disable netrw at the very start of your init.lua
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
@@ -30,7 +27,6 @@ vim.g.have_nerd_font = true
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
-local isWindows = jit.os == 'Windows'
 if not isWindows then
   vim.g.shell = '/bin/bash' -- or '/bin/zsh', '/usr/bin/fish', etc.
   vim.g.shellcmdflag = '-c' -- Executes the command passed as a string
@@ -46,7 +42,8 @@ else
   vim.g.shellxquote = ''
 end
 
--- Toggle virtual_text off when on the line with the error
+----------------------------------------------------------------------------------------
+-- INFO: Set diagnostic config
 vim.diagnostic.config({
   virtual_lines = true,
   update_in_insert = true,
@@ -70,6 +67,8 @@ vim.diagnostic.config({
   },
 })
 
+----------------------------------------------------------------------------------------
+-- INFO: Set nvim keymaps
 local keymap = function(mode, lhs, rhs, opts)
   local options = { silent = true } --noremap = true by default in vim.keymap.set
   if opts then
@@ -132,7 +131,15 @@ keymap('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 keymap('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 keymap('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
 ----------------------------------------------------------------------------------------
+-- INFO: Set mini lazy config
+-- pick a temp root
+local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
+
+vim.env.XDG_DATA_HOME = tmp .. '/data'
+vim.env.XDG_CACHE_HOME = tmp .. '/cache'
+vim.env.XDG_STATE_HOME = tmp .. '/state'
 
 local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
 
@@ -150,6 +157,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 ----------------------------------------------------------------------------------------
+-- INFO: define plugins table
 local plugins = {
 
   {
@@ -163,72 +171,6 @@ local plugins = {
       },
     },
   },
-  -- {
-  --   'saghen/blink.cmp',
-  --   -- optional: provides snippets for the snippet source
-  --   dependencies = { 'rafamadriz/friendly-snippets' },
-  --
-  --   -- use a release tag to download pre-built binaries
-  --   version = '1.*',
-  --   -- AND/OR build from source
-  --   -- build = 'cargo build --release',
-  --   -- If you use nix, you can build from source with:
-  --   -- build = 'nix run .#build-plugin',
-  --
-  --   ---@module 'blink.cmp'
-  --   ---@type blink.cmp.Config
-  --   opts = {
-  --     -- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
-  --     -- 'super-tab' for mappings similar to vscode (tab to accept)
-  --     -- 'enter' for enter to accept
-  --     -- 'none' for no mappings
-  --     --
-  --     -- All presets have the following mappings:
-  --     -- C-space: Open menu or open docs if already open
-  --     -- C-n/C-p or Up/Down: Select next/previous item
-  --     -- C-e: Hide menu
-  --     -- C-k: Toggle signature help (if signature.enabled = true)
-  --     --
-  --     -- See :h blink-cmp-config-keymap for defining your own keymap
-  --     keymap = { preset = 'default' },
-  --
-  --     appearance = {
-  --       -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
-  --       -- Adjusts spacing to ensure icons are aligned
-  --       nerd_font_variant = 'mono',
-  --     },
-  --
-  --     -- (Default) Only show the documentation popup when manually triggered
-  --     completion = { documentation = { auto_show = false } },
-  --
-  --     -- Default list of enabled providers defined so that you can extend it
-  --     -- elsewhere in your config, without redefining it, due to `opts_extend`
-  --     sources = {
-  --       default = { 'lsp', 'path', 'snippets', 'buffer' },
-  --     },
-  --
-  --     -- (Default) Rust fuzzy matcher for typo resistance and significantly better performance
-  --     -- You may use a lua implementation instead by using `implementation = "lua"` or fallback to the lua implementation,
-  --     -- when the Rust fuzzy matcher is not available, by using `implementation = "prefer_rust"`
-  --     --
-  --     -- See the fuzzy documentation for more information
-  --     fuzzy = { implementation = 'prefer_rust_with_warning' },
-  --   },
-  --   opts_extend = { 'sources.default' },
-  -- },
-  --
-  -- {
-  --   'famiu/bufdelete.nvim',
-  --   keys = {
-  --     {
-  --       '<leader>bd',
-  --       function()
-  --         require('bufdelete').bufdelete(0, true)
-  --       end,
-  --       desc = 'Delete buffer',
-  --     },
-  --   },
-  -- },
   {
     'akinsho/bufferline.nvim',
     version = '*',
@@ -312,6 +254,8 @@ local plugins = {
 }
 ----------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------
+-- INFO: Install/config plugins
 require('lazy').setup(plugins, {
   install = {
     missing = true,
@@ -319,6 +263,8 @@ require('lazy').setup(plugins, {
 })
 ----------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------
+-- INFO: autocommand to Update lazy.nvim plugins in the background
 vim.api.nvim_create_autocmd('User', {
   pattern = 'LazyVimStarted', -- Triggers after the UI enters and startup time is calculated
   desc = 'Update lazy.nvim plugins in the background',
@@ -332,9 +278,8 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
------------------------------------------------------------------------------------------
--- local isWindows = jit.os == 'Windows'
---
+----------------------------------------------------------------------------------------
+-- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
 if isWindows then
   platformio_core_dir = vim.env.HOME .. '\\.platformio'
@@ -371,13 +316,14 @@ if not vim.uv.fs_stat(pynvim_env) then
   if not isWindows then
     vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
-    -- vim.cmd('source ' .. pynvim_activate)
     vim.fn.system('source ' .. pynvim_activate)
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
     vim.fn.system(pynvim_activate)
   end
 
+  --------------------------------------------------------------------------------------
+  -- INFO: install platformio and nvim required packages.
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'neovim' })
@@ -388,9 +334,10 @@ if not vim.uv.fs_stat(pynvim_env) then
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'platformio' })
   -- vim.fn.system({ 'pip', 'install', '-U', 'platformio' })
 end
-------------------------
+
+----------------------------------------------------------------------------------------
+-- INFO: configure nvim-platformio and load
 -----------------------------------------------------------------------------------------
--- platformio config
 local pioConfig = {
   lspClangd = {
     enabled = true,
