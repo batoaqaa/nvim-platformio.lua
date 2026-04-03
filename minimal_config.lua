@@ -97,6 +97,11 @@ keymap('n', '<leader>ba', ':bnext<CR>', { desc = '[A]fter Buffer' })
 keymap('n', '<leader>bs', ':ball<CR>', { desc = '[S]how AllOpened Buffers' })
 keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' })
 keymap('n', '<leader>bd', '<Cmd>Bdelete<CR>', { desc = '[D]elete Buffer' })
+
+-- Native way to avoid jumping to nvim-tree
+vim.keymap.set('n', '<leader>bd', ':bp | bd #<CR>', { desc = '[D]elete Buffer' })
+-- keymap('n', '<leader>bd', '<Cmd>Bdelete<CR>', { desc = '[D]elete Buffer' })
+-- map({ mode = "n", key = "<leader>c", desc = "Close buffer",       cmd = ":let n=bufnr() | bnext | exec 'sil bd' .. n<cr>" })
 keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
 keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
 keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
