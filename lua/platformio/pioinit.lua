@@ -9,9 +9,8 @@ local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
-local config = require('platformio').config
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
--- local boilerplate = require('platformio.boilerplate')
+local piolsp = require('platformio.piolsp').piolsp
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -64,19 +63,12 @@ local function pick_framework(board_details)
             .. ' --project-option "framework='
             .. selected_framework
             .. '" && exit && echo "done"'
-          boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          -- boilerplate.boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          local piolsp = require('platformio.piolsp').piolsp
+
           utils.ToggleTerminal(command, 'float', piolsp)
-          --
-          -- utils.ToggleTerminal(command, 'float', function()
-          --   require('platformio.piolsp').piolsp()
-          -- end)
-          --
-          -- utils.ToggleTerminal(command, 'float', function()
-          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          --   vim.cmd(':PioLSP')
-          -- end)
+
+          -- it fails creating the file if src directory not exist
+          -- src directory should be created by piolsp callback function in the previous command
+          boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
         end)
         return true
       end,
