@@ -35,6 +35,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
       if not bok then
         if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
           vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+          print('completion enabled')
         end
 
         -- vim.diagnostic.config({
@@ -43,12 +44,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
         --     current_line = true,
         --   },
         -- })
-        -- vim.cmd([[set completeopt+=noselect]])
+        vim.cmd([[set completeopt+=noselect]])
       end
 
       ------------------------------------------------------------------
       if client.server_capabilities.documentHighlightProvider then
-        local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
+        local highlight_augroup = vim.api.nvim_create_augroup('platformio-lsp-highlight', { clear = false })
         vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
           buffer = bufnr,
           group = highlight_augroup,
@@ -62,10 +63,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
         })
         --
         vim.api.nvim_create_autocmd('LspDetach', {
-          group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
+          group = vim.api.nvim_create_augroup('platformio-lsp-detach', { clear = true }),
           callback = function(event)
             vim.lsp.buf.clear_references()
-            vim.api.nvim_clear_autocmds({ group = 'kickstart-lsp-highlight', buffer = event.buf })
+            vim.api.nvim_clear_autocmds({ group = 'platformio-lsp-highlight', buffer = event.buf })
           end,
         })
         --
