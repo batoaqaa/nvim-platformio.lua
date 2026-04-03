@@ -31,9 +31,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
       -- if client and client.server_capabilities.completionProvider then
       if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
-        -- Enable native completion for this specific client and buffer
-        vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
-
         vim.diagnostic.config({
           current_line = true,
           virtual_lines = {
@@ -42,6 +39,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
         })
         vim.cmd([[set completeopt+=noselect]])
         print('completion enabled')
+
+        -- Enable native completion for this specific client and buffer
+        vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
       end
       ------------------------------------------------------------------
       --- Skip this if you are using blink
