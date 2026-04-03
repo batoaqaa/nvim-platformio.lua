@@ -339,11 +339,13 @@ Diagnostics:
 }
 
 function M.boilerplate_gen(framework, src_path)
-  print(src_path .. '/' .. framework)
+  print(src_path .. '/0' .. framework)
   local entry = boilerplate[framework]
   if not entry then
+    print(src_path .. '/1' .. framework)
     return
   end
+  print(src_path .. '/2' .. framework)
   --
   local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
