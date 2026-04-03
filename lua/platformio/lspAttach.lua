@@ -29,23 +29,28 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end, { desc = 'Switch between source/header' })
       end
 
+      if client and client.server_capabilities.completionProvider then
+        -- Enable native completion for this specific client and buffer
+        vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+        print('completion enabled')
+      end
       ------------------------------------------------------------------
       --- Skip this if you are using blink
-      local bok, _ = pcall(require, 'blink')
-      if not bok then
-        if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
-          vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
-          print('completion enabled')
-        end
-
-        -- vim.diagnostic.config({
-        --   current_line = true,
-        --   virtual_lines = {
-        --     current_line = true,
-        --   },
-        -- })
-        vim.cmd([[set completeopt+=noselect]])
-      end
+      -- local bok, _ = pcall(require, 'blink')
+      -- if not bok then
+      --   if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
+      --     vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+      --     print('completion enabled')
+      --   end
+      --
+      --   -- vim.diagnostic.config({
+      --   --   current_line = true,
+      --   --   virtual_lines = {
+      --   --     current_line = true,
+      --   --   },
+      --   -- })
+      --   -- vim.cmd([[set completeopt+=noselect]])
+      -- end
 
       ------------------------------------------------------------------
       if client.server_capabilities.documentHighlightProvider then
