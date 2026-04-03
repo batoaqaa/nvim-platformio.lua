@@ -18,8 +18,10 @@ vim.opt.autowrite = true -- Enable auto write
 -- integration works automatically. Requires Neovim >= 0.10.0
 vim.opt.clipboard = vim.env.SSH_TTY and '' or 'unnamedplus' -- Sync with system clipboard
 
-vim.opt.completeopt = 'menu,menuone,noselect'
+-- vim.opt.completeopt = 'menu,menuone,noselect'
+vim.opt.completeopt = { 'menuone', 'noselect', 'fuzzy' }
 
+vim.opt.completeopt:append('fuzzy')
 vim.opt.tabstop = 2 -- Number of spaces tabs count for
 vim.opt.softtabstop = 2
 vim.opt.shiftround = true -- Round indent
