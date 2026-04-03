@@ -362,18 +362,22 @@ function M.boilerplate_gen(framework, src_path)
   --
   uv.fs_open(file_path, 'w', 420, function(err, fd)
     if err then
+      print(src_path .. '/30' .. entry.filename)
       return
     end
     uv.fs_fstat(fd, function(serr, _)
       if serr then
+        print(src_path .. '/31' .. entry.filename)
         return
       end
       uv.fs_write(fd, entry.content, 0, function(werr, _)
         if werr then
+          print(src_path .. '/32' .. entry.filename)
           return
         end
         uv.fs_close(fd, function(cerr)
           if cerr then
+            print(src_path .. '/33' .. entry.filename)
             return
           end
         end)
