@@ -311,14 +311,15 @@ if vim.fn.isdirectory(platformio_core_dir) == 0 then
   -- os.execute((isWindows and "del " or "rm -f ") .. "get-platformio.py*")
 end
 
+local output
 -- local expand_dir = vim.fn.expand(pynvim_env)
 if not vim.uv.fs_stat(pynvim_env) then
   if not isWindows then
     print('linux:')
-    local out = vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
-    print(out)
-    out = vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
-    out = vim.fn.system('source ' .. pynvim_activate)
+    output = vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
+    print(output)
+    vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
+    vim.fn.system('source ' .. pynvim_activate)
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
     vim.fn.system(pynvim_activate)
@@ -326,8 +327,10 @@ if not vim.uv.fs_stat(pynvim_env) then
 
   --------------------------------------------------------------------------------------
   -- INFO: install platformio and nvim required packages.
-  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
-  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
+  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'pip' })
+  print(output)
+  output = vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'pynvim' })
+  print(output)
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'neovim' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'debugpy' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'isort' })
