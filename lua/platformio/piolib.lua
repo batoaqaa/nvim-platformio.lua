@@ -1,8 +1,6 @@
 local M = {}
 
-local config = require('platformio').config
 local curl = require('plenary.curl')
-
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local entry_display = require('telescope.pickers.entry_display')
@@ -12,6 +10,7 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
+local piolsp = require('platformio.piolsp').piolsp
 
 local libentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -48,43 +47,47 @@ end
 local function pick_library(json_data)
   local opts = {}
   pickers
-      .new(opts, {
-        prompt_title = 'Libraries',
-        finder = finders.new_table({
-          results = json_data['items'],
-          entry_maker = opts.entry_maker or libentry_maker(opts),
-        }),
-        attach_mappings = function(prompt_bufnr, _)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
-            local command = 'pio pkg install --library "' .. pkg_name .. '" && exit && echo "done"'
-            utils.ToggleTerminal(command, 'float', function()
-              vim.cmd(':PioLSP')
-            end)
-          end)
-          return true
-        end,
+    .new(opts, {
+      prompt_title = 'Libraries',
+      finder = finders.new_table({
+        results = json_data['items'],
+        entry_maker = opts.entry_maker or libentry_maker(opts),
+      }),
+      attach_mappings = function(prompt_bufnr, _)
+        actions.select_default:replace(function()
+          actions.close(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
+          local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
+          local command = 'pio pkg install --library "' .. pkg_name .. '"'
+          -- local command = 'pio pkg install --library "' .. pkg_name .. '" && exit && echo "done"'
 
-        previewer = previewers.new_buffer_previewer({
-          title = 'Package Info',
-          define_preview = function(self, entry, _)
-            local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
-            local bufnr = self.state.bufnr
-            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
-            vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
-            vim.defer_fn(function()
-              local win = self.state.winid
-              vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
-              vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
-              vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
-            end, 0)
-          end,
-        }),
-        sorter = conf.generic_sorter(opts),
-      })
-      :find()
+          -- utils.ToggleTerminal(command, 'float', function()
+          --   -- require('platformio.piolsp').piolsp()
+          --   piolsp()
+          -- end)
+          utils.ToggleTerminal(command, 'float', piolsp)
+        end)
+        return true
+      end,
+
+      previewer = previewers.new_buffer_previewer({
+        title = 'Package Info',
+        define_preview = function(self, entry, _)
+          local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
+          local bufnr = self.state.bufnr
+          vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
+          vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
+          vim.defer_fn(function()
+            local win = self.state.winid
+            vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
+            vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
+            vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
+          end, 0)
+        end,
+      }),
+      sorter = conf.generic_sorter(opts),
+    })
+    :find()
 end
 
 function M.piolib(lib_arg_list)
@@ -118,8 +121,7 @@ function M.piolib(lib_arg_list)
     pick_library(json_data)
   else
     vim.notify(
-      'API Request to platformio return HTTP code: ' ..
-      res['status'] .. '\nplease run `curl -LI ' .. url .. '` for complete information',
+      'API Request to platformio return HTTP code: ' .. res['status'] .. '\nplease run `curl -LI ' .. url .. '` for complete information',
       vim.log.levels.ERROR
     )
   end

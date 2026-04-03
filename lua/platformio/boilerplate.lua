@@ -347,7 +347,7 @@ function M.boilerplate_gen(framework, src_path)
   --
   local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
-    return
+    return -- return if file exists
   end
   --
   uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists

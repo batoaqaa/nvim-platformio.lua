@@ -58,21 +58,14 @@ local function pick_framework(board_details)
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
-          local command = 'pio project init --board '
-            .. board_details['id']
-            .. ' --project-option "framework='
-            .. selected_framework
-            .. '" && exit && echo "done"'
+          local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
+          -- .. '" && exit && echo "done"'
 
-          -- utils.ToggleTerminal(command, 'float', piolsp)
           utils.ToggleTerminal(command, 'float', function()
             -- require('platformio.piolsp').piolsp()
             piolsp()
             boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
           end)
-
-          -- it fails creating the file if src directory not exist
-          -- src directory should be created by piolsp callback function in the previous command
         end)
         return true
       end,
