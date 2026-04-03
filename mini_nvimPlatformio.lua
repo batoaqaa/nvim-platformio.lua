@@ -316,7 +316,8 @@ if not vim.uv.fs_stat(pynvim_env) then
   if not isWindows then
     vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })
-    vim.fn.system('source ' .. pynvim_activate)
+    local out = vim.fn.system('source ' .. pynvim_activate)
+    print(out)
   else
     vim.fn.system({ 'python', '-m', 'venv', pynvim_env })
     vim.fn.system(pynvim_activate)
