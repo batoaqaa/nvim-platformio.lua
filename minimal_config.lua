@@ -151,6 +151,17 @@ vim.opt.rtp:prepend(lazypath)
 
 ----------------------------------------------------------------------------------------
 local plugins = {
+
+  {
+    'Saghen/blink.nvim',
+    version = '*', -- Download pre-built binaries
+    opts = {
+      keymap = { preset = 'default' }, -- 'default', 'super-tab', or 'enter'
+      sources = {
+        default = { 'lsp', 'path', 'snippets', 'buffer' },
+      },
+    },
+  },
   -- {
   --   'saghen/blink.cmp',
   --   -- optional: provides snippets for the snippet source
