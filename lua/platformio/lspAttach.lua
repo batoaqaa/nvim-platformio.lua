@@ -29,9 +29,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end, { desc = 'Switch between source/header' })
       end
 
-      if client and client.server_capabilities.completionProvider then
+      -- if client and client.server_capabilities.completionProvider then
+      if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
         -- Enable native completion for this specific client and buffer
-        vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+        vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
         print('completion enabled')
       end
       ------------------------------------------------------------------
