@@ -15,7 +15,7 @@ Try the plugin with this minimal standalone config without modifying your existi
 
 ```sh
 wget https://raw.githubusercontent.com/batoaqaa/nvim-platformio.lua/refs/heads/main/minimal_config.lua
-nvim -u minimal_config.lua
+nvim -u mini_nvimPlatformio.lua
 
 # Now run :Pioinit
 ```
