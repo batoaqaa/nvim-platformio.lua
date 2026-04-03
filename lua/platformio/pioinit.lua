@@ -64,8 +64,13 @@ local function pick_framework(board_details)
             .. selected_framework
             .. '" && exit && echo "done"'
           boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          local piolsp = require('platformio.piolsp').piolsp
-          utils.ToggleTerminal(command, 'float', piolsp)
+          -- local piolsp = require('platformio.piolsp').piolsp
+          -- utils.ToggleTerminal(command, 'float', piolsp)
+          --
+          utils.ToggleTerminal(command, 'float', function()
+            require('platformio.piolsp').piolsp()
+          end)
+          --
           -- utils.ToggleTerminal(command, 'float', function()
           --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
           --   vim.cmd(':PioLSP')
