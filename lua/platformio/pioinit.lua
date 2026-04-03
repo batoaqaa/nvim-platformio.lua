@@ -10,8 +10,8 @@ local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
 local config = require('platformio').config
--- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local boilerplate = require('platformio.boilerplate')
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+-- local boilerplate = require('platformio.boilerplate')
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -64,7 +64,8 @@ local function pick_framework(board_details)
             .. ' --project-option "framework='
             .. selected_framework
             .. '" && exit && echo "done"'
-          boilerplate.boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+          boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+          -- boilerplate.boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
           local piolsp = require('platformio.piolsp').piolsp
           utils.ToggleTerminal(command, 'float', piolsp)
           --
