@@ -33,6 +33,14 @@ vim.api.nvim_create_autocmd('LspAttach', {
       if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
         -- Enable native completion for this specific client and buffer
         vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+
+        vim.diagnostic.config({
+          current_line = true,
+          virtual_lines = {
+            current_line = true,
+          },
+        })
+        vim.cmd([[set completeopt+=noselect]])
         print('completion enabled')
       end
       ------------------------------------------------------------------
