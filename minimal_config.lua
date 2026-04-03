@@ -154,6 +154,7 @@ local plugins = {
 
   {
     'Saghen/blink.cmp',
+    dependencies = { 'rafamadriz/friendly-snippets' },
     version = '1.*', -- Download pre-built binaries
     opts = {
       keymap = { preset = 'default' }, -- 'default', 'super-tab', or 'enter'
