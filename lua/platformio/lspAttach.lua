@@ -32,20 +32,20 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- if client and client.server_capabilities.completionProvider then
       -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
 
-      -- local ok, _ = pcall(require, 'blink.cmp')
-      -- if not ok then
-      --   if client:supports_method('textDocument/completion') then
-      --     vim.opt.completeopt = { 'menu', 'menuone', 'noselect', 'noinsert', 'fuzzy', 'popup' }
-      --
-      --     print('completion enabled')
-      --
-      --     -- Enable native completion for this specific client and buffer
-      --     vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
-      --     vim.keymap.set('i', '<C-Space', function()
-      --       vim.lsp.completion.get()
-      --     end)
-      --   end
-      -- end
+      local ok, _ = pcall(require, 'blink.cmp')
+      if not ok then
+        if client:supports_method('textDocument/completion') then
+          vim.opt.completeopt = { 'menu', 'menuone', 'noselect', 'noinsert', 'fuzzy', 'popup' }
+
+          print('completion enabled')
+
+          -- Enable native completion for this specific client and buffer
+          vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+          vim.keymap.set('i', '<C-Space', function()
+            vim.lsp.completion.get()
+          end)
+        end
+      end
 
       -- Inlay hints
       if client:supports_method('textDocument/inlayHints') then
