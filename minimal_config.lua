@@ -154,7 +154,7 @@ local plugins = {
 
   {
     'Saghen/blink.nvim',
-    version = '*', -- Download pre-built binaries
+    version = '1.*', -- Download pre-built binaries
     opts = {
       keymap = { preset = 'default' }, -- 'default', 'super-tab', or 'enter'
       sources = {
