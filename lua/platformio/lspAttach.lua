@@ -32,12 +32,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- if client and client.server_capabilities.completionProvider then
       -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
       if client:supports_method('textDocument/completion') then
-        vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy' }
+        vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
 
         print('completion enabled')
 
         -- Enable native completion for this specific client and buffer
         vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+        vim.keymap.set('i', '<C-Space', function()
+          vim.lsp.completion.get()
+        end)
       end
 
       -- Inlay hints
@@ -50,26 +53,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
           style = 'background', -- 'background', 'foreground', or 'virtual'
         })
       end
-      ------------------------------------------------------------------
-      --- Skip this if you are using blink
-      -- local bok, _ = pcall(require, 'blink')
-      -- if not bok then
-      --   if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
-      --     vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
-      --     print('completion enabled')
-      --   end
-      --
-      --   -- vim.diagnostic.config({
-      --   --   current_line = true,
-      --   --   virtual_lines = {
-      --   --     current_line = true,
-      --   --   },
-      --   -- })
-      --   -- vim.cmd([[set completeopt+=noselect]])
-      -- end
 
       ------------------------------------------------------------------
-      if client.server_capabilities.documentHighlightProvider then
+      if client:supports_method('documentHighlightProvider') then
         local highlight_augroup = vim.api.nvim_create_augroup('platformio-lsp-highlight', { clear = false })
         vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
           buffer = bufnr,
