@@ -189,7 +189,7 @@ function M.ToggleTerminal(command, direction, exit_callback)
         background = 'NormalFloat',
       },
     },
-    close_on_exit = false,
+    close_on_exit = true,
 
     -- INFO: on_open()
     on_open = function(t)
