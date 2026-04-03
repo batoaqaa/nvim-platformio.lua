@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/fdbb6655-4b2d-4a2b-81d1-fd8af6e7d9f1
 Try the plugin with this minimal standalone config without modifying your existing nvim setup. **This is especially useful if you're encountering errors during installation or usage**.
 
 ```sh
-wget https://raw.githubusercontent.com/batoaqaa/nvim-platformio.lua/refs/heads/main/minimal_config.lua
+wget https://raw.githubusercontent.com/batoaqaa/nvim-platformio.lua/refs/heads/main/mini_nvimPlatformio.lua
 nvim -u mini_nvimPlatformio.lua
 
 # Now run :Pioinit
