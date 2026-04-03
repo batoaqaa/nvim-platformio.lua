@@ -91,7 +91,7 @@ end
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 ok, _ = pcall(require, 'blink')
 if ok then
-  capabilities = vim.tbl_deep_extend('force', capabilities, require('blink.nvim').get_lsp_capabilities({}, false))
+  capabilities = vim.tbl_deep_extend('force', capabilities, require('blink.cmp').get_lsp_capabilities({}, false))
 end
 
 local clangd = {
