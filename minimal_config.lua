@@ -96,9 +96,22 @@ keymap('n', '<leader>bb', ':bprevious<CR>', { desc = '[B]efore Buffer' })
 keymap('n', '<leader>ba', ':bnext<CR>', { desc = '[A]fter Buffer' })
 keymap('n', '<leader>bs', ':ball<CR>', { desc = '[S]how AllOpened Buffers' })
 keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' })
--- keymap('n', '<leader>bd', '<Cmd>BDelete<CR>', { desc = '[D]elete Buffer' })
--- keymap('n', '<leader>bd', '<Cmd>BDelete<CR>', { desc = '[D]elete Buffer' })
-keymap('n', '<leader>bd', ':bp | bd #<CR>', { desc = '[D]elete Buffer' })
+-- keymap('n', '<leader>bd', '<Cmd>bdelete<CR>', { desc = '[D]elete Buffer' })
+-- keymap('n', '<leader>bd', ':bp | bd #<CR>', { desc = '[D]elete Buffer' })
+keymap('n', '<leader>bd', function()
+  -- local bufnr = vim.api.nvim_get_current_buf()
+  local bufs = vim.fn.getbufinfo({ buflisted = 1 })
+
+  if #bufs <= 1 then
+    -- If it's the last buffer, create a new empty one first
+    -- This prevents focus from jumping to NvimTree
+    vim.cmd('enew | bd #')
+  else
+    -- Otherwise, go to the previous buffer and delete the old one
+    vim.cmd('bp | bd #')
+  end
+end, { desc = '[D]elete Buffer' })
+
 keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
 keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
 keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
