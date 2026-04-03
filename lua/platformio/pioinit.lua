@@ -64,11 +64,15 @@ local function pick_framework(board_details)
             .. selected_framework
             .. '" && exit && echo "done"'
 
-          utils.ToggleTerminal(command, 'float', piolsp)
+          -- utils.ToggleTerminal(command, 'float', piolsp)
+          utils.ToggleTerminal(command, 'float', function()
+            -- require('platformio.piolsp').piolsp()
+            piolsp()
+            boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+          end)
 
           -- it fails creating the file if src directory not exist
           -- src directory should be created by piolsp callback function in the previous command
-          boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
         end)
         return true
       end,
