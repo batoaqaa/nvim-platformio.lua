@@ -41,7 +41,18 @@ vim.api.nvim_create_autocmd('LspAttach', {
         print('completion enabled')
 
         -- Enable native completion for this specific client and buffer
-        vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+        vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+      end
+
+      -- Inlay hints
+      if client:supports_method('textDocument/inlayHints') then
+        vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
+      end
+
+      if client:supports_method('textDocument/documentColor') then
+        vim.lsp.document_color.enable(true, args.buf, {
+          style = 'background', -- 'background', 'foreground', or 'virtual'
+        })
       end
       ------------------------------------------------------------------
       --- Skip this if you are using blink
