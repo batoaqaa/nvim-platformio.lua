@@ -159,7 +159,7 @@ vim.opt.rtp:prepend(lazypath)
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
 local plugins = {
-
+  { 'windwp/nvim-autopairs', event = 'InsertEnter', config = true },
   {
     'Saghen/blink.cmp',
     dependencies = { 'rafamadriz/friendly-snippets' },
