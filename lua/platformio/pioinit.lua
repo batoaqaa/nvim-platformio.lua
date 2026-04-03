@@ -64,12 +64,12 @@ local function pick_framework(board_details)
             .. ' --project-option "framework='
             .. selected_framework
             .. '" && exit && echo "done"'
-          boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          utils.ToggleTerminal(command, 'float', piolsp)
-          -- utils.ToggleTerminal(command, 'float', function()
-          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          --   vim.cmd(':PioLSP')
-          -- end)
+          -- boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+          -- utils.ToggleTerminal(command, 'float', piolsp)
+          utils.ToggleTerminal(command, 'float', function()
+            boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+            vim.cmd(':PioLSP')
+          end)
         end)
         return true
       end,
