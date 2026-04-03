@@ -345,17 +345,19 @@ function M.boilerplate_gen(framework, src_path)
     print(src_path .. '/1' .. framework)
     return
   end
-  print(src_path .. '/2' .. framework)
+  print(src_path .. '/2' .. entry.filename)
   --
   local file_path = src_path .. '/' .. entry.filename
   if vim.uv.fs_stat(file_path) then
     return
   end
   --
+  print(src_path .. '/3' .. entry.filename)
   local fd = uv.fs_open(file_path, 'w', 420)
   if not fd then
     return
   end
+  print(src_path .. '/4' .. entry.filename)
   uv.fs_write(fd, entry.content)
   uv.fs_close(fd)
 end
