@@ -360,7 +360,7 @@ function M.boilerplate_gen(framework, src_path)
   -- end
 
   --
-  uv.fs_open(file_path, 'r', 438, function(err, fd)
+  uv.fs_open(file_path, 'w', 420, function(err, fd)
     if err then
       return
     end
