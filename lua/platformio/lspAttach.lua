@@ -30,7 +30,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
       end
 
       -- if client and client.server_capabilities.completionProvider then
-      if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
+      -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
+      if client:supports_method('textDocument/completion') then
         vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy' }
 
         print('completion enabled')
