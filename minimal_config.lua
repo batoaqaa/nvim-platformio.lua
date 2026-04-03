@@ -153,7 +153,7 @@ vim.opt.rtp:prepend(lazypath)
 local plugins = {
 
   {
-    'Saghen/blink.cmp',
+    'Saghen/blink.nvim',
     version = '1.*', -- Download pre-built binaries
     opts = {
       keymap = { preset = 'default' }, -- 'default', 'super-tab', or 'enter'
