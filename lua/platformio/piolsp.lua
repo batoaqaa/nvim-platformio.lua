@@ -34,23 +34,23 @@ function M.piolsp()
   utils.shell_cmd_blocking('pio run -t compiledb')
   gitignore_lsp_configs('compile_commands.json')
 
-  if vim.fn.has('nvim-0.12') then
-    -- if #vim.lsp.get_clients() > 0 then
-    local getClients = vim.lsp.get_clients()
-    if getClients then
-      if next(vim.lsp.get_clients()) ~= nil then
-        if vim.tbl_count(getClients.attached_buffers) == 0 then
-          print('client stop piolsp')
-          -- getClients.stop()
-        else
-          print('client restart')
-          vim.cmd('lsp restart')
-        end
-      end
-    end
-  else
-    vim.cmd('LspRestart')
-  end
+  -- if vim.fn.has('nvim-0.12') then
+  --   -- if #vim.lsp.get_clients() > 0 then
+  --   local getClients = vim.lsp.get_clients()
+  --   if getClients then
+  --     if next(vim.lsp.get_clients()) ~= nil then
+  --       if vim.tbl_count(getClients.attached_buffers) == 0 then
+  --         print('client stop piolsp')
+  --         -- getClients.stop()
+  --       else
+  --         print('client restart')
+  --         vim.cmd('lsp restart')
+  --       end
+  --     end
+  --   end
+  -- else
+  --   vim.cmd('LspRestart')
+  -- end
 
   vim.notify('LSP: compile_commands.jsoncon generation/update completed!', vim.log.levels.INFO)
 end
