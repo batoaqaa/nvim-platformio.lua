@@ -32,7 +32,7 @@ end
 -- List of packages you want Mason to ensure are installed
 local ensure_installed = {
   -- 'clang-format', embeded in clangd
-  'stylua',
+  -- 'stylua',
 }
 -- call mason-registry function to install or ensure formatters/linters are installed
 local mr = require('mason-registry')
@@ -184,13 +184,13 @@ local lua_ls = {
 }
 vim.lsp.config('lua_ls', lua_ls)
 
-local stylua = {
-  cmd = { 'stylua', '--search-parent-directories', '--stdin-filepath', '$FILENAME', '-' },
-  filetypes = { 'lua' },
-  root_markers = { 'stylua.toml', '.stylua.toml', '.git' },
-}
-vim.lsp.config('stylua', stylua)
-vim.lsp.enable('stylua')
+-- local stylua = {
+--   cmd = { 'stylua', '--search-parent-directories', '--stdin-filepath', '$FILENAME', '-' },
+--   filetypes = { 'lua' },
+--   root_markers = { 'stylua.toml', '.stylua.toml', '.git' },
+-- }
+-- vim.lsp.config('stylua', stylua)
+-- vim.lsp.enable('stylua')
 
 local pyrefly = {
   name = 'pyrefly',
