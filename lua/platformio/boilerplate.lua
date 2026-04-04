@@ -337,8 +337,8 @@ Diagnostics:
 
 ]],
 }
-boilerplate['stylua.toml'] = {
-  filename = 'stylua.toml',
+boilerplate['.stylua.toml'] = {
+  filename = '.stylua.toml',
   content = [[
 syntax = "All"
 column_width = 132

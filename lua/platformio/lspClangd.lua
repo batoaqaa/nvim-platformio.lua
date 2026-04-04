@@ -197,7 +197,7 @@ boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-boilerplate_gen([[stylua.toml]], vim.g.platformioRootDir)
+boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
 
 -- require('platformio.piolsp').piolsp()
 if vim.fn.has('nvim-0.12') then
