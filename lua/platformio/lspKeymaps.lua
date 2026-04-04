@@ -102,10 +102,11 @@ function K.lspKeymaps(client, bufnr)
       buffer = bufnr,
       group = fmt_group,
       desc = 'Fromat current buffer',
-      callback = function()
+      callback = function(args)
         if (client.name == 'lua_ls') and (vim.fn.executable('stylua') == 1) then
           -- if (client.name == 'stylua') and (vim.fn.executable('stylua') == 1) then
-          vim.fn.system({ 'stylua', vim.api.nvim_buf_get_name(bufnr) })
+          -- vim.fn.system({ 'stylua', vim.api.nvim_buf_get_name(bufnr) })
+          vim.fn.system({ 'stylua', vim.api.nvim_buf_get_name(args.buf) })
           vim.cmd('checktime')
           print('stylua formatting')
         else
