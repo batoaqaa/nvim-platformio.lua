@@ -114,9 +114,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
     --
   end,
 })
+
 vim.api.nvim_create_autocmd('LspDetach', {
-  group = platformio_lsp_attach,
-  -- group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
+  -- group = platformio_lsp_attach,
+  group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
   callback = function(arg)
     local cl = vim.lsp.get_client_by_id(arg.data.client_id)
     if not cl then
