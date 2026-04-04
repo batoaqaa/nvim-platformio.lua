@@ -14,6 +14,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
       if client.name == 'lua_ls' then
         client.server_capabilities.documentFormattingProvider = false
       end
+      print('lua_ls 0')
       ------------------------------------------------------------------
       if client.name == 'clangd' then
         vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
@@ -31,6 +32,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
           end, bufnr)
         end, { desc = 'Switch between source/header' })
       end
+      print('lua_ls 1')
 
       -- if client and client.server_capabilities.completionProvider then
       -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
@@ -49,17 +51,20 @@ vim.api.nvim_create_autocmd('LspAttach', {
           end)
         end
       end
+      print('lua_ls 2')
 
       -- Inlay hints
       if client:supports_method('textDocument/inlayHints') then
         vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
       end
+      print('lua_ls 3')
 
       if client:supports_method('textDocument/documentColor') then
         vim.lsp.document_color.enable(true, args.buf, {
           style = 'background', -- 'background', 'foreground', or 'virtual'
         })
       end
+      print('lua_ls 4')
 
       ------------------------------------------------------------------
       if client:supports_method('documentHighlightProvider') then
@@ -85,6 +90,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         })
         --
       end
+      print('lua_ls 5')
 
       ------------------------------------------------------------------
       local config = require('platformio').config
@@ -93,9 +99,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
         lspkeymaps.lspKeymaps(client, bufnr)
       end
     end
+    print('lua_ls 6')
 
     ------------------------------------------------------------------
     vim.cmd([[autocmd FileType * set formatoptions-=ro]])
+    print('lua_ls 7')
     --
   end,
 })
