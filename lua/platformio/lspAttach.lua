@@ -11,6 +11,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
       vim.api.nvim_echo({ { 'Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr, 'Info' } }, true, {})
 
+      if client.name == 'lua_ls' then
+        client.server_capabilities.documentFormattingProvider = false
+      end
       ------------------------------------------------------------------
       if client.name == 'clangd' then
         vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
