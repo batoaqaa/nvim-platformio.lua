@@ -11,9 +11,9 @@ if ok then
   result.setup({})
 end
 
+----------------------------------------------------------------------------------------
+-- INFO: setup and install mason packages
 -----------------------------------------------------------------------------------------
--- INFO: Mason packages install for lint and formater
--- mason.setup()
 ok, result = pcall(require, 'mason')
 if ok then
   result.setup({
@@ -65,21 +65,20 @@ end
 -- end)
 
 -- require('mason-lspconfig').setup({
+----------------------------------------------------------------------------------------
+-- INFO: install clangd using mason-lspconfig
+-----------------------------------------------------------------------------------------
 local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
-    ensure_installed = { 'clangd' },
-    automatic_enable = true, -- this will automatically enable LSP servers after install
+    ensure_installed = { 'clangd', 'lua_ls' },
+    automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
 
+----------------------------------------------------------------------------------------
+-- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
-boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-
 local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 if vim.fn.filereadable(fname) == 1 then
@@ -123,11 +122,64 @@ local clangd = {
 }
 vim.lsp.config('clangd', clangd)
 
-----------------------
--- local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
--- if mok then
---   mason_lspconfig.setup({})
--- end
+----------------------------------------------------------------------------------------
+-- INFO: configure clangd lsp server
+-----------------------------------------------------------------------------------------
+local lua_ls = {
+  cmd = { 'lua-language-server' },
+  filetypes = { 'lua' },
+  root_markers = {
+    '.luarc.json',
+    '.luarc.jsonc',
+    '.luacheckrc',
+    '.stylua.toml',
+    'selene.toml',
+    'selene.yml',
+    '.git',
+  },
+  settings = {
+    Lua = {
+      hint = {
+        enable = true,
+        arrayIndex = 'Enable',
+        await = true,
+        paramName = 'All',
+        paramType = true,
+        semicolon = 'Disable',
+        setType = true,
+      },
+      telemetry = { enable = false },
+      diagnostics = { globals = { 'vim' } },
+      runtime = {
+        -- Specify LuaJIT for Neovim
+        version = 'LuaJIT',
+        -- Include Neovim runtime files
+        path = vim.split(package.path, ';'),
+      },
+      workspace = {
+        checkThirdParty = false,
+        library = {
+          vim.env.VIMRUNTIME,
+          '${3rd}/luv/library',
+          './lua',
+          vim.api.nvim_get_runtime_file('', true),
+          -- Depending on the usage, you might want to add additional paths here.
+          -- "${3rd}/busted/library",
+        },
+      },
+    },
+  },
+}
+vim.lsp.config('lua_ls', lua_ls)
+
+----------------------------------------------------------------------------------------
+-- INFO: create clangd required files
+-----------------------------------------------------------------------------------------
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
+boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
 -- require('platformio.piolsp').piolsp()
 if vim.fn.has('nvim-0.12') then
