@@ -134,7 +134,7 @@ vim.api.nvim_create_autocmd('LspDetach', {
         count = count + 1
       end
 
-      if count == 0 then
+      if count == 1 then
         cl:stop(true)
       end
 
