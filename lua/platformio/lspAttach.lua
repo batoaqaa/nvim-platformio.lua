@@ -126,10 +126,18 @@ vim.api.nvim_create_autocmd('LspDetach', {
 
     print('client detatch')
 
-    if vim.tbl_isempty(cl.attached_buffers) then
-      print('detatch: client stop')
-      cl:stop(true)
+    for _, cli in ipairs(vim.lsp.get_clients()) do
+      if cli.attached_buffers and vim.tbl_isempty(cli.attached_buffers) then
+        -- if vim.iter(cli.attached_buffers):count() == 0 then
+        print('detatch: client stop')
+        cli:stop(true)
+      end
     end
+
+    -- if cl.attached_buffers and vim.tbl_isempty(cl.attached_buffers) then
+    --   print('detatch: client stop')
+    --   cl:stop(true)
+    -- end
   end,
 })
 
