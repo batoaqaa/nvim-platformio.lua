@@ -189,6 +189,7 @@ local stylua = {
   filetypes = { 'lua' },
   root_markers = { 'stylua.toml', '.stylua.toml', '.git' },
 }
+vim.lsp.config('stylua', stylua)
 vim.lsp.enable('stylua')
 
 local pyrefly = {
