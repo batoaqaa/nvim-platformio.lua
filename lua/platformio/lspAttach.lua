@@ -111,4 +111,19 @@ vim.api.nvim_create_autocmd('LspAttach', {
     --
   end,
 })
+
+vim.api.nvim_create_autocmd('LspDetach', {
+  group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if not client then
+      return
+    end
+
+    -- Check if the client still has other buffers attached
+    if vim.tbl_count(client.attached_buffers) == 0 then
+      client.stop()
+    end
+  end,
+})
 -- --> End LspAttach autocommand
