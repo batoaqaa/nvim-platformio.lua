@@ -35,7 +35,8 @@ function M.piolsp()
   gitignore_lsp_configs('compile_commands.json')
 
   if vim.fn.has('nvim-0.12') then
-    if #vim.lsp.get_clients() > 0 then
+    -- if #vim.lsp.get_clients() > 0 then
+    if next(vim.lsp.get_clients()) ~= nil then
       vim.cmd('lsp restart')
     end
   else
