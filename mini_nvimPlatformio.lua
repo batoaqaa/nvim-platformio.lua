@@ -120,6 +120,12 @@ keymap('n', '<leader>bd', function()
     -- Otherwise, go to the previous buffer and delete the old one
     vim.cmd('bp | bd #')
   end
+  for _, cli in ipairs(vim.lsp.get_clients()) do
+    if vim.iter(cli.attached_buffers):count() == 0 then
+      print('bd: client stop')
+      cli:stop(true)
+    end
+  end
 end, { desc = '[D]elete Buffer' })
 
 keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
