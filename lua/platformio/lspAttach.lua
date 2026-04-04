@@ -11,11 +11,20 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
       vim.api.nvim_echo({ { 'Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr, 'Info' } }, true, {})
 
-      if client.name == 'lua_ls' then
-         -- client.server_capabilities.documentFormattingProvider = false
-  if client:supports_method('textDocument/formatting') then
-        end
-      end
+      -- if client.name == 'lua_ls' then
+      --   -- client.server_capabilities.documentFormattingProvider = false
+      --   if client:supports_method('textDocument/formatting') then
+      --     vim.lsp.buf.format({
+      --       bufnr = bufnr,
+      --       async = false,
+      --       timeout_ms = 10000,
+      --       id = client.id,
+      --       filter = function(c)
+      --         return c.id == client.id
+      --       end,
+      --     })
+      --   end
+      -- end
       -- print('lua_ls 0')
       ------------------------------------------------------------------
       if client.name == 'clangd' then
@@ -104,19 +113,25 @@ vim.api.nvim_create_autocmd('LspAttach', {
 })
 
 -- Native StyLua Formatting (0.11 Safe)
-vim.api.nvim_create_autocmd("BufWritePre", {
-  pattern = "*.lua",
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*.lua',
   callback = function(args)
-    if vim.fn.executable("stylua") == 1 then
-      vim.fn.system({ "stylua", vim.api.nvim_buf_get_name(args.buf) })
-      vim.cmd("checktime")
-   else
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+    local bufnr = args.buf
+    if vim.fn.executable('stylua') == 1 then
+      vim.fn.system({ 'stylua', vim.api.nvim_buf_get_name(args.buf) })
+      vim.cmd('checktime')
+    else
       -- Fallback to LSP formatting if stylua isn't found
-      vim.lsp.buf.format({ 
-        bufnr = args.buf,
-        filter = function(client) return client.name == "lua_ls" end 
+      vim.lsp.buf.format({
+        bufnr = bufnr,
+        async = false,
+        timeout_ms = 10000,
+        id = client.id,
+        filter = function(c)
+          return c.id == client.id
+        end,
       })
-    end
     end
   end,
 })

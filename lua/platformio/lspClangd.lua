@@ -78,8 +78,8 @@ end
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 local bok, blink = pcall(require, 'blink.cmp')
 if bok then
-  -- capabilities = vim.tbl_deep_extend('force', capabilities, blink.get_lsp_capabilities({}, false))
-  capabilities = blink.get_lsp_capabilities(capabilities)
+  capabilities = vim.tbl_deep_extend('force', capabilities, blink.get_lsp_capabilities({}, false))
+  -- capabilities = blink.get_lsp_capabilities(capabilities)
 end
 
 -- INFO: 1
@@ -114,7 +114,6 @@ local clangd = {
     '.git',
     vim.uv.cwd(),
   },
-  -- capabilities = capabilities,
   workspace_required = true,
   single_file_support = true,
   init_options = {
@@ -142,7 +141,6 @@ local lua_ls = {
     'selene.yml',
     '.git',
   },
-  -- capabilities = capabilities,
   settings = {
     Lua = {
       hint = {
