@@ -75,11 +75,19 @@ if mok then
   })
 end
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
+local capabilities = vim.lsp.protocol.make_client_capabilities({
+  textDocument = {
+    -- Folding capabilities for nvim-ufo
+    foldingRange = {
+      dynamicRegistration = false,
+      lineFoldingOnly = true,
+    },
+  },
+})
 local bok, blink = pcall(require, 'blink.cmp')
 if bok then
-  capabilities = vim.tbl_deep_extend('force', capabilities, blink.get_lsp_capabilities({}, false))
-  -- capabilities = blink.get_lsp_capabilities(capabilities)
+  -- capabilities = vim.tbl_deep_extend('force', capabilities, blink.get_lsp_capabilities({}, false))
+  capabilities = blink.get_lsp_capabilities(capabilities)
 end
 
 -- INFO: 1
@@ -175,6 +183,13 @@ vim.lsp.config('clangd', clangd)
 --   },
 -- }
 -- vim.lsp.config('lua_ls', lua_ls)
+
+local stylua = {
+  cmd = { 'stylua', '--search-parent-directories', '--stdin-filepath', '$FILENAME', '-' },
+  filetypes = { 'lua' },
+  root_markers = { 'stylua.toml', '.stylua.toml', '.git' },
+}
+vim.lsp.enable('stylua')
 
 local pyrefly = {
   name = 'pyrefly',

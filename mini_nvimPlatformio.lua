@@ -11,6 +11,7 @@ vim.opt.termguicolors = true
 
 vim.opt['number'] = true
 vim.opt.autowrite = true -- Enable auto write
+
 -- only set clipboard if not in ssh, to make sure the OSC 52
 -- integration works automatically. Requires Neovim >= 0.10.0
 vim.opt.clipboard = vim.env.SSH_TTY and '' or 'unnamedplus' -- Sync with system clipboard
@@ -21,7 +22,17 @@ vim.opt.shiftround = true -- Round indent
 vim.opt.shiftwidth = 2 -- Size of an indent
 vim.opt.smartindent = true -- Insert indents automatically
 vim.opt.expandtab = true -- Use spaces instead of tabs
-vim.opt.clipboard = vim.env.SSH_TTY and '' or 'unnamedplus' -- Sync with system clipboard
+
+vim.opt.smoothscroll = true
+vim.opt.foldmethod = 'expr'
+vim.opt.foldtext = ''
+vim.opt.fillchars = ''
+vim.opt.foldcolumn = '0'
+vim.opt.foldenable = true
+vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+vim.opt.foldlevel = 99
+vim.opt.foldlevelstart = 99
+vim.opt.foldnestmax = 3
 
 vim.g.have_nerd_font = true
 vim.g.mapleader = ' '
