@@ -39,7 +39,12 @@ function M.piolsp()
     local getClients = vim.lsp.get_clients()
     if getClients then
       if next(vim.lsp.get_clients()) ~= nil then
-        vim.cmd('lsp restart')
+        if vim.tbl_count(getClients.attached_buffers) == 0 then
+          getClients.stop()
+          print('client stop piolsp')
+        else
+          vim.cmd('lsp restart')
+        end
       end
     end
   else

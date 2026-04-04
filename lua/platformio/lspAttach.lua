@@ -122,7 +122,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end
 
         -- Check if the client still has other buffers attached
-        if vim.tbl_count(client.attached_buffers) == 0 then
+        if vim.tbl_count(cl.attached_buffers) == 0 then
+          print('client stop')
           client.stop()
         end
       end,
