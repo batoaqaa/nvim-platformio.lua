@@ -36,8 +36,11 @@ function M.piolsp()
 
   if vim.fn.has('nvim-0.12') then
     -- if #vim.lsp.get_clients() > 0 then
-    if next(vim.lsp.get_clients()) ~= nil then
-      vim.cmd('lsp restart')
+    local getClients = vim.lsp.get_clients()
+    if getClients then
+      if next(vim.lsp.get_clients()) ~= nil then
+        vim.cmd('lsp restart')
+      end
     end
   else
     vim.cmd('LspRestart')
