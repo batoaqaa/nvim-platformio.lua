@@ -94,6 +94,7 @@ end
 vim.lsp.config('*', {
   capabilities = capabilities,
   root_markers = { '.git' },
+  workspace_required = false,
 })
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
