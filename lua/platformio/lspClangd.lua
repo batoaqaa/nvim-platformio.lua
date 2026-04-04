@@ -64,10 +64,14 @@ end
 --   end
 -- end)
 
-require('mason-lspconfig').setup({
-  ensure_installed = { 'clangd' },
-  automatic_enable = true, -- this will automatically enable LSP servers after install
-})
+-- require('mason-lspconfig').setup({
+local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+if mok then
+  mason_lspconfig.setup({
+    ensure_installed = { 'clangd' },
+    automatic_enable = true, -- this will automatically enable LSP servers after install
+  })
+end
 
 -----------------------------------------------------------------------------------------
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
@@ -77,8 +81,6 @@ boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
 local cmd = { 'clangd' }
-
--- local path = vim.fn.getcwd()
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
@@ -122,10 +124,10 @@ local clangd = {
 vim.lsp.config('clangd', clangd)
 
 ----------------------
-local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
-if mok then
-  mason_lspconfig.setup({})
-end
+-- local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+-- if mok then
+--   mason_lspconfig.setup({})
+-- end
 
 -- require('platformio.piolsp').piolsp()
 if vim.fn.has('nvim-0.12') then
