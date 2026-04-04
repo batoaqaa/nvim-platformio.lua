@@ -116,10 +116,11 @@ end
 ------------------------------------------------------
 -- INFO: ToggleTerminal
 function M.ToggleTerminal(command, direction, exit_callback)
-  if type(exit_callback) == 'function' then
-    command = command .. ' && exit '
-    -- else
-    --   exit_callback = function() end
+  local closeOnexit = type(exit_callback) == 'function'
+  if closeOnexit then
+    command = command .. ' && exit'
+  else
+    exit_callback = function() end
   end
 
   local status_ok, _ = pcall(require, 'toggleterm')
@@ -189,7 +190,7 @@ function M.ToggleTerminal(command, direction, exit_callback)
         background = 'NormalFloat',
       },
     },
-    close_on_exit = true,
+    close_on_exit = closeOnexit,
 
     -- INFO: on_open()
     on_open = function(t)
@@ -243,9 +244,7 @@ function M.ToggleTerminal(command, direction, exit_callback)
 
     -- INFO: on_exit()
     on_exit = function(_)
-      if type(exit_callback) == 'function' then
-        exit_callback()
-      end
+      exit_callback()
     end,
 
     -- INFO: on_create() {
