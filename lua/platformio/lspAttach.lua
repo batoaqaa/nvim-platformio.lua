@@ -1,4 +1,4 @@
-local platformio_lsp_attach = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true })
+local platformio_lsp_attach = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = false })
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
   -- group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
