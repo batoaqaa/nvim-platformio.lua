@@ -337,6 +337,23 @@ Diagnostics:
 
 ]],
 }
+boilerplate['stylua.toml'] = {
+  filename = 'stylua.toml',
+  content = [[
+syntax = "All"
+column_width = 132
+line_endings = "Unix"
+indent_type = "Spaces"
+indent_width = 2
+quote_style = "AutoPreferSingle"
+call_parentheses = "Always"
+collapse_simple_statement = "Never"
+space_after_function_names = "Never"
+
+[sort_requires]
+enabled = false
+]],
+}
 
 function M.boilerplate_gen(framework, src_path)
   -- print(src_path .. '/0' .. framework)

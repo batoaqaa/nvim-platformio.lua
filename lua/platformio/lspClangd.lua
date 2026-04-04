@@ -30,39 +30,38 @@ if ok then
 end
 
 -- List of packages you want Mason to ensure are installed
--- local ensure_installed = {
---   'clang-format',
---   -- 'biome',
--- }
---
--- -- call mason-registry function to install or ensure formatters/linters are installed
--- local mr = require('mason-registry')
--- mr.refresh(function()
---   for _, tool in ipairs(ensure_installed) do
---     ok, result = pcall(mr.get_package, tool)
---     if ok and result then
---       if not result:is_installed() then
---         if not result:is_installing() then
---           result:install({}, function(success, _)
---             if not success then
---               vim.defer_fn(function()
---                 vim.notify(tool .. ' failed to install', vim.log.levels.ERROR)
---               end, 0)
---             end
---           end)
---         else
---           vim.defer_fn(function()
---             vim.notify(tool .. ' already installed', vim.log.levels.WARN)
---           end, 0)
---         end
---       end
---     else
---       vim.defer_fn(function()
---         vim.notify('Failed to get package: ' .. tool, vim.log.levels.WARN)
---       end, 0)
---     end
---   end
--- end)
+local ensure_installed = {
+  -- 'clang-format', embeded in clangd
+  'stylua',
+}
+-- call mason-registry function to install or ensure formatters/linters are installed
+local mr = require('mason-registry')
+mr.refresh(function()
+  for _, tool in ipairs(ensure_installed) do
+    ok, result = pcall(mr.get_package, tool)
+    if ok and result then
+      if not result:is_installed() then
+        if not result:is_installing() then
+          result:install({}, function(success, _)
+            if not success then
+              vim.defer_fn(function()
+                vim.notify(tool .. ' failed to install', vim.log.levels.ERROR)
+              end, 0)
+            end
+          end)
+        else
+          vim.defer_fn(function()
+            vim.notify(tool .. ' already installed', vim.log.levels.WARN)
+          end, 0)
+        end
+      end
+    else
+      vim.defer_fn(function()
+        vim.notify('Failed to get package: ' .. tool, vim.log.levels.WARN)
+      end, 0)
+    end
+  end
+end)
 
 -- require('mason-lspconfig').setup({
 ----------------------------------------------------------------------------------------
@@ -71,7 +70,7 @@ end
 local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
-    ensure_installed = { 'clangd', 'lua_ls' },
+    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
@@ -172,6 +171,20 @@ local lua_ls = {
 }
 vim.lsp.config('lua_ls', lua_ls)
 
+local pyrefly = {
+  name = 'pyrefly',
+  cmd = { 'pyrefly', 'lsp' },
+  filetypes = { 'python' },
+  root_markers = { 'pyrefly.toml', 'pyproject.toml', 'setup.py', 'setup.cfg', 'requirements.txt', 'Pipfile', '.git' },
+  settings = {
+    python = {
+      pythonPath = vim.env.VIRTUAL_ENV,
+      -- venvPath = vim.env.VIRTUAL_ENV,
+    },
+  },
+}
+vim.lsp.config('pyrefly', pyrefly)
+
 ----------------------------------------------------------------------------------------
 -- INFO: create clangd required files
 -----------------------------------------------------------------------------------------
@@ -180,6 +193,7 @@ boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+boilerplate_gen([[stylua.toml]], vim.g.platformioRootDir)
 
 -- require('platformio.piolsp').piolsp()
 if vim.fn.has('nvim-0.12') then
