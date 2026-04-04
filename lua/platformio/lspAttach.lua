@@ -60,8 +60,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
       print('lua_ls 3')
 
       if client:supports_method('textDocument/documentColor') then
-        vim.lsp.document_color.enable(true, args.buf, {
-          style = 'background', -- 'background', 'foreground', or 'virtual'
+        -- vim.lsp.document_color.enable(true, args.buf, { style = 'background', -- 'background', 'foreground', or 'virtual' })
+        vim.lsp.document_color.enable(true, {
+          bufnr = bufnr,
+          style = 'inline', -- This is the modern 0.11 way to show color icons
         })
       end
       print('lua_ls 4')
