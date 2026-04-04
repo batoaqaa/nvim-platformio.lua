@@ -136,6 +136,7 @@ local lua_ls = {
     'selene.yml',
     '.git',
   },
+  capabilities = capabilities,
   settings = {
     Lua = {
       hint = {
