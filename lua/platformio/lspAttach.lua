@@ -132,7 +132,8 @@ vim.api.nvim_create_autocmd('LspDetach', {
 
     -- Run this to kill any LSP client not attached to a buffer
     for _, client in ipairs(vim.lsp.get_clients()) do
-      if vim.iter(client.attached_buffers):count() == 0 then
+      if client.attached_buffers and vim.tbl_isempty(client.attached_buffers) then
+        -- if vim.iter(client.attached_buffers):count() == 0 then
         print('detatch1: client stop')
         client:stop(true)
       end
