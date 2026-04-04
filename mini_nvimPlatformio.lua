@@ -121,7 +121,8 @@ keymap('n', '<leader>bd', function()
     vim.cmd('bp | bd #')
   end
   for _, cli in ipairs(vim.lsp.get_clients()) do
-    if vim.iter(cli.attached_buffers):count() == 0 then
+    if vim.tbl_isempty(cli.attached_buffers) then
+      -- if vim.iter(cli.attached_buffers):count() == 0 then
       print('bd: client stop')
       cli:stop(true)
     end
