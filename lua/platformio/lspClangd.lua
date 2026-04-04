@@ -69,7 +69,8 @@ end)
 local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
-    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly' },
+    ensure_installed = { 'clangd', 'pyrefly' },
+    -- ensure_installed = { 'clangd', 'lua_ls', 'pyrefly' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
@@ -128,52 +129,52 @@ vim.lsp.config('clangd', clangd)
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
-local lua_ls = {
-  cmd = { 'lua-language-server' },
-  filetypes = { 'lua' },
-  root_markers = {
-    '.luarc.json',
-    '.luarc.jsonc',
-    '.luacheckrc',
-    '.stylua.toml',
-    'selene.toml',
-    'selene.yml',
-    '.git',
-  },
-  settings = {
-    Lua = {
-      hint = {
-        enable = true,
-        arrayIndex = 'Enable',
-        await = true,
-        paramName = 'All',
-        paramType = true,
-        semicolon = 'Disable',
-        setType = true,
-      },
-      telemetry = { enable = false },
-      diagnostics = { globals = { 'vim' } },
-      runtime = {
-        -- Specify LuaJIT for Neovim
-        version = 'LuaJIT',
-        -- Include Neovim runtime files
-        path = vim.split(package.path, ';'),
-      },
-      workspace = {
-        checkThirdParty = false,
-        library = {
-          vim.env.VIMRUNTIME,
-          '${3rd}/luv/library',
-          './lua',
-          vim.api.nvim_get_runtime_file('', true),
-          -- Depending on the usage, you might want to add additional paths here.
-          -- "${3rd}/busted/library",
-        },
-      },
-    },
-  },
-}
-vim.lsp.config('lua_ls', lua_ls)
+-- local lua_ls = {
+--   cmd = { 'lua-language-server' },
+--   filetypes = { 'lua' },
+--   root_markers = {
+--     '.luarc.json',
+--     '.luarc.jsonc',
+--     '.luacheckrc',
+--     '.stylua.toml',
+--     'selene.toml',
+--     'selene.yml',
+--     '.git',
+--   },
+--   settings = {
+--     Lua = {
+--       hint = {
+--         enable = true,
+--         arrayIndex = 'Enable',
+--         await = true,
+--         paramName = 'All',
+--         paramType = true,
+--         semicolon = 'Disable',
+--         setType = true,
+--       },
+--       telemetry = { enable = false },
+--       diagnostics = { globals = { 'vim' } },
+--       runtime = {
+--         -- Specify LuaJIT for Neovim
+--         version = 'LuaJIT',
+--         -- Include Neovim runtime files
+--         path = vim.split(package.path, ';'),
+--       },
+--       workspace = {
+--         checkThirdParty = false,
+--         library = {
+--           vim.env.VIMRUNTIME,
+--           '${3rd}/luv/library',
+--           './lua',
+--           vim.api.nvim_get_runtime_file('', true),
+--           -- Depending on the usage, you might want to add additional paths here.
+--           -- "${3rd}/busted/library",
+--         },
+--       },
+--     },
+--   },
+-- }
+-- vim.lsp.config('lua_ls', lua_ls)
 
 local pyrefly = {
   name = 'pyrefly',
