@@ -106,6 +106,7 @@ function K.lspKeymaps(client, bufnr)
         if (client.name == 'lua_ls') and (vim.fn.executable('stylua') == 1) then
           vim.fn.system({ 'stylua', vim.api.nvim_buf_get_name(bufnr) })
           vim.cmd('checktime')
+          print('stylua formatting')
         else
           vim.lsp.buf.format({
             bufnr = bufnr,
@@ -116,6 +117,7 @@ function K.lspKeymaps(client, bufnr)
               return c.id == client.id
             end,
           })
+          print('lsp formatting')
         end
       end,
     })
