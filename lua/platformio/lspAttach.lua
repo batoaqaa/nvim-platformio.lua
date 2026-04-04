@@ -12,9 +12,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.api.nvim_echo({ { 'Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr, 'Info' } }, true, {})
 
       if client.name == 'lua_ls' then
-        client.server_capabilities.documentFormattingProvider = false
+         -- client.server_capabilities.documentFormattingProvider = false
+  if client:supports_method('textDocument/formatting') then
+        end
       end
-      print('lua_ls 0')
+      -- print('lua_ls 0')
       ------------------------------------------------------------------
       if client.name == 'clangd' then
         vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
@@ -32,7 +34,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
           end, bufnr)
         end, { desc = 'Switch between source/header' })
       end
-      print('lua_ls 1')
 
       -- if client and client.server_capabilities.completionProvider then
       -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
@@ -42,8 +43,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
         if client:supports_method('textDocument/completion') then
           vim.opt.completeopt = { 'menu', 'menuone', 'noselect', 'noinsert', 'fuzzy', 'popup' }
 
-          print('completion enabled')
-
           -- Enable native completion for this specific client and buffer
           vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
           vim.keymap.set('i', '<C-Space', function()
@@ -51,13 +50,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
           end)
         end
       end
-      print('lua_ls 2')
 
       -- Inlay hints
       if client:supports_method('textDocument/inlayHints') then
-        vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
       end
-      print('lua_ls 3')
 
       if client:supports_method('textDocument/documentColor') then
         -- vim.lsp.document_color.enable(true, args.buf, { style = 'background', -- 'background', 'foreground', or 'virtual' })
@@ -66,7 +63,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
           style = 'inline', -- This is the modern 0.11 way to show color icons
         })
       end
-      print('lua_ls 4')
 
       ------------------------------------------------------------------
       if client:supports_method('documentHighlightProvider') then
@@ -92,7 +88,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
         })
         --
       end
-      print('lua_ls 5')
 
       ------------------------------------------------------------------
       local config = require('platformio').config
@@ -101,13 +96,28 @@ vim.api.nvim_create_autocmd('LspAttach', {
         lspkeymaps.lspKeymaps(client, bufnr)
       end
     end
-    print('lua_ls 6')
 
     ------------------------------------------------------------------
     vim.cmd([[autocmd FileType * set formatoptions-=ro]])
-    print('lua_ls 7')
     --
   end,
 })
 
+-- Native StyLua Formatting (0.11 Safe)
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.lua",
+  callback = function(args)
+    if vim.fn.executable("stylua") == 1 then
+      vim.fn.system({ "stylua", vim.api.nvim_buf_get_name(args.buf) })
+      vim.cmd("checktime")
+   else
+      -- Fallback to LSP formatting if stylua isn't found
+      vim.lsp.buf.format({ 
+        bufnr = args.buf,
+        filter = function(client) return client.name == "lua_ls" end 
+      })
+    end
+    end
+  end,
+})
 -- --> End LspAttach autocommand
