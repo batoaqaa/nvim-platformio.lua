@@ -154,8 +154,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- pick a temp root
 local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
 
--- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
-vim.env.XDG_CONFIG_HOME = tmp .. '/miniConfig'
+vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
 vim.env.XDG_DATA_HOME = tmp .. '/data'
 vim.env.XDG_CACHE_HOME = tmp .. '/cache'
 vim.env.XDG_STATE_HOME = tmp .. '/state'
