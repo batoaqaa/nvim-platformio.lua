@@ -40,7 +40,7 @@ function M.lsp_restarti(name)
     local attached_buffers = vim.tbl_keys(c.attached_buffers) ---@type integer[]
     print(vim.inspect(c.attached_buffers))
     local configc = c.config
-    vim.lsp.stop_client(c.id, true)
+    c:stop(c.id, true)
     vim.defer_fn(function()
       local id = vim.lsp.start(configc)
       if id then
