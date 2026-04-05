@@ -35,31 +35,12 @@ function M.piolsp()
   gitignore_lsp_configs('compile_commands.json')
 
   if vim.fn.has('nvim-0.12') then
-    -- if #vim.lsp.get_clients() > 0 then
-    -- local getClients = vim.lsp.get_clients()
-    --
-    -- for _, cli in ipairs(getClients) do
-    --   if vim.iter(cli.attached_buffers):count() == 0 then
-    --     print('client stop')
-    --     cli:stop(true)
-    --   end
-    -- end
-    --
-
     local clangd = vim.lsp.get_clients({ name = 'clangd' })[1]
     if clangd then
-      print('piolsp: lsp restart ' .. clangd.name)
+      print('number of attaced: ' .. #clangd.attached_buffers)
+      -- print('piolsp: lsp restart ' .. clangd.name)
       vim.cmd('lsp restart clangd')
     end
-    -- if next(vim.lsp.get_clients()) ~= nil then
-    --   if vim.tbl_count(getClients.attached_buffers) == 0 then
-    --     print('client stop piolsp')
-    --     -- getClients.stop()
-    --   else
-    --     print('client restart')
-    --     vim.cmd('lsp restart')
-    --   end
-    -- end
   else
     vim.cmd('LspRestart')
   end

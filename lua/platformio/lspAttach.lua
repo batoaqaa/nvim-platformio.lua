@@ -96,25 +96,23 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
--- vim.api.nvim_create_autocmd('LspDetach', {
---   group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
---   callback = function(arg)
---     local bufnr = arg.buf
---     local client = vim.lsp.get_client_by_id(arg.data.client_id)
---     if client and client.attached_buffers then
---       -- print(vim.inspect(client.attached_buffers))
---       -- if vim.iter(client.attached_buffers):count() == 0 then
---       vim.api.nvim_echo({ { 'Detaching ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
---       local count = 0
---       for _ in pairs(client.attached_buffers) do
---         count = count + 1
---       end
---
---       if count == 1 then
---         client:stop(true)
---       end
---     end
---   end,
--- })
+vim.api.nvim_create_autocmd('LspDetach', {
+  group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
+  callback = function(arg)
+    local bufnr = arg.buf
+    local client = vim.lsp.get_client_by_id(arg.data.client_id)
+    if client and client.attached_buffers then
+      vim.api.nvim_echo({ { 'Detaching ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
+      -- local count = 0
+      -- for _ in pairs(client.attached_buffers) do
+      --   count = count + 1
+      -- end
+      --
+      -- if count == 1 then
+      --   client:stop(true)
+      -- end
+    end
+  end,
+})
 
 -- --> End LspAttach autocommand
