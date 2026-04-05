@@ -26,7 +26,7 @@ function M.gitignore_lsp_configs(config_file)
 end
 
 function M.lsp_restart(name)
-  if vim.fn.has('nvim-0.12') == 1 then
+  if vim.fn.has('nvim-0.11') == 1 then
     -- local clients = vim.lsp.get_clients({ name = name })
     local clangd = vim.lsp.get_clients({ name = name })[1]
 
