@@ -9,7 +9,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     if client then
       -- vim.lsp.set_log_level 'trace'
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
-      vim.api.nvim_echo({ { 'Attaching: ' .. client.name .. ' to buffer ' .. bufnr, 'Info' } }, true, {})
+      vim.api.nvim_echo({ { 'Attaching ' .. client.name .. ' to buffer ' .. bufnr, 'Info' } }, true, {})
 
       ------------------------------------------------------------------
       if client.name == 'clangd' then
@@ -104,7 +104,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 --     if client and client.attached_buffers then
 --       -- print(vim.inspect(client.attached_buffers))
 --       -- if vim.iter(client.attached_buffers):count() == 0 then
---       vim.api.nvim_echo({ { 'Detaching: ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
+--       vim.api.nvim_echo({ { 'Detaching ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
 --       local count = 0
 --       for _ in pairs(client.attached_buffers) do
 --         count = count + 1

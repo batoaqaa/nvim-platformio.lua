@@ -48,7 +48,7 @@ function M.piolsp()
 
     local clangd = vim.lsp.get_clients({ name = 'clangd' })[1]
     if clangd then
-      print('piolsp: client restart')
+      print('piolsp: lsp restart ' .. clangd.name)
       vim.cmd('lsp restart clangd')
     end
     -- if next(vim.lsp.get_clients()) ~= nil then
