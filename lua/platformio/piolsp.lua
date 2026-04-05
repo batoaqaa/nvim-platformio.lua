@@ -27,9 +27,10 @@ end
 
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') then
-    local clients = vim.lsp.get_clients({ name = name })
+    -- local clients = vim.lsp.get_clients({ name = name })
+    local clangd = vim.lsp.get_clients({ name = name })[1]
 
-    if #clients > 0 then
+    if clangd > 0 then
       -- Client is active, try to restart
       local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
       if not ok then
