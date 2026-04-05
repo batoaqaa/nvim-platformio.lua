@@ -214,8 +214,10 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
 boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
-boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
-boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+print(vim.env.XDG_CONFIG_HOME)
+-- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+-- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+-- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
 
