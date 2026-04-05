@@ -38,6 +38,7 @@ function M.lsp_restarti(name)
 
   for _, c in ipairs(clients) do
     local attached_buffers = vim.tbl_keys(c.attached_buffers) ---@type integer[]
+    print(vim.inspect(c.attached_buffers))
     local configc = c.config
     vim.lsp.stop_client(c.id, true)
     vim.defer_fn(function()
