@@ -108,7 +108,6 @@ keymap('n', '<leader>bs', ':ball<CR>', { desc = '[S]how AllOpened Buffers' })
 keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' })
 
 -- keymap('n', '<leader>bd', '<Cmd>bdelete<CR>', { desc = '[D]elete Buffer' })
--- keymap('n', '<leader>bd', ':bp | bd #<CR>', { desc = '[D]elete Buffer' })
 keymap('n', '<leader>bd', function()
   -- local bufnr = vim.api.nvim_get_current_buf()
   local bufs = vim.fn.getbufinfo({ buflisted = 1 })

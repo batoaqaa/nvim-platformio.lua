@@ -1,8 +1,6 @@
-local platformio_lsp_attach = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = false })
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
-  -- group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
-  group = platformio_lsp_attach,
+  group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
   --desc = 'LSP actions',
   callback = function(args)
     local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
@@ -13,21 +11,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
       vim.api.nvim_echo({ { 'Attaching: ' .. client.name .. ' to buffer ' .. bufnr, 'Info' } }, true, {})
 
-      -- if client.name == 'lua_ls' then
-      --   -- client.server_capabilities.documentFormattingProvider = false
-      --   if client:supports_method('textDocument/formatting') then
-      --     vim.lsp.buf.format({
-      --       bufnr = bufnr,
-      --       async = false,
-      --       timeout_ms = 10000,
-      --       id = client.id,
-      --       filter = function(c)
-      --         return c.id == client.id
-      --       end,
-      --     })
-      --   end
-      -- end
-      -- print('lua_ls 0')
       ------------------------------------------------------------------
       if client.name == 'clangd' then
         vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
@@ -46,9 +29,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end, { desc = 'Switch between source/header' })
       end
 
-      -- if client and client.server_capabilities.completionProvider then
-      -- if client:supports_method('textDocument/completion', { bufnr = bufnr }) then
-
+      -- use lsp completion if no blink
       local ok, _ = pcall(require, 'blink.cmp')
       if not ok then
         if client:supports_method('textDocument/completion') then
@@ -115,25 +96,25 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
-vim.api.nvim_create_autocmd('LspDetach', {
-  group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
-  callback = function(arg)
-    local bufnr = arg.buf
-    local client = vim.lsp.get_client_by_id(arg.data.client_id)
-    if client and client.attached_buffers then
-      -- print(vim.inspect(client.attached_buffers))
-      -- if vim.iter(client.attached_buffers):count() == 0 then
-      vim.api.nvim_echo({ { 'Detaching: ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
-      local count = 0
-      for _ in pairs(client.attached_buffers) do
-        count = count + 1
-      end
-
-      if count == 1 then
-        client:stop(true)
-      end
-    end
-  end,
-})
+-- vim.api.nvim_create_autocmd('LspDetach', {
+--   group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
+--   callback = function(arg)
+--     local bufnr = arg.buf
+--     local client = vim.lsp.get_client_by_id(arg.data.client_id)
+--     if client and client.attached_buffers then
+--       -- print(vim.inspect(client.attached_buffers))
+--       -- if vim.iter(client.attached_buffers):count() == 0 then
+--       vim.api.nvim_echo({ { 'Detaching: ' .. client.name .. ' from buffer ' .. bufnr, 'Info' } }, true, {})
+--       local count = 0
+--       for _ in pairs(client.attached_buffers) do
+--         count = count + 1
+--       end
+--
+--       if count == 1 then
+--         client:stop(true)
+--       end
+--     end
+--   end,
+-- })
 
 -- --> End LspAttach autocommand
