@@ -45,10 +45,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
       end
 
-      if client:supports_method('textDocument/documentColor') then
+      if vim.lsp.document_color and client:supports_method('textDocument/documentColor') then
         -- vim.lsp.document_color.enable(true, args.buf, { style = 'background', -- 'background', 'foreground', or 'virtual' })
         vim.lsp.document_color.enable(true, {
-          bufnr = bufnr,
+          bufnr = args.buf,
           style = 'inline', -- This is the modern 0.11 way to show color icons
         })
       end
