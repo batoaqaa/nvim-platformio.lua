@@ -28,22 +28,17 @@ end
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.11') == 1 then
     -- local clients = vim.lsp.get_clients({ name = name })
-    local clients = vim.lsp.get_clients({ name = name })
-    for _, client in ipairs(clients) do
-      client:notify('workspace/didChangeConfiguration', { settings = client.config.settings })
-      vim.notify('LSP configuration refreshed', vim.log.levels.INFO)
+    local clangd = vim.lsp.get_clients({ name = name })[1]
+
+    if clangd then
+      -- Client is active, try to restart
+      local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
+      if not ok then
+        vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
+      else
+        vim.notify('LSP ' .. name .. ' restarted : ' .. err)
+      end
     end
-    -- local clangd = vim.lsp.get_clients({ name = name })[1]
-    --
-    -- if clangd then
-    --   -- Client is active, try to restart
-    --   local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-    --   if not ok then
-    --     vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
-    --   else
-    --     vim.notify('LSP ' .. name .. ' restarted : ' .. err)
-    --   end
-    -- end
   else
     vim.cmd('LspRestart')
   end
