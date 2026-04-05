@@ -31,8 +31,8 @@ function M.lsp_restart(name)
     local clients = vim.lsp.get_clients({ name = name })
     for _, client in ipairs(clients) do
       client:notify('workspace/didChangeConfiguration', { settings = client.config.settings })
+      vim.notify('LSP configuration refreshed', vim.log.levels.INFO)
     end
-    vim.notify('LSP configuration refreshed', vim.log.levels.INFO)
     -- local clangd = vim.lsp.get_clients({ name = name })[1]
     --
     -- if clangd then
