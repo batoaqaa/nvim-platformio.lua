@@ -154,6 +154,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- pick a temp root
 local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
 
+vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
 vim.env.XDG_DATA_HOME = tmp .. '/data'
 vim.env.XDG_CACHE_HOME = tmp .. '/cache'
 vim.env.XDG_STATE_HOME = tmp .. '/state'
@@ -332,7 +333,6 @@ local output
 -- local expand_dir = vim.fn.expand(pynvim_env)
 if not vim.uv.fs_stat(pynvim_env) then
   if not isWindows then
-    print('linux:')
     output = vim.fn.system({ 'python3', '-m', 'venv', pynvim_env })
     print(output)
     vim.fn.system({ 'chmod', '755', '-R', pynvim_bin })

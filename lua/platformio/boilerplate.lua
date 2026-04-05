@@ -4,7 +4,7 @@ local uv = vim.loop
 local boilerplate = {}
 
 boilerplate['arduino'] = {
-  filename = 'main.cpp',
+  -- filename = 'main.cpp',
   content = [[
 #include <Arduino.h>
 
@@ -19,7 +19,7 @@ void loop() {
 }
 
 boilerplate['.clangd_cmd'] = {
-  filename = '.clangd_cmd',
+  -- filename = '.clangd_cmd',
   content = [[
 clangd
 --all-scopes-completion
@@ -43,7 +43,7 @@ clangd
 }
 
 boilerplate['.clang-format'] = {
-  filename = '.clang-format',
+  -- filename = '.clang-format',
   content = [[
 ---
 Language:        Cpp
@@ -297,7 +297,7 @@ WhitespaceSensitiveMacros:
 -- local home = vim.env.HOME
 -- print(home)
 boilerplate['.clangd'] = {
-  filename = '.clangd',
+  -- filename = '.clangd',
   content = [[
 CompileFlags:
   Remove: [
@@ -338,7 +338,7 @@ Diagnostics:
 ]],
 }
 boilerplate['.stylua.toml'] = {
-  filename = '.stylua.toml',
+  -- filename = '.stylua.toml',
   content = [[
 syntax = "All"
 column_width = 132
@@ -355,17 +355,23 @@ enabled = false
 ]],
 }
 
-function M.boilerplate_gen(framework, src_path)
+function M.boilerplate_gen(framework, src_path, filename)
+  filename = filename or framework
   -- print(src_path .. '/0' .. framework)
   local entry = boilerplate[framework]
   if not entry then
     return
   end
   --
-  local file_path = src_path .. '/' .. entry.filename
+  local file_path = src_path .. '/' .. filename
   if vim.uv.fs_stat(file_path) then
     return -- return if file exists
   end
+
+  if vim.fn.isdirectory(src_path) == 0 then
+    vim.fn.mkdir(src_path, 'p')
+  end
+
   --
   uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
     if not fd then
