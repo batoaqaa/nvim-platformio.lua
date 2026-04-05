@@ -24,6 +24,34 @@ function M.gitignore_lsp_configs(config_file)
     file:close()
   end
 end
+function M.lsp_restarti(name)
+  local clients = vim.lsp.get_clients({ name = name })
+
+  if #clients == 0 then
+    -- I'm using my own implementation of `vim.lsp.enable()`
+    -- To work with default one change group name from `MyLsp` to `nvim.lsp.enable`
+    -- It is not tested with default one, so not sure if it would 100% work.
+    vim.api.nvim_exec_autocmds('FileType', { group = 'nvim.lsp.enable', buffer = 0 })
+    return
+  end
+
+  for _, c in ipairs(clients) do
+    local attached_buffers = vim.tbl_keys(c.attached_buffers) ---@type integer[]
+    local configc = c.config
+    vim.lsp.stop_client(c.id, true)
+    vim.defer_fn(function()
+      local id = vim.lsp.start(configc)
+      if id then
+        for _, b in ipairs(attached_buffers) do
+          vim.lsp.buf_attach_client(b, id)
+        end
+        vim.notify(string.format('Lsp `%s` has been restarted.', config.name))
+      else
+        vim.notify(string.format('Error restarting `%s`.', config.name), vim.log.levels.ERROR)
+      end
+    end, 600)
+  end
+end
 
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.11') == 1 then
@@ -51,7 +79,7 @@ function M.piolsp()
   utils.cd_pioini()
 
   utils.shell_cmd_blocking('pio run -t compiledb')
-  vim.notify('LSP: compile_commands.jsoncon generation/update completed!', vim.log.levels.INFO)
+  vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
   M.gitignore_lsp_configs('compile_commands.json')
 
   -- if vim.fn.has('nvim-0.12') then
@@ -60,7 +88,7 @@ function M.piolsp()
   --   -- print('number of attaced: ' .. #clangd.attached_buffers)
   --   -- print('piolsp: lsp restart ' .. clangd.name)
   -- pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-  M.lsp_restart('clangd')
+  M.lsp_restarti('clangd')
   -- vim.cmd('lsp restart clangd')
   -- end
   -- else
