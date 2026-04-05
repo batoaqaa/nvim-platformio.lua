@@ -18,6 +18,15 @@ void loop() {
 ]],
 }
 
+boilerplate['extra_script.py'] = {
+  -- filename = 'main.cpp',
+  content = [[
+from SCons.Script import DefaultEnvironment
+env = DefaultEnvironment()
+env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
+]],
+}
+
 boilerplate['.clangd_cmd'] = {
   -- filename = '.clangd_cmd',
   content = [[
