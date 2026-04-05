@@ -66,7 +66,7 @@ local function pick_library(json_data)
             vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
             piolsp.gitignore_lsp_configs('compile_commands.json')
             piolsp.lsp_restart('clangd')
-          end, 600)
+          end, 900)
           -- local command = 'pio pkg install --library "' .. pkg_name .. '" && exit && echo "done"'
 
           -- utils.ToggleTerminal(command, 'float', function()
