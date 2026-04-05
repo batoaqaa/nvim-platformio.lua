@@ -60,14 +60,13 @@ local function pick_framework(board_details)
           local selected_framework = selection[1]
           local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
           command = command .. ' && pio run -t compiledb'
-          -- .. '" && exit && echo "done"'
 
           utils.ToggleTerminal(command, 'float')
           vim.defer_fn(function()
             vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
             piolsp.gitignore_lsp_configs('compile_commands.json')
             boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-            piolsp.lsp_restarti('clangd')
+            piolsp.lsp_restart('clangd')
           end, 600)
           -- utils.ToggleTerminal(command, 'float', function()
           --   -- require('platformio.piolsp').piolsp()

@@ -10,7 +10,7 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
-local piolsp = require('platformio.piolsp').piolsp
+local piolsp = require('platformio.piolsp') --.piolsp
 
 local libentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -59,13 +59,21 @@ local function pick_library(json_data)
           local selection = action_state.get_selected_entry()
           local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
           local command = 'pio pkg install --library "' .. pkg_name .. '"'
+          command = command .. ' && pio run -t compiledb'
+
+          utils.ToggleTerminal(command, 'float')
+          vim.defer_fn(function()
+            vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
+            piolsp.gitignore_lsp_configs('compile_commands.json')
+            piolsp.lsp_restart('clangd')
+          end, 600)
           -- local command = 'pio pkg install --library "' .. pkg_name .. '" && exit && echo "done"'
 
           -- utils.ToggleTerminal(command, 'float', function()
           --   -- require('platformio.piolsp').piolsp()
           --   piolsp()
           -- end)
-          utils.ToggleTerminal(command, 'float', piolsp)
+          -- utils.ToggleTerminal(command, 'float', piolsp)
         end)
         return true
       end,
