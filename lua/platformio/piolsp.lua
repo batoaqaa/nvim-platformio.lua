@@ -43,7 +43,7 @@ function M.lsp_restarti(name)
     c:stop(true)
 
     vim.defer_fn(function()
-      local id = vim.lsp.start(configc)
+      local id = vim.lsp.enable(configc)
       -- if id then
       --   for _, b in ipairs(attached_buffers) do
       --     vim.lsp.buf_attach_client(b, id)
