@@ -31,13 +31,14 @@ function M.lsp_restart(name)
     local clangd = vim.lsp.get_clients({ name = name })[1]
 
     if clangd then
-      -- Client is active, try to restart
-      local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-      if not ok then
-        vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
-      else
-        vim.notify('LSP ' .. name .. ' restarted : ' .. err)
-      end
+      clangd:restart()
+      -- -- Client is active, try to restart
+      -- local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
+      -- if not ok then
+      --   vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
+      -- else
+      --   vim.notify('LSP ' .. name .. ' restarted : ' .. err)
+      -- end
     end
   else
     vim.cmd('LspRestart')
