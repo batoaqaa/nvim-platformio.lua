@@ -352,6 +352,7 @@ if not vim.uv.fs_stat(pynvim_env) then
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'debugpy' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'isort' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'scons' })
+  vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'sconscrip' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', 'yamllint' })
   vim.fn.system({ pynvim_python, '-m', 'pip', 'install', '-U', 'platformio' })
   -- vim.fn.system({ 'pip', 'install', '-U', 'platformio' })
