@@ -24,16 +24,17 @@ function M.gitignore_lsp_configs(config_file)
     file:close()
   end
 end
+
 function M.lsp_restarti(name)
   local clients = vim.lsp.get_clients({ name = name })
 
-  if #clients == 0 then
-    -- I'm using my own implementation of `vim.lsp.enable()`
-    -- To work with default one change group name from `MyLsp` to `nvim.lsp.enable`
-    -- It is not tested with default one, so not sure if it would 100% work.
-    vim.api.nvim_exec_autocmds('FileType', { group = 'nvim.lsp.enable', buffer = 0 })
-    return
-  end
+  -- if #clients == 0 then
+  --   -- I'm using my own implementation of `vim.lsp.enable()`
+  --   -- To work with default one change group name from `MyLsp` to `nvim.lsp.enable`
+  --   -- It is not tested with default one, so not sure if it would 100% work.
+  --   vim.api.nvim_exec_autocmds('FileType', { group = 'nvim.lsp.enable', buffer = 0 })
+  --   return
+  -- end
 
   for _, c in ipairs(clients) do
     local attached_buffers = vim.tbl_keys(c.attached_buffers) ---@type integer[]
