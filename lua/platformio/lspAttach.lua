@@ -11,7 +11,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     if client then
       -- vim.lsp.set_log_level 'trace'
       -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
-      vim.api.nvim_echo({ { 'Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr, 'Info' } }, true, {})
+      vim.api.nvim_echo({ { 'Attaching: ' .. client.name .. ' to buffer ' .. bufnr, 'Info' } }, true, {})
 
       -- if client.name == 'lua_ls' then
       --   -- client.server_capabilities.documentFormattingProvider = false
