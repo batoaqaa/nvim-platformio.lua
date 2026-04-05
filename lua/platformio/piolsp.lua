@@ -37,7 +37,6 @@ function M.lsp_restarti(name)
   -- end
 
   for _, c in ipairs(clients) do
-    local attached_buffers = vim.tbl_keys(c.attached_buffers) ---@type integer[]
     local configc = c.config
     print(vim.inspect(configc))
     c:stop(true)
@@ -45,14 +44,6 @@ function M.lsp_restarti(name)
     vim.defer_fn(function()
       vim.lsp.config(name, configc)
       vim.lsp.enable(name)
-      -- if id then
-      --   for _, b in ipairs(attached_buffers) do
-      --     vim.lsp.buf_attach_client(b, id)
-      --   end
-      --   vim.notify(string.format('Lsp `%s` has been restarted.', config.name))
-      -- else
-      --   vim.notify(string.format('Error restarting `%s`.', config.name), vim.log.levels.ERROR)
-      -- end
     end, 600)
   end
 end

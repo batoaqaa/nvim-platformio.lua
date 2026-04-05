@@ -10,7 +10,7 @@ local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local piolsp = require('platformio.piolsp').piolsp
+local piolsp = require('platformio.piolsp') --.piolsp
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -59,13 +59,21 @@ local function pick_framework(board_details)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
           local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
+          command = command .. ' && pio run -t compiledb'
           -- .. '" && exit && echo "done"'
 
-          utils.ToggleTerminal(command, 'float', function()
-            -- require('platformio.piolsp').piolsp()
-            piolsp()
+          utils.ToggleTerminal(command, 'float')
+          vim.defer_fn(function()
+            vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
+            piolsp.gitignore_lsp_configs('compile_commands.json')
             boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          end)
+            piolsp.lsp_restarti('clangd')
+          end, 600)
+          -- utils.ToggleTerminal(command, 'float', function()
+          --   -- require('platformio.piolsp').piolsp()
+          --   piolsp()
+          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
+          -- end)
         end)
         return true
       end,
