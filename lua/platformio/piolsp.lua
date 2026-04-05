@@ -3,7 +3,7 @@ local M = {}
 local utils = require('platformio.utils')
 local config = require('platformio').config
 
-local function gitignore_lsp_configs(config_file)
+function M.gitignore_lsp_configs(config_file)
   local gitignore_path = vim.fs.joinpath(vim.g.platformioRootDir, '.gitignore')
   local file = io.open(gitignore_path, 'r')
   local pattern = '^%s*' .. vim.pesc(config_file) .. '%s*$'
@@ -24,6 +24,7 @@ local function gitignore_lsp_configs(config_file)
     file:close()
   end
 end
+
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') then
     local clients = vim.lsp.get_clients({ name = name })
@@ -33,6 +34,8 @@ function M.lsp_restart(name)
       local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
       if not ok then
         vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
+      else
+        vim.notify('LSP ' .. name .. ' restarted : ' .. err)
       end
     end
   else
@@ -47,7 +50,8 @@ function M.piolsp()
   utils.cd_pioini()
 
   utils.shell_cmd_blocking('pio run -t compiledb')
-  gitignore_lsp_configs('compile_commands.json')
+  vim.notify('LSP: compile_commands.jsoncon generation/update completed!', vim.log.levels.INFO)
+  M.gitignore_lsp_configs('compile_commands.json')
 
   -- if vim.fn.has('nvim-0.12') then
   -- local clangd = vim.lsp.get_clients({ name = 'clangd' })[1]
@@ -61,8 +65,6 @@ function M.piolsp()
   -- else
   -- vim.cmd('LspRestart')
   -- end
-
-  vim.notify('LSP: compile_commands.jsoncon generation/update completed!', vim.log.levels.INFO)
 end
 
 return M
