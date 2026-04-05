@@ -1,14 +1,11 @@
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
-  --desc = 'LSP actions',
   callback = function(args)
     local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
     local bufnr = args.buf
 
     if client then
-      -- vim.lsp.set_log_level 'trace'
-      -- print('Attaching to: ' .. client.name .. ' attached to buffer ' .. bufnr)
       vim.api.nvim_echo({ { 'Attaching ' .. client.name .. ' to buffer ' .. bufnr, 'Info' } }, true, {})
 
       ------------------------------------------------------------------
