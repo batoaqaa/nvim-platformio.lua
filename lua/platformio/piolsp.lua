@@ -39,7 +39,8 @@ function M.piolsp()
     -- if clangd then
     --   -- print('number of attaced: ' .. #clangd.attached_buffers)
     --   -- print('piolsp: lsp restart ' .. clangd.name)
-    vim.cmd('lsp restart clangd')
+    pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
+    -- vim.cmd('lsp restart clangd')
     -- end
   else
     vim.cmd('LspRestart')
