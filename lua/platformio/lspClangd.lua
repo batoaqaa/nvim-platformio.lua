@@ -117,6 +117,16 @@ local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
 -- local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 print(fname)
+
+local f = io.open(fname, 'r')
+if f then
+  local content = f:read('*all')
+  f:close()
+  print(content)
+else
+  print('Could not open file')
+end
+
 -- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
   ok, result = pcall(vim.fn.readfile, fname)
