@@ -62,7 +62,7 @@ clangd
 --pch-storage=memory
 --pretty
 --ranking-model=decision_forest
---query-driver=]] .. vim.env.HOME .. [[.platformio/packages/toolchain-*/bin/*]],
+--query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/toolchain-*/bin/*]],
 }
 
 --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
