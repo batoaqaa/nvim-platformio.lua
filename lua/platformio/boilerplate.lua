@@ -106,6 +106,23 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 boilerplate['generate_compile_commands.py'] = {
   content = [[
+# No 'import env' here!
+import subprocess
+from SCons.Script import COMMAND_LINE_TARGETS # Optional: for better IDE support
+
+# This line MUST be here for PIO to provide the environment
+Import("env") 
+
+def regenerate_database(source, target, env):
+    print("Regenerating...")
+    subprocess.run(["pio", "run", "-t", "compiledb"])
+
+# Use the 'env' object that was imported above
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
+]],
+}
+
+--[[
 import os
 import subprocess
 Import("env")
@@ -126,8 +143,7 @@ if "compiledb" not in COMMAND_LINE_TARGETS:
     # 2. Use a specific file as a hook rather than a generic alias
     # This ensures it runs AFTER the ELF file is actually created/updated
     env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
-]],
-}
+]]
 
 boilerplate['.clangd_cmd'] = {
   -- filename = '.clangd_cmd',
