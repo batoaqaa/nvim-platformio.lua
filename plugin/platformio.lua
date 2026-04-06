@@ -6,6 +6,19 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
+----------------------------------------------------------------------------------------
+-- INFO: create clangd required files
+-----------------------------------------------------------------------------------------
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
+boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
+boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+boilerplate_gen([[extra_script.py]], vim.g.platformioRootDir)
+boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
+
 local utils = require('platformio.utils')
 local piolsserial = require('platformio.piolsserial')
 
