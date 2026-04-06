@@ -153,7 +153,6 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- INFO: Set mini lazy config
 -- pick a temp root
 local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
-
 vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
 vim.env.XDG_DATA_HOME = tmp .. '/data'
 vim.env.XDG_CACHE_HOME = tmp .. '/cache'
@@ -314,6 +313,8 @@ else
 end
 
 vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
+-- vim.env.PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN = true
+vim.uv.os_setenv('PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN', 'true')
 vim.g.python_host_prog = pynvim_python
 vim.g.python3_host_prog = pynvim_python
 vim.env.PATH = pynvim_bin .. (isWindows and ';' or ':') .. vim.env.PATH

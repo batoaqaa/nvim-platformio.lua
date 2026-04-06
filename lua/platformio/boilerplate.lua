@@ -51,19 +51,20 @@ lib_ldf_mode = deep   ;Library dependencies Finder ldf
 }
 
 boilerplate['enable_toolchain.py'] = {
-  --[[working
+  content = [[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
+print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
-]]
-  content = [[
-Import("env")
-# This must be done in a PRE script to affect the database generation
-env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 ]],
+  --   content = [[
+  -- Import("env")
+  -- # This must be done in a PRE script to affect the database generation
+  -- env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
+  -- ]],
 }
 
 -- boilerplate['generate_compile_commands.py'] = {
