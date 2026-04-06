@@ -131,7 +131,7 @@ if vim.uv.fs_stat(fname) then
   print(vim.inspect(cmd))
   print(vim.inspect(result))
   cmd = result or cmd
-  -- print(vim.inspect(cmd))
+  print(vim.inspect(cmd))
   -- end
 end
 
