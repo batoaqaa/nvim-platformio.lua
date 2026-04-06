@@ -427,7 +427,7 @@ function M.boilerplate_gen(framework, src_path, filename)
     print('failed to create file: ' .. file_path)
     return
   end
-  uv.fs_write(fd, entry.content, 0)
+  uv.fs_write(fd, vim.fn.expand(entry.content), 0)
   uv.fs_close(fd)
 
   -- uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
