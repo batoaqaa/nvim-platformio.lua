@@ -36,8 +36,8 @@ monitor_speed = 9600
 monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
 monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
 
-;extra_scripts = pre:extra_script.py
-;extra_scripts = post:generate_compilation_database.py
+extra_scripts = pre:extra_script.py
+extra_scripts = post:generate_compile_commands.py
 
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
@@ -89,7 +89,7 @@ lib_ldf_mode = deep   ;Library dependencies Finder ldf
 -- ]],
 -- }
 
-boilerplate['extra_script.py'] = {
+boilerplate['pre_script.py'] = {
   content = [[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
@@ -97,6 +97,23 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
+]],
+}
+
+boilerplate['generate_compile_commands.py'] = {
+  content = [[
+import subprocess
+Import("env")
+
+def regenerate_database(source, target, prev_env):
+    print("Regenerating compile_commands.json...")
+    # 'pio run -t compiledb' is the standard command to generate the file
+    # We use subprocess to avoid interfering with the current build process
+    subprocess.run(["pio", "run", "-t", "compiledb"])
+
+# Add a post-action to a common target (like the firmware binary)
+# to trigger regeneration after every successful build
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
 ]],
 }
 
