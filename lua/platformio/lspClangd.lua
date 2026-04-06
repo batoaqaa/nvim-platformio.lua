@@ -122,6 +122,7 @@ local f = io.open(fname, 'r')
 if f then
   local content = f:read('*all')
   f:close()
+  print('read file')
   print(content)
 else
   print('Could not open file')
