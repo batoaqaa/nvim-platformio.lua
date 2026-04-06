@@ -41,8 +41,8 @@ extra_scripts =
     pre:enable_toolchain.py
     post:generate_compile_commands.py
 
-build_flags = 
-    -D COMPILATIONDB_INCLUDE_TOOLCHAIN=1
+;build_flags = 
+;    -D COMPILATIONDB_INCLUDE_TOOLCHAIN=1
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
   -- content = function()
