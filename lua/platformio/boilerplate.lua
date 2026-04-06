@@ -404,19 +404,20 @@ function M.boilerplate_gen(framework, src_path, filename)
       print('failed to create file: ' .. file_path .. '/' .. entry.filename)
       return
     end
-    uv.fs_write(fd, entry.content, 0, function(werr, _)
-      if werr then
-        print('failed to write to file: ' .. file_path .. '/' .. entry.filename)
-        return
-      end
-      uv.fs_close(fd, function(cerr)
-        if cerr then
-          print('failed to close file: ' .. file_path .. '/' .. entry.filename)
-          return
-        end
-      end)
-    end)
+    -- uv.fs_write(fd, entry.content, 0, function(werr, _)
+    --   if werr then
+    --     print('failed to write to file: ' .. file_path .. '/' .. entry.filename)
+    --     return
+    --   end
+    --   uv.fs_close(fd, function(cerr)
+    --     if cerr then
+    --       print('failed to close file: ' .. file_path .. '/' .. entry.filename)
+    --       return
+    --     end
+    --   end)
     -- end)
+    uv.fs_write(fd, entry.content, 0)
+    uv.fs_close(fd)
   end)
 end
 return M
