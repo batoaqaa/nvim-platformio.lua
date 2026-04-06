@@ -31,7 +31,6 @@ default_envs =
 
 ;--------------------------------------------------------------------------
 [env]
-
 upload_speed = 115200
 monitor_speed = 9600
 monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
