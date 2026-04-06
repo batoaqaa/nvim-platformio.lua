@@ -61,6 +61,9 @@ local function pick_framework(board_details)
 
           local command = 'pio project init --board '
             .. board_details['id']
+            .. ' -O "core_dir = '
+            .. vim.env.PLATFORMIO_CORE_DIR
+            .. '"'
             .. ' -O "lib_ldf_mode = deep" -O "extra_scripts = pre:extra_script.py" -O "framework='
             .. selected_framework
             .. '"'
