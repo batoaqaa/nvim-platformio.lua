@@ -59,11 +59,8 @@ local function pick_framework(board_details)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
 
-          -- pio project init --board <BOARD_ID> \
-          --   -O "packages_dir = ${platformio.core_dir}/esp32c3/packages" \
-          --   -O "platforms_dir = ${platformio.core_dir}/esp32c3/platforms"
           local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. selected_framework .. '"'
-          -- command = command .. ' && pio run -t compiledb'
+          command = command .. ' && pio run -t compiledb'
 
           utils.ToggleTerminal(command, 'float')
           vim.defer_fn(function()
