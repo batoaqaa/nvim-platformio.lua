@@ -106,18 +106,26 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 boilerplate['generate_compile_commands.py'] = {
   content = [[
+import os
 import subprocess
 Import("env")
 
-def regenerate_database(source, target, prev_env):
-    print("Regenerating compile_commands.json...")
-    # 'pio run -t compiledb' is the standard command to generate the file
-    # We use subprocess to avoid interfering with the current build process
-    subprocess.run(["pio", "run", "-t", "compiledb"])
+# 1. Prevent Infinite Recursion
+# Check if we are ALREADY running the 'compiledb' target to avoid an infinite loop
+if "compiledb" not in COMMAND_LINE_TARGETS:
 
-# Add a post-action to a common target (like the firmware binary)
-# to trigger regeneration after every successful build
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
+    def regenerate_database(source, target, prev_env):
+        print("--- REGENERATING compile_commands.json ---")
+        # Use subprocess to run the PIO command separately
+        # 'shell=True' might be needed on Windows if 'pio' isn't in your PATH directly
+        try:
+            subprocess.run(["pio", "run", "-t", "compiledb"], check=True)
+        except Exception as e:
+            print(f"Error regenerating database: {e}")
+
+    # 2. Use a specific file as a hook rather than a generic alias
+    # This ensures it runs AFTER the ELF file is actually created/updated
+    env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
 ]],
 }
 
