@@ -383,7 +383,6 @@ enabled = false
 
 function M.boilerplate_gen(framework, src_path, filename)
   filename = filename or framework
-  -- print(src_path .. '/0' .. framework)
   local entry = boilerplate[framework]
   if not entry then
     return
@@ -398,27 +397,31 @@ function M.boilerplate_gen(framework, src_path, filename)
     vim.fn.mkdir(src_path, 'p')
   end
 
-  --
   local fd = assert(uv.fs_open(file_path, 'w', 420))
-  -- uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
   if not fd then
     print('failed to create file: ' .. file_path .. '/' .. entry.filename)
     return
   end
-  -- uv.fs_write(fd, entry.content, 0, function(werr, _)
-  --   if werr then
-  --     print('failed to write to file: ' .. file_path .. '/' .. entry.filename)
-  --     return
-  --   end
-  --   uv.fs_close(fd, function(cerr)
-  --     if cerr then
-  --       print('failed to close file: ' .. file_path .. '/' .. entry.filename)
-  --       return
-  --     end
-  --   end)
-  -- end)
   uv.fs_write(fd, entry.content, 0)
   uv.fs_close(fd)
+
+  -- uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
+  --   if not fd then
+  --     print('failed to create file: ' .. file_path .. '/' .. entry.filename)
+  --     return
+  --   end
+  --   uv.fs_write(fd, entry.content, 0, function(werr, _)
+  --     if werr then
+  --       print('failed to write to file: ' .. file_path .. '/' .. entry.filename)
+  --       return
+  --     end
+  --     uv.fs_close(fd, function(cerr)
+  --       if cerr then
+  --         print('failed to close file: ' .. file_path .. '/' .. entry.filename)
+  --         return
+  --       end
+  --     end)
+  --   end)
   -- end)
 end
 return M
