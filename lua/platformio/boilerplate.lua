@@ -42,12 +42,12 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
-  content = function()
-    return string.format(boilerplate['platformio.ini'].template, vim.env.PLATFORMIO_CORE_DIR)
-  end,
-  -- content = function(self)
-  --   return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+  -- content = function()
+  --   return string.format(boilerplate['platformio.ini'].template, vim.env.PLATFORMIO_CORE_DIR)
   -- end,
+  content = function(self)
+    return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+  end,
 }
 
 --- stylua: ignore
@@ -464,7 +464,7 @@ function M.boilerplate_gen(framework, src_path, filename)
   end
 
   -- local closeOnexit = type(exit_callback) == 'function'
-  local text = type(entry.content) == 'function' and entry.content() or entry.content
+  local text = type(entry.content) == 'function' and entry:content() or entry.content
   uv.fs_write(fd, text, 0)
   uv.fs_close(fd)
 
