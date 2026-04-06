@@ -26,7 +26,7 @@ env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Optional: ensure it saves to the root of your project
-env.Replace(COMPILATIONDB_PATH="compile_commands.json")
+#env.Replace(COMPILATIONDB_PATH="compile_commands.json")
 ]],
 }
 

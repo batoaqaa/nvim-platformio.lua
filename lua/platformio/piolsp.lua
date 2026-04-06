@@ -38,7 +38,7 @@ function M.lsp_restarti(name)
 
   for _, c in ipairs(clients) do
     local configc = c.config
-    print(vim.inspect(configc))
+    -- print(vim.inspect(configc))
     c:stop(true)
 
     vim.defer_fn(function()
@@ -83,7 +83,7 @@ function M.piolsp()
   --   -- print('number of attaced: ' .. #clangd.attached_buffers)
   --   -- print('piolsp: lsp restart ' .. clangd.name)
   -- pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-  M.lsp_restarti('clangd')
+  M.lsp_restart('clangd')
   -- vim.cmd('lsp restart clangd')
   -- end
   -- else
