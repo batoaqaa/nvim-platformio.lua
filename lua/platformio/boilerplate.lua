@@ -49,10 +49,11 @@ clangd
 --offset-encoding=utf-8
 --pch-storage=memory
 --pretty
---query-driver=**
 --ranking-model=decision_forest
+--query-driver=" .. vim.env.HOME .. "/.platformio/packages/toolchain-*/bin/*" 
 ]],
 }
+--query-driver=**
 
 boilerplate['.clang-format'] = {
   -- filename = '.clang-format',
