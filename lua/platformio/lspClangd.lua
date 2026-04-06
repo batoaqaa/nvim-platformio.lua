@@ -1,4 +1,17 @@
+----------------------------------------------------------------------------------------
+-- INFO: create clangd required files
+-----------------------------------------------------------------------------------------
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
+boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
+boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+boilerplate_gen([[extra_script.py]], vim.g.platformioRootDir)
+boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
 ---------------------------------------------------------------------------------
+
 local ok, result
 ok, result = pcall(require, 'fidget')
 if ok then
@@ -96,6 +109,7 @@ vim.lsp.config('*', {
   root_markers = { '.git' },
   workspace_required = false,
 })
+
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
@@ -103,18 +117,19 @@ local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 print(fname)
 if vim.fn.filereadable(fname) == 1 then
-  ok, result = pcall(vim.fn.readfile, fname)
-  if ok then
-    -- vim.g.platformioRootDir
-    -- local content = table.concat(vim.fn.readfile('my_file.txt'), '\n')
-    -- local content = table.concat(result, '\n')
-    -- result = vim.json.decode(result)
-    -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
-    -- cmd = cmd.result
-    cmd = result
-    print(vim.inspect(result))
-    -- print(vim.inspect(cmd))
-  end
+  -- ok, result = pcall(vim.fn.readfile, fname)
+  -- if ok then
+  result = vim.fn.readfile(fname)
+  -- vim.g.platformioRootDir
+  -- local content = table.concat(vim.fn.readfile('my_file.txt'), '\n')
+  -- local content = table.concat(result, '\n')
+  -- result = vim.json.decode(result)
+  -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
+  -- cmd = cmd.result
+  cmd = result or cmd
+  print(vim.inspect(result))
+  -- print(vim.inspect(cmd))
+  -- end
 end
 
 local clangd = {
