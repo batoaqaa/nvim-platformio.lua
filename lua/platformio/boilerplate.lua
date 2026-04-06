@@ -21,7 +21,8 @@ void loop() {
 boilerplate['platformio.ini'] = {
   content = [[
 [platformio]
-core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR .. [[default_envs = 
+core_dir = $vim.env.PLATFORMIO_CORE_DIR
+default_envs = 
 ;default_envs = uno, nodemcu
 platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
