@@ -116,8 +116,9 @@ local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
-    cmd = result
-    print(vim.inspect(cmd))
+    -- cmd = result
+    print(result)
+    -- print(vim.inspect(cmd))
   end
 end
 
