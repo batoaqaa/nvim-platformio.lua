@@ -113,12 +113,16 @@ vim.lsp.config('*', {
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
-print(fname)
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
-    -- cmd = result
-    print(result)
+    -- local content = table.concat(vim.fn.readfile('my_file.txt'), '\n')
+    -- local content = table.concat(result, '\n')
+    -- result = vim.json.decode(result)
+    -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
+    -- cmd = cmd.result
+    cmd = result
+    print(vim.inspect(result))
     -- print(vim.inspect(cmd))
   end
 end
