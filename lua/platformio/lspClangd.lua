@@ -9,7 +9,7 @@ boilerplate_gen([[extra_script.py]], vim.g.platformioRootDir)
 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
-boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+-- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
 ---------------------------------------------------------------------------------
 
 local ok, result
@@ -119,20 +119,11 @@ local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
 print(fname)
 -- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
-  -- ok, result = pcall(vim.fn.readfile, fname)
-  -- if ok then
-  result = vim.fn.readfile(fname)
-  -- vim.g.platformioRootDir
-  -- local content = table.concat(vim.fn.readfile('my_file.txt'), '\n')
-  -- local content = table.concat(result, '\n')
-  -- result = vim.json.decode(result)
-  -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
-  -- cmd = cmd.result
-  print(vim.inspect(cmd))
-  print(vim.inspect(result))
-  cmd = result or cmd
-  print(vim.inspect(cmd))
-  -- end
+  ok, result = pcall(vim.fn.readfile, fname)
+  if ok then
+    cmd = result
+    print(vim.inspect(cmd))
+  end
 end
 
 local clangd = {
