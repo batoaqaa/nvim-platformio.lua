@@ -19,15 +19,15 @@ void loop() {
 ]],
 }
 
---- stylua: ignore
 boilerplate['platformio.ini'] = {
-  content = [[
+  template = [[
 [platformio]
-core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR .. [[
-]] .. [[default_envs = 
-;default_envs = uno, nodemcu
+core_dir = %s
 platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
+
+default_envs = 
+;default_envs = uno, nodemcu
 
 ;--------------------------------------------------------------------------
 [env]
@@ -42,8 +42,36 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
+  content = function(self)
+    return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+  end,
 }
 
+--- stylua: ignore
+-- boilerplate['platformio.ini'] = {
+--   content = [[
+-- [platformio]
+-- core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR .. [[
+-- ]] .. [[default_envs =
+-- ;default_envs = uno, nodemcu
+-- platforms_dir = ${platformio.core_dir}/platforms
+-- packages_dir = ${platformio.core_dir}/packages
+--
+-- ;--------------------------------------------------------------------------
+-- [env]
+--
+-- upload_speed = 115200
+-- monitor_speed = 9600
+-- monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
+-- monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
+--
+-- ;extra_scripts = pre:extra_script.py
+-- ;extra_scripts = post:generate_compilation_database.py
+--
+-- lib_ldf_mode = deep   ;Library dependencies Finder ldf
+-- ]],
+-- }
+--
 -- boilerplate['extra_script.py'] = {
 --   content = [[
 -- Import("env")
