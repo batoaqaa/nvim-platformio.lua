@@ -312,9 +312,9 @@ else
   pynvim_activate = pynvim_bin .. '/activate'
 end
 
--- vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
+vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
 vim.env.PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN = true
-vim.uv.os_setenv('PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN', 'true')
+-- vim.uv.os_setenv('PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN', 'true')
 vim.g.python_host_prog = pynvim_python
 vim.g.python3_host_prog = pynvim_python
 vim.env.PATH = pynvim_bin .. (isWindows and ';' or ':') .. vim.env.PATH
