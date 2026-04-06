@@ -113,9 +113,11 @@ vim.lsp.config('*', {
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
+print(fname)
 if vim.fn.filereadable(fname) == 1 then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
+    -- vim.g.platformioRootDir
     -- local content = table.concat(vim.fn.readfile('my_file.txt'), '\n')
     -- local content = table.concat(result, '\n')
     -- result = vim.json.decode(result)
