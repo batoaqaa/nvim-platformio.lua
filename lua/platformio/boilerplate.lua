@@ -42,9 +42,12 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
-  content = function(self)
-    return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+  content = function()
+    return string.format(boilerplate['platformio.ini'].template, vim.env.PLATFORMIO_CORE_DIR)
   end,
+  -- content = function(self)
+  --   return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+  -- end,
 }
 
 --- stylua: ignore
