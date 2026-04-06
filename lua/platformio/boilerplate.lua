@@ -40,7 +40,7 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 ;extra_scripts =
 ;    pre:enable_toolchain.py
 
-lib_ldf_mode = deep   ;Library dependencies Finder ldf
+lib_ldf_mode = chain+   ;Library dependencies Finder ldf
 ]],
   -- content = function()
   --   return string.format(boilerplate['platformio.ini'].template, vim.env.PLATFORMIO_CORE_DIR)
@@ -86,8 +86,7 @@ print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 -- }
 
 boilerplate['.clangd_cmd'] = {
-  -- filename = '.clangd_cmd',
-  content = [[
+  template = [[
 clangd
 --all-scopes-completion
 --background-index
@@ -105,13 +104,17 @@ clangd
 --pch-storage=memory
 --pretty
 --ranking-model=decision_forest
---query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/toolchain-*/bin/*]],
+--query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
+]],
+  content = function(self)
+    return string.format(self.template, vim.env.HOME)
+  end,
+  --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
+  --query-driver=**
+  --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
 }
---query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
---query-driver=**
 
 boilerplate['.clang-format'] = {
-  -- filename = '.clang-format',
   content = [[
 ---
 Language:        Cpp
@@ -365,7 +368,6 @@ WhitespaceSensitiveMacros:
 -- local home = vim.env.HOME
 -- print(home)
 boilerplate['.clangd'] = {
-  -- filename = '.clangd',
   content = [[
 CompileFlags:
   Remove: [
@@ -406,7 +408,6 @@ Diagnostics:
 ]],
 }
 boilerplate['.stylua.toml'] = {
-  -- filename = '.stylua.toml',
   content = [[
 syntax = "All"
 column_width = 132
