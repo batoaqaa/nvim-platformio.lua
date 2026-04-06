@@ -37,8 +37,8 @@ monitor_speed = 9600
 monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
 monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
 
-extra_scripts = 
-    pre:pre_script.py
+extra_scripts =
+    pre:enable_toolchain.py
     post:generate_compile_commands.py
 
 build_flags = 
@@ -93,14 +93,20 @@ lib_ldf_mode = deep   ;Library dependencies Finder ldf
 -- ]],
 -- }
 
-boilerplate['pre_script.py'] = {
-  content = [[
+--[[working
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
+]]
+
+boilerplate['enable_toolchain.py'] = {
+  content = [[
+Import("env")
+# This must be done in a PRE script to affect the database generation
+env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 ]],
 }
 
