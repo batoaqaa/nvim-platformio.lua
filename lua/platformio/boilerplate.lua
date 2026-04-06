@@ -54,6 +54,7 @@ boilerplate['enable_toolchain.py'] = {
   content = [[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
+print(env.Dump())
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
