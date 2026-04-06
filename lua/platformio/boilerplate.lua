@@ -459,7 +459,10 @@ function M.boilerplate_gen(framework, src_path, filename)
     print('failed to create file: ' .. file_path)
     return
   end
-  uv.fs_write(fd, entry.content, 0)
+
+  -- local closeOnexit = type(exit_callback) == 'function'
+  local text = type(entry.content) == 'function' and entry.content() or entry.content
+  uv.fs_write(fd, text, 0)
   uv.fs_close(fd)
 
   -- uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
