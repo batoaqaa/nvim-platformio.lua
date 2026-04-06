@@ -9,7 +9,7 @@ boilerplate_gen([[extra_script.py]], vim.g.platformioRootDir)
 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
--- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
 ---------------------------------------------------------------------------------
 
 local ok, result
@@ -114,26 +114,13 @@ vim.lsp.config('*', {
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
-local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
--- local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
-print(fname)
-
-local f = io.open(fname, 'r')
-if f then
-  local content = f:read('*all')
-  f:close()
-  print('read file')
-  print(content)
-else
-  print('Could not open file')
-end
-
+local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 -- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
     cmd = result
-    print(vim.inspect(cmd))
+    -- print(vim.inspect(cmd))
   end
 end
 
