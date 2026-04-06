@@ -64,10 +64,10 @@ local function pick_framework(board_details)
           --   -O "platforms_dir = ${platformio.core_dir}/esp32c3/platforms"
           local command = [[pio project init --board ]]
             .. board_details['id']
-            .. [[ -O "core_dir = ]]
-            .. vim.env.PLATFORMIO_CORE_DIR
-            .. [[" -O "platforms_dir = \${platformio.core_dir}/platforms"]]
-            .. [[ -O "packages_dir = \${platformio.core_dir}/packages"]]
+            -- .. [[ -O "core_dir = ]]
+            -- .. vim.env.PLATFORMIO_CORE_DIR
+            -- .. [[" -O "platforms_dir = \${platformio.core_dir}/platforms"]]
+            -- .. [[ -O "packages_dir = \${platformio.core_dir}/packages"]]
             .. [[ -O "lib_ldf_mode = deep" -O "extra_scripts = pre:extra_script.py" -O "framework=]]
             .. selected_framework
             .. [["]]
