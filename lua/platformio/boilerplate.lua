@@ -399,7 +399,7 @@ function M.boilerplate_gen(framework, src_path, filename)
 
   local fd = assert(uv.fs_open(file_path, 'w', 420))
   if not fd then
-    print('failed to create file: ' .. file_path .. '/' .. entry.filename)
+    print('failed to create file: ' .. file_path)
     return
   end
   uv.fs_write(fd, entry.content, 0)
