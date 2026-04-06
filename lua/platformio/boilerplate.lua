@@ -397,6 +397,7 @@ function M.boilerplate_gen(framework, src_path, filename)
     vim.fn.mkdir(src_path, 'p')
   end
 
+  -------------------------------------------------------------------------------------
   local fd = assert(uv.fs_open(file_path, 'w', 420))
   if not fd then
     print('failed to create file: ' .. file_path)

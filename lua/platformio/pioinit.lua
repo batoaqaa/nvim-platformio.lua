@@ -58,7 +58,12 @@ local function pick_framework(board_details)
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
-          local command = 'pio project init --board ' .. board_details['id'] .. ' --project-option "framework=' .. selected_framework .. '"'
+
+          local command = 'pio project init --board '
+            .. board_details['id']
+            .. ' -O "lib_ldf_mode = deep" -O "extra_scripts = pre:extra_script.py" -O "framework='
+            .. selected_framework
+            .. '"'
           command = command .. ' && pio run -t compiledb'
 
           utils.ToggleTerminal(command, 'float')
