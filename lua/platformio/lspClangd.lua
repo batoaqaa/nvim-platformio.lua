@@ -115,8 +115,10 @@ vim.lsp.config('*', {
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
 local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
+local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 print(fname)
-if vim.fn.filereadable(fname) == 1 then
+-- if vim.fn.filereadable(fname) == 1 then
+if vim.uv.fs_stat(fname) then
   -- ok, result = pcall(vim.fn.readfile, fname)
   -- if ok then
   result = vim.fn.readfile(fname)
@@ -127,6 +129,7 @@ if vim.fn.filereadable(fname) == 1 then
   -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
   -- cmd = cmd.result
   cmd = result or cmd
+  print(vim.inspect(cmd))
   print(vim.inspect(result))
   -- print(vim.inspect(cmd))
   -- end
