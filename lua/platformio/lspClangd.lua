@@ -114,8 +114,8 @@ vim.lsp.config('*', {
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
-local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
-local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
+local fname = string.format('%s/.clangd_cmd', vim.g.platformioRootDir)
+-- local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 print(fname)
 -- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
