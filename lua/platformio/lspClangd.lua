@@ -128,9 +128,9 @@ if vim.uv.fs_stat(fname) then
   -- result = vim.json.decode(result)
   -- cmd = vim.tbl_deep_extend('force', cmd or {}, result.cmd) --working fine
   -- cmd = cmd.result
-  cmd = result or cmd
   print(vim.inspect(cmd))
   print(vim.inspect(result))
+  cmd = result or cmd
   -- print(vim.inspect(cmd))
   -- end
 end
