@@ -21,14 +21,26 @@ void loop() {
 boilerplate['extra_script.py'] = {
   -- filename = 'main.cpp',
   content = [[
+Import("env")
+
+def set_compilation_db_toolchain(env):
+    # This runs after the environment is fully initialized
+    env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
+
+# Add the function as a callback for the environment
+env.AddMethod(set_compilation_db_toolchain)
+set_compilation_db_toolchain(env)
+
+]],
+}
+--[[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
-]],
-}
+]]
 
 boilerplate['.clangd_cmd'] = {
   -- filename = '.clangd_cmd',
@@ -53,7 +65,7 @@ clangd
 --query-driver=]] .. vim.env.HOME .. [[.platformio/packages/toolchain-*/bin/*]],
 }
 
-local cmd = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
+--query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
 --query-driver=**
 
 boilerplate['.clang-format'] = {
