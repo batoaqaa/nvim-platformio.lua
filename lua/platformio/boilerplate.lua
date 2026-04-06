@@ -3,6 +3,7 @@ local uv = vim.loop
 
 local boilerplate = {}
 
+-- stylua: ignore
 boilerplate['arduino'] = {
   -- filename = 'main.cpp',
   content = [[
@@ -18,10 +19,12 @@ void loop() {
 ]],
 }
 
+-- stylua: ignore
 boilerplate['platformio.ini'] = {
   content = [[
 [platformio]
-core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR .. [[\ndefault_envs = 
+core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR ..
+[[default_envs = 
 ;default_envs = uno, nodemcu
 platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
@@ -41,29 +44,31 @@ lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
 }
 
+-- boilerplate['extra_script.py'] = {
+--   content = [[
+-- Import("env")
+--
+-- def set_compilation_db_toolchain(env):
+--     # This runs after the environment is fully initialized
+--     env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
+--
+-- # Add the function as a callback for the environment
+-- env.AddMethod(set_compilation_db_toolchain)
+-- set_compilation_db_toolchain(env)
+--
+-- ]],
+-- }
+
 boilerplate['extra_script.py'] = {
-  -- filename = 'main.cpp',
   content = [[
-Import("env")
-
-def set_compilation_db_toolchain(env):
-    # This runs after the environment is fully initialized
-    env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
-
-# Add the function as a callback for the environment
-env.AddMethod(set_compilation_db_toolchain)
-set_compilation_db_toolchain(env)
-
-]],
-}
---[[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
-]]
+]],
+}
 
 boilerplate['.clangd_cmd'] = {
   -- filename = '.clangd_cmd',
