@@ -18,6 +18,30 @@ void loop() {
 ]],
 }
 
+boilerplate['platformio.ini'] = {
+  content = [[
+[platformio]
+
+default_envs = 
+;default_envs = uno, nodemcu
+platforms_dir = ${platformio.core_dir}/platforms
+packages_dir = ${platformio.core_dir}/packages
+
+;--------------------------------------------------------------------------
+[env]
+
+upload_speed = 115200
+monitor_speed = 9600
+monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
+monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
+
+;extra_scripts = pre:extra_script.py
+;extra_scripts = post:generate_compilation_database.py
+
+lib_ldf_mode = deep   ;Library dependencies Finder ldf
+]],
+}
+
 boilerplate['extra_script.py'] = {
   -- filename = 'main.cpp',
   content = [[
