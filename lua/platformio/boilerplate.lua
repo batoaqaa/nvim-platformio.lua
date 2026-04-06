@@ -39,10 +39,7 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 
 extra_scripts =
     pre:enable_toolchain.py
-    post:generate_compile_commands.py
 
-;build_flags = 
-;    -D COMPILATIONDB_INCLUDE_TOOLCHAIN=1
 lib_ldf_mode = deep   ;Library dependencies Finder ldf
 ]],
   -- content = function()
@@ -53,47 +50,8 @@ lib_ldf_mode = deep   ;Library dependencies Finder ldf
   end,
 }
 
---- stylua: ignore
--- boilerplate['platformio.ini'] = {
---   content = [[
--- [platformio]
--- core_dir = ]] .. vim.env.PLATFORMIO_CORE_DIR .. [[
--- ]] .. [[default_envs =
--- ;default_envs = uno, nodemcu
--- platforms_dir = ${platformio.core_dir}/platforms
--- packages_dir = ${platformio.core_dir}/packages
---
--- ;--------------------------------------------------------------------------
--- [env]
---
--- upload_speed = 115200
--- monitor_speed = 9600
--- monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
--- monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
---
--- ;extra_scripts = pre:extra_script.py
--- ;extra_scripts = post:generate_compilation_database.py
---
--- lib_ldf_mode = deep   ;Library dependencies Finder ldf
--- ]],
--- }
---
--- boilerplate['extra_script.py'] = {
---   content = [[
--- Import("env")
---
--- def set_compilation_db_toolchain(env):
---     # This runs after the environment is fully initialized
---     env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
---
--- # Add the function as a callback for the environment
--- env.AddMethod(set_compilation_db_toolchain)
--- set_compilation_db_toolchain(env)
---
--- ]],
--- }
-
---[[working
+boilerplate['enable_toolchain.py'] = {
+  --[[working
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
@@ -101,8 +59,6 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 # Optional: ensure it saves to the root of your project
 #env.Replace(COMPILATIONDB_PATH="compile_commands.json")
 ]]
-
-boilerplate['enable_toolchain.py'] = {
   content = [[
 Import("env")
 # This must be done in a PRE script to affect the database generation
@@ -110,46 +66,23 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 ]],
 }
 
-boilerplate['generate_compile_commands.py'] = {
-  content = [[
-# No 'import env' here!
-import subprocess
-from SCons.Script import COMMAND_LINE_TARGETS # Optional: for better IDE support
-
-# This line MUST be here for PIO to provide the environment
-Import("env") 
-
-def regenerate_database(source, target, env):
-    print("Regenerating...")
-    subprocess.run(["pio", "run", "-t", "compiledb"])
-
-# Use the 'env' object that was imported above
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
-]],
-}
-
---[[
-import os
-import subprocess
-Import("env")
-
-# 1. Prevent Infinite Recursion
-# Check if we are ALREADY running the 'compiledb' target to avoid an infinite loop
-if "compiledb" not in COMMAND_LINE_TARGETS:
-
-    def regenerate_database(source, target, prev_env):
-        print("--- REGENERATING compile_commands.json ---")
-        # Use subprocess to run the PIO command separately
-        # 'shell=True' might be needed on Windows if 'pio' isn't in your PATH directly
-        try:
-            subprocess.run(["pio", "run", "-t", "compiledb"], check=True)
-        except Exception as e:
-            print(f"Error regenerating database: {e}")
-
-    # 2. Use a specific file as a hook rather than a generic alias
-    # This ensures it runs AFTER the ELF file is actually created/updated
-    env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
-]]
+-- boilerplate['generate_compile_commands.py'] = {
+--   content = [[
+-- # No 'import env' here!
+-- import subprocess
+-- from SCons.Script import COMMAND_LINE_TARGETS # Optional: for better IDE support
+--
+-- # This line MUST be here for PIO to provide the environment
+-- Import("env")
+--
+-- def regenerate_database(source, target, env):
+--     print("Regenerating...")
+--     subprocess.run(["pio", "run", "-t", "compiledb"])
+--
+-- # Use the 'env' object that was imported above
+-- env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
+-- ]],
+-- }
 
 boilerplate['.clangd_cmd'] = {
   -- filename = '.clangd_cmd',
@@ -173,7 +106,6 @@ clangd
 --ranking-model=decision_forest
 --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/toolchain-*/bin/*]],
 }
-
 --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
 --query-driver=**
 
