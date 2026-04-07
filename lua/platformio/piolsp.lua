@@ -19,42 +19,50 @@ function M.fix_pio_compile_commands()
 
   -- 2. Read and Decode
   local file = io.open(json_path, 'r')
-  local content = file:read('*all')
-  file:close()
+  if file then
+    local content = file:read('*all')
+    file:close()
+    local ok, data = pcall(vim.fn.json_decode, content)
+    if not ok or type(data) ~= 'table' then
+      return
+    end
+    -- 3. Get Toolchain Path
+    local glob_result = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
+    if glob_result == '' then
+      return
+    end
+    local toolchain_bin = vim.split(glob_result, '\n')[1] -- Ensure we get a single string
 
-  local ok, data = pcall(vim.fn.json_decode, content)
-  if not ok or type(data) ~= 'table' then
-    return
-  end
-
-  -- 3. Get Toolchain Path
-  local glob_result = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
-  if glob_result == '' then
-    return
-  end
-  local toolchain_bin = vim.split(glob_result, '\n')[1] -- Ensure we get a single string
-
-  local changed = false
-  for _, entry in ipairs(data) do
-    if entry.command then
-      -- IMPROVEMENT: Only prepend if it's NOT already an absolute path
-      -- AND it doesn't already contain the toolchain path (prevents double-prepending)
-      if not entry.command:match('^/') and not entry.command:find(toolchain_bin, 1, true) then
-        entry.command = toolchain_bin .. entry.command
-        changed = true
+    local changed = false
+    for _, entry in ipairs(data) do
+      if entry.command then
+        -- IMPROVEMENT: Only prepend if it's NOT already an absolute path
+        -- AND it doesn't already contain the toolchain path (prevents double-prepending)
+        if not entry.command:match('^/') and not entry.command:find(toolchain_bin, 1, true) then
+          entry.command = toolchain_bin .. entry.command
+          changed = true
+        end
       end
     end
-  end
+    -- 4. Save with Formatting
+    if changed then
+      local out_file = io.open(json_path, 'w')
+      -- Check if vim.json is available (Neovim 0.9+)
+      if out_file then
+        if vim.json and vim.json.encode then
+          out_file:write(vim.json.encode(data, { indent = '  ' }))
+        else
+          -- Fallback for older versions (minified)
+          out_file:write(vim.fn.json_encode(data))
+        end
+        out_file:close()
 
-  -- 4. Save with Formatting
-  if changed then
-    local out_file = io.open(json_path, 'w')
-    -- Using indent makes the file human-readable and less likely to "mess up"
-    out_file:write(vim.fn.json_encode(data))
-    out_file:close()
-
-    print('PIO: Paths localized in compile_commands.json')
-    M.lsp_restart('clangd')
+        print('PIO: Paths fixed and JSON formatted')
+        M.lsp_restart('clangd')
+      end
+    end
+  else
+    return
   end
 end
 
