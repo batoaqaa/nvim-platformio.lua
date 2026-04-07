@@ -38,7 +38,7 @@ function M.fix_pio_compile_commands()
           -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
           local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
           path_map[name] = driver_path
-          print('PioFix1:' .. driver_path)
+          print('PioFix1: driver_path=' .. driver_path .. ' name=' .. name)
         end
       end
     end
@@ -55,6 +55,7 @@ function M.fix_pio_compile_commands()
         local is_abs = first:sub(1, 1) == '/' or first:match('^%a:[/\\]')
         if not is_abs then
           local short_name = first:gsub('%.exe$', '')
+          print('PioFix20:' .. short_name)
           if path_map[short_name] then
             cmd_parts[1] = path_map[short_name]
             entry.command = table.concat(cmd_parts, ' ')
