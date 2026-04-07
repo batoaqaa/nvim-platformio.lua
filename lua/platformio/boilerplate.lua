@@ -37,8 +37,8 @@ monitor_speed = 9600
 monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
 monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
 
-extra_scripts =
-    pre:enable_toolchain.py
+;extra_scripts =
+;    pre:enable_toolchain.py ; enabled global env 'PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN'
 
 lib_ldf_mode = chain+   ;Library dependencies Finder ldf
 ]],
