@@ -77,7 +77,7 @@ function M.fix_pio_compile_commands()
         out_file:write(json_str)
         out_file:close()
         vim.notify('PIO: Paths fixed and JSON formatted.', vim.log.levels.INFO)
-        vim.cmd('LspRestart')
+        M.lsp_restart('clangd')
       else
         out_file:close()
         vim.notify('LSP: Failed to encode JSON', vim.log.levels.ERROR)
