@@ -3,7 +3,7 @@ local M = {}
 local utils = require('platformio.utils')
 local config = require('platformio').config
 
-local function fix_pio_compile_commands()
+function M.fix_pio_compile_commands()
   local cwd = vim.fn.getcwd()
   local json_path = cwd .. '/compile_commands.json'
 

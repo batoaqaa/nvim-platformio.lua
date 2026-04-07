@@ -58,7 +58,7 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 #Import("env")
 
-# ..Method 1: Safe retrieval with a default message
+# ...Method 1: Safe retrieval with a default message
 print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
 print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 ]],
