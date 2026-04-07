@@ -25,7 +25,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
             vim.cmd.edit(vim.uri_to_fname(result))
           end, bufnr)
         end, { desc = 'Switch between source/header' })
-        piolsp.fix_pio_compile_commands()
+        -- piolsp.fix_pio_compile_commands()
       end
 
       -- use lsp completion if no blink
