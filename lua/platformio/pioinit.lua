@@ -59,15 +59,40 @@ local function pick_framework(board_details)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
 
-          utils.watch_once_and_run('.pio_done', piolsp.cleanup(selected_framework), 40000)
-
-          local is_win = vim.uv.os_uname().sysname == 'Windows_NT'
-          local marker = is_win and 'type nul > .pio_done' or 'touch .pio_done'
-
           local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. selected_framework .. '"'
-          command = command .. ' && pio run -t compiledb && ' .. marker
+          -- command = command .. ' && pio run -t compiledb'
 
-          utils.ToggleTerminal(command, 'float')
+          -- Handle after 'pio run -t compiledb' execution
+          local function handleDb(_, _, data, _)
+            for _, line in ipairs(data) do
+              local clean_line = line:gsub('%s+', '')
+              if clean_line:find('___PIO_SUCCESS___') then
+                vim.schedule(function()
+                  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+                  piolsp.fix_pio_compile_commands()
+                  vim.notify('compiledb: fixed', vim.log.levels.INFO)
+                  piolsp.gitignore_lsp_configs('compile_commands.json')
+                  piolsp.lsp_restart('clangd')
+                  vim.notify('compiledb: Success', vim.log.levels.INFO)
+                end)
+              end
+            end
+          end
+          -- Handle after poioinit execution
+          local function handlePioinit(_, _, data, _)
+            for _, line in ipairs(data) do
+              local clean_line = line:gsub('%s+', '')
+              if clean_line:find('___PIO_SUCCESS___') then
+                vim.schedule(function()
+                  vim.notify('Pioinit: Success', vim.log.levels.INFO)
+                  boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+                  command = 'pio run -t compiledb'
+                  utils.ToggleTerminal(command, 'float', handleDb)
+                end)
+              end
+            end
+          end
+          utils.ToggleTerminal(command, 'float', handlePioinit)
           -- vim.defer_fn(function()
           --   vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
           --   piolsp.gitignore_lsp_configs('compile_commands.json')
