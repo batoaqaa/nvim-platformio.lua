@@ -3,145 +3,144 @@ local M = {}
 local utils = require('platformio.utils')
 local config = require('platformio').config
 
--- Cache the toolchain path once globally so we don't glob on every save
-local cached_toolchain = nil
-
 function M.fix_pio_compile_commands()
-  local cwd = vim.fn.getcwd()
-  local json_path = cwd .. '/compile_commands.json'
-
-  -- 1. Performance: Check if file exists and get last modified time
-  local stats = vim.loop.fs_stat(json_path)
-  if not stats then
-    if vim.fn.filereadable(cwd .. '/platformio.ini') == 1 then
-      vim.fn.system('pio run -t compiledb')
-      stats = vim.loop.fs_stat(json_path) -- Re-check after gen
-    end
-  end
-  if not stats then
-    return
-  end
-
-  -- 2. Performance: Only run if the file was modified in the last 5 seconds
-  -- This prevents re-parsing the JSON every time you hit :w
-  local now = os.time()
-  if (now - stats.mtime.sec) > 5 and _G.PIO_FIXED_ONCE then
-    return
-  end
-
-  -- 3. Get Toolchain (Cached)
-  if not cached_toolchain then
-    local glob = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
-    if glob == '' then
-      return
-    end
-    cached_toolchain = vim.split(glob, '\n')[1] -- Ensure single string
-  end
-
-  -- 4. Safe Read
-  local file = io.open(json_path, 'r')
+  local filename = 'compile_commands.json'
+  local file = io.open(filename, 'r')
   if not file then
     return
-  end
-  local content = file:read('*all')
-  file:close()
-  if not content or content == '' then
-    return
-  end
+  end -- Gracefully exit if file is missing
 
-  -- 5. Safe Decode
+  local content = file:read('*a')
+  file:close()
+
+  -- Safe JSON decoding with error handling
   local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= 'table' then
+    vim.notify('LSP: Failed to parse compile_commands.json', vim.log.levels.ERROR)
     return
   end
 
-  local changed = false
+  local path_map = {}
+  local modified = 0
+
+  -- Phase 1: Discover absolute paths from existing entries
   for _, entry in ipairs(data) do
-    -- Defensive Nil Checks
-    if type(entry) == 'table' and entry.command then
-      -- Prepend only if relative and not already fixed
-      if not entry.command:match('^/') and not entry.command:find(cached_toolchain, 1, true) then
-        entry.command = cached_toolchain .. entry.command
-        changed = true
+    if type(entry.command) == 'string' then
+      local cmd_parts = vim.split(entry.command, ' ')
+      local driver_path = cmd_parts[1]
+      -- Check for Linux (/...) or Windows (C:...) absolute paths
+      if driver_path and (driver_path:sub(1, 1) == '/' or driver_path:match('^%a:')) then
+        local driver_name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+        path_map[driver_name] = driver_path
       end
     end
   end
 
-  -- 6. Safe Save
-  if changed then
-    local out = io.open(json_path, 'w')
-    if out then
-      out:write(vim.json.encode(data, { indent = '  ' }))
-      out:close()
-      _G.PIO_FIXED_ONCE = true
-      vim.schedule(function()
-        print('PIO: Database optimized')
-        M.lsp_restarti('clangd')
-      end)
+  -- Phase 2: Replace bare driver names with discovered absolute paths
+  for _, entry in ipairs(data) do
+    if type(entry.command) == 'string' then
+      local cmd_parts = vim.split(entry.command, ' ')
+      local first = cmd_parts[1]
+      if first and not (first:sub(1, 1) == '/' or first:match('^%a:')) then
+        local short_name = first:gsub('%.exe$', '')
+        if path_map[short_name] then
+          cmd_parts[1] = path_map[short_name]
+          entry.command = table.concat(cmd_parts, ' ')
+          modified = modified + 1
+        end
+      end
+    end
+  end
+
+  -- Save changes only if modifications were made
+  if modified > 0 then
+    local out_file = io.open(filename, 'w')
+    if out_file then
+      out_file:write(vim.json.encode(data))
+      out_file:close()
+      vim.notify('Fixed ' .. modified .. ' paths in compile_commands.json', vim.log.levels.INFO)
+      -- Trigger LSP reload to pick up new paths
+      vim.cmd('LspRestart')
     end
   end
 end
 
+-- -- Cache the toolchain path once globally so we don't glob on every save
+-- local cached_toolchain = nil
+--
 -- function M.fix_pio_compile_commands()
 --   local cwd = vim.fn.getcwd()
 --   local json_path = cwd .. '/compile_commands.json'
 --
---   -- 1. Generate if missing
---   if vim.fn.filereadable(json_path) == 0 then
+--   -- 1. Performance: Check if file exists and get last modified time
+--   local stats = vim.loop.fs_stat(json_path)
+--   if not stats then
 --     if vim.fn.filereadable(cwd .. '/platformio.ini') == 1 then
---       print('PIO: Generating compilation database...')
 --       vim.fn.system('pio run -t compiledb')
---     else
+--       stats = vim.loop.fs_stat(json_path) -- Re-check after gen
+--     end
+--   end
+--   if not stats then
+--     return
+--   end
+--
+--   -- 2. Performance: Only run if the file was modified in the last 5 seconds
+--   -- This prevents re-parsing the JSON every time you hit :w
+--   local now = os.time()
+--   if (now - stats.mtime.sec) > 5 and _G.PIO_FIXED_ONCE then
+--     return
+--   end
+--
+--   -- 3. Get Toolchain (Cached)
+--   if not cached_toolchain then
+--     local glob = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
+--     if glob == '' then
 --       return
+--     end
+--     cached_toolchain = vim.split(glob, '\n')[1] -- Ensure single string
+--   end
+--
+--   -- 4. Safe Read
+--   local file = io.open(json_path, 'r')
+--   if not file then
+--     return
+--   end
+--   local content = file:read('*all')
+--   file:close()
+--   if not content or content == '' then
+--     return
+--   end
+--
+--   -- 5. Safe Decode
+--   local ok, data = pcall(vim.json.decode, content)
+--   if not ok or type(data) ~= 'table' then
+--     return
+--   end
+--
+--   local changed = false
+--   for _, entry in ipairs(data) do
+--     -- Defensive Nil Checks
+--     if type(entry) == 'table' and entry.command then
+--       -- Prepend only if relative and not already fixed
+--       if not entry.command:match('^/') and not entry.command:find(cached_toolchain, 1, true) then
+--         entry.command = cached_toolchain .. entry.command
+--         changed = true
+--       end
 --     end
 --   end
 --
---   -- 2. Read and Decode
---   local file = io.open(json_path, 'r')
---   if file then
---     local content = file:read('*all')
---     file:close()
---     local ok, data = pcall(vim.fn.json_decode, content)
---     if not ok or type(data) ~= 'table' then
---       return
+--   -- 6. Safe Save
+--   if changed then
+--     local out = io.open(json_path, 'w')
+--     if out then
+--       out:write(vim.json.encode(data, { indent = '  ' }))
+--       out:close()
+--       _G.PIO_FIXED_ONCE = true
+--       vim.schedule(function()
+--         print('PIO: Database optimized')
+--         M.lsp_restarti('clangd')
+--       end)
 --     end
---     -- 3. Get Toolchain Path
---     local glob_result = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
---     if glob_result == '' then
---       return
---     end
---     local toolchain_bin = vim.split(glob_result, '\n')[1] -- Ensure we get a single string
---
---     local changed = false
---     for _, entry in ipairs(data) do
---       if entry.command then
---         -- IMPROVEMENT: Only prepend if it's NOT already an absolute path
---         -- AND it doesn't already contain the toolchain path (prevents double-prepending)
---         if not entry.command:match('^/') and not entry.command:find(toolchain_bin, 1, true) then
---           entry.command = toolchain_bin .. entry.command
---           changed = true
---         end
---       end
---     end
---     -- 4. Save with Formatting
---     if changed then
---       local out_file = io.open(json_path, 'w')
---       -- Check if vim.json is available (Neovim 0.9+)
---       if out_file then
---         if vim.json and vim.json.encode then
---           out_file:write(vim.json.encode(data, { indent = '  ' }))
---         else
---           -- Fallback for older versions (minified)
---           out_file:write(vim.fn.json_encode(data))
---         end
---         out_file:close()
---
---         print('PIO: Paths fixed and JSON formatted')
---         M.lsp_restart('clangd')
---       end
---     end
---   else
---     return
 --   end
 -- end
 
