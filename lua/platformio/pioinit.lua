@@ -59,16 +59,21 @@ local function pick_framework(board_details)
           local selection = action_state.get_selected_entry()
           local selected_framework = selection[1]
 
+          utils.watch_once_and_run('.pio_done', piolsp.cleanup(selected_framework), 40000)
+
+          local is_win = vim.uv.os_uname().sysname == 'Windows_NT'
+          local marker = is_win and 'type nul > .pio_done' or 'touch .pio_done'
+
           local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. selected_framework .. '"'
-          command = command .. ' && pio run -t compiledb'
+          command = command .. ' && pio run -t compiledb && ' .. marker
 
           utils.ToggleTerminal(command, 'float')
-          vim.defer_fn(function()
-            vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
-            piolsp.gitignore_lsp_configs('compile_commands.json')
-            boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-            piolsp.lsp_restart('clangd')
-          end, 3000)
+          -- vim.defer_fn(function()
+          --   vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
+          --   piolsp.gitignore_lsp_configs('compile_commands.json')
+          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+          --   piolsp.lsp_restart('clangd')
+          -- end, 3000)
           -- utils.ToggleTerminal(command, 'float', function()
           --   -- require('platformio.piolsp').piolsp()
           --   piolsp()

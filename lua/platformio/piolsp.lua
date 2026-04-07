@@ -2,10 +2,18 @@ local M = {}
 
 local utils = require('platformio.utils')
 local config = require('platformio').config
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+
+function M.cleanup(selected_framework)
+  vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
+  M.fix_pio_compile_commands()
+  M.gitignore_lsp_configs('compile_commands.json')
+  boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+  M.lsp_restart('clangd')
+end
 
 function M.fix_pio_compile_commands()
-  local cwd = vim.fn.getcwd()
-  local filename = cwd .. '/compile_commands.json'
+  local filename = 'compile_commands.json'
   local file = io.open(filename, 'r')
   if not file then
     return
@@ -13,9 +21,14 @@ function M.fix_pio_compile_commands()
 
   local content = file:read('*a')
   file:close()
+  if not content or content == '' then
+    return
+  end
 
+  -- Safe JSON decoding
   local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= 'table' then
+    vim.notify('PIO Fix: Invalid JSON in ' .. filename, vim.log.levels.ERROR)
     return
   end
 
@@ -62,13 +75,14 @@ function M.fix_pio_compile_commands()
   end
 
   -- PHASE 3: Save and Refresh
-  if modified > 0 then
+  -- Safe JSON encoding
+  local encode_ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
+  if encode_ok and json_str then
     local out_file = io.open(filename, 'w')
     if out_file then
-      out_file:write(vim.json.encode(data, { indent = '  ' }))
+      out_file:write(json_str)
       out_file:close()
-      vim.notify('PIO: Auto-resolved ' .. modified .. ' driver paths', vim.log.levels.INFO)
-      M.lsp_restart('clangd')
+      vim.cmd('LspRestart')
     end
   end
 end

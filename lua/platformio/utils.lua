@@ -3,8 +3,40 @@ local M = {}
 local config = require('platformio').config
 
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
-M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
+-- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+------------------------------------------------------
+local uv, active = vim.uv or vim.loop, {}
+-- stylua: ignore
+function M.watch_once_and_run(file, callback, timeout)
+  local path = vim.fn.fnamemodify(file, ":p") -- Get absolute path
+  if type(callback) ~= "function" or active[path] then return end
+
+  local event, timer = uv.new_fs_event(), uv.new_timer()
+  if not event or not timer then return end
+
+  local function cleanup()
+    active[path] = nil
+    if not timer:is_closing() then timer:stop(); timer:close() end
+    if not event:is_closing() then event:stop(); event:close() end
+  end
+
+  active[path] = true
+  timer:start(timeout or 60000, 0, vim.schedule_wrap(function()
+    if active[path] then cleanup(); vim.notify("Timeout: "..file, 3) end
+  end))
+
+  event:start(path, {}, vim.schedule_wrap(function(err)
+    if not err and uv.fs_stat(path) then
+      cleanup()
+      local ok, msg = pcall(callback)
+      if not ok then vim.notify("Error: "..tostring(msg), 4) end
+      pcall(os.remove, path)
+    end
+  end))
+end
+
+------------------------------------------------------
 function M.strsplit(inputstr, del)
   local t = {}
   if type(inputstr) == 'string' and inputstr and inputstr ~= '' then
