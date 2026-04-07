@@ -61,7 +61,7 @@ function M.fix_pio_compile_commands()
       vim.notify('Fixed ' .. modified .. ' paths in compile_commands.json', vim.log.levels.INFO)
       -- Trigger LSP reload to pick up new paths
       -- vim.cmd('LspRestart')
-      M.lsp_restart()
+      M.lsp_restart('clangd')
     end
   end
 end
@@ -201,7 +201,7 @@ function M.lsp_restart(name)
       if not ok then
         vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
       else
-        vim.notify('LSP ' .. name .. ' restarted')
+        vim.notify('LSP ' .. name .. ' restarted' .. err)
       end
     end
   else
