@@ -9,8 +9,6 @@ local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local piolsp = require('platformio.piolsp') --.piolsp
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -45,6 +43,7 @@ local boardentry_maker = function(opts)
   end
 end
 
+M.selected_framework = ''
 local function pick_framework(board_details)
   local opts = {}
   pickers
@@ -57,42 +56,12 @@ local function pick_framework(board_details)
         actions.select_default:replace(function()
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
-          local selected_framework = selection[1]
+          M.selected_framework = selection[1]
 
-          local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. selected_framework .. '"'
+          local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. M.selected_framework .. '"'
           -- command = command .. ' && pio run -t compiledb'
 
-          -- Handle after 'pio run -t compiledb' execution
-          local function handleDb(_, _, data, _)
-            for _, line in ipairs(data) do
-              local clean_line = line:gsub('%s+', '')
-              if clean_line:find('___PIO_SUCCESS___') then
-                vim.schedule(function()
-                  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
-                  piolsp.fix_pio_compile_commands()
-                  vim.notify('compiledb: fixed', vim.log.levels.INFO)
-                  piolsp.gitignore_lsp_configs('compile_commands.json')
-                  piolsp.lsp_restart('clangd')
-                  vim.notify('compiledb: Success', vim.log.levels.INFO)
-                end)
-              end
-            end
-          end
-          -- Handle after poioinit execution
-          local function handlePioinit(_, _, data, _)
-            for _, line in ipairs(data) do
-              local clean_line = line:gsub('%s+', '')
-              if clean_line:find('___PIO_SUCCESS___') then
-                vim.schedule(function()
-                  vim.notify('Pioinit: Success', vim.log.levels.INFO)
-                  boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-                  command = 'pio run -t compiledb'
-                  utils.ToggleTerminal(command, 'float', handleDb)
-                end)
-              end
-            end
-          end
-          utils.ToggleTerminal(command, 'float', handlePioinit)
+          utils.ToggleTerminal(command, 'float', utils.handlePioinit)
           -- vim.defer_fn(function()
           --   vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
           --   piolsp.gitignore_lsp_configs('compile_commands.json')

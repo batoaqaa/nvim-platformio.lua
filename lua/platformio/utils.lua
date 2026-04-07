@@ -1,3 +1,6 @@
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+local piolsp = require('platformio.piolsp') --.piolsp
+local pioinit = require('platformio.pioinit')
 local M = {}
 
 local config = require('platformio').config
@@ -5,6 +8,37 @@ local config = require('platformio').config
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+-- Handle after 'pio run -t compiledb' execution
+function M.handleDb(_, _, data, _)
+  for _, line in ipairs(data) do
+    local clean_line = line:gsub('%s+', '')
+    if clean_line:find('___PIO_SUCCESS___') then
+      vim.schedule(function()
+        vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+        piolsp.fix_pio_compile_commands()
+        vim.notify('compiledb: fixed', vim.log.levels.INFO)
+        piolsp.gitignore_lsp_configs('compile_commands.json')
+        piolsp.lsp_restart('clangd')
+        vim.notify('compiledb: Success', vim.log.levels.INFO)
+      end)
+    end
+  end
+end
+-- Handle after poioinit execution
+function M.handlePioinit(_, _, data, _)
+  vim.notify('Pioinit: Success', vim.log.levels.INFO)
+  for _, line in ipairs(data) do
+    local clean_line = line:gsub('%s+', '')
+    if clean_line:find('___PIO_SUCCESS___') then
+      vim.schedule(function()
+        vim.notify('Pioinit: Success', vim.log.levels.INFO)
+        boilerplate_gen(pioinit.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+        local command = 'pio run -t compiledb'
+        M.ToggleTerminal(command, 'float', M.handleDb)
+      end)
+    end
+  end
+end
 ------------------------------------------------------
 -- local uv, active = vim.uv or vim.loop, {}
 -- --stylua: ignore
