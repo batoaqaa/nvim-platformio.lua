@@ -21,7 +21,7 @@ function M.fix_pio_compile_commands()
 
   local path_map = {}
   local modified = 0
-
+  print('PioFix0')
   -- Phase 1: Discover paths
   for _, entry in ipairs(data) do
     if type(entry.command) == 'string' then
@@ -37,12 +37,13 @@ function M.fix_pio_compile_commands()
           -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
           local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
           path_map[name] = driver_path
-          print(driver_path)
+          print('PioFix1')
         end
       end
     end
   end
 
+  print('PioFix2')
   -- Phase 2: Replace bare names
   for _, entry in ipairs(data) do
     if type(entry.command) == 'string' then
@@ -63,6 +64,7 @@ function M.fix_pio_compile_commands()
     end
   end
 
+  print('PioFix3')
   if modified > 0 then
     local out_file = io.open(filename, 'w')
     if out_file then
