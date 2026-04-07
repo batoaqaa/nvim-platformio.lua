@@ -3,12 +3,21 @@ local M = {}
 local utils = require('platformio.utils')
 local config = require('platformio').config
 
-function M.fix_pio_compile_commands()
-  local json_path = vim.fn.getcwd() .. '/compile_commands.json'
+local function fix_pio_compile_commands()
+  local cwd = vim.fn.getcwd()
+  local json_path = cwd .. '/compile_commands.json'
+
+  -- 1. Generate if missing
   if vim.fn.filereadable(json_path) == 0 then
-    return
+    if vim.fn.filereadable(cwd .. '/platformio.ini') == 1 then
+      print('PIO: Generating compilation database...')
+      vim.fn.system('pio run -t compiledb')
+    else
+      return
+    end
   end
 
+  -- 2. Read and Decode
   local file = io.open(json_path, 'r')
   local content = file:read('*all')
   file:close()
@@ -18,28 +27,34 @@ function M.fix_pio_compile_commands()
     return
   end
 
-  -- Use vim.fn.glob and vim.split for Neovim compatibility
+  -- 3. Get Toolchain Path
   local glob_result = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
   if glob_result == '' then
     return
   end
-
-  -- CORRECTED: Use vim.split() instead of :split()
-  local toolchain_bin = vim.split(glob_result, '\n')[1]
+  local toolchain_bin = vim.split(glob_result, '\n')[1] -- Ensure we get a single string
 
   local changed = false
   for _, entry in ipairs(data) do
-    if entry.command and not entry.command:match('^/') then
-      entry.command = toolchain_bin .. entry.command
-      changed = true
+    if entry.command then
+      -- IMPROVEMENT: Only prepend if it's NOT already an absolute path
+      -- AND it doesn't already contain the toolchain path (prevents double-prepending)
+      if not entry.command:match('^/') and not entry.command:find(toolchain_bin, 1, true) then
+        entry.command = toolchain_bin .. entry.command
+        changed = true
+      end
     end
   end
 
+  -- 4. Save with Formatting
   if changed then
     local out_file = io.open(json_path, 'w')
+    -- Using indent makes the file human-readable and less likely to "mess up"
     out_file:write(vim.fn.json_encode(data))
     out_file:close()
-    print('PIO: Fixed compiler paths in compile_commands.json')
+
+    print('PIO: Paths localized in compile_commands.json')
+    vim.cmd('LspRestart clangd')
   end
 end
 
