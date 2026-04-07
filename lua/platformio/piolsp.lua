@@ -201,7 +201,7 @@ function M.lsp_restart(name)
       if not ok then
         vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
       else
-        vim.notify('LSP ' .. name .. ' restarted : ' .. err)
+        vim.notify('LSP ' .. name .. ' restarted')
       end
     end
   else
