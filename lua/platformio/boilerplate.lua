@@ -372,6 +372,9 @@ WhitespaceSensitiveMacros:
 boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
+  Add: [
+      --target=riscv32-esp-elf,
+  ]
   Remove: [
       -misc-definitions-in-headers,
       -fno-tree-switch-conversion,
