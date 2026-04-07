@@ -69,10 +69,19 @@ function M.fix_pio_compile_commands()
   if modified > 0 then
     local out_file = io.open(filename, 'w')
     if out_file then
-      out_file:write(vim.json.encode(data))
-      out_file:close()
-      vim.notify('PIO: Fixed ' .. modified .. ' toolchain paths (' .. vim.loop.os_uname().sysname .. ')', vim.log.levels.INFO)
-      M.lsp_restart('clangd')
+      -- Encode with 2-space indentation
+      local success, json_str = pcall(vim.json.encode, data, { indent = '  ' })
+
+      print('PioFix4')
+      if success then
+        out_file:write(json_str)
+        out_file:close()
+        vim.notify('PIO: Paths fixed and JSON formatted.', vim.log.levels.INFO)
+        vim.cmd('LspRestart')
+      else
+        out_file:close()
+        vim.notify('LSP: Failed to encode JSON', vim.log.levels.ERROR)
+      end
     end
   end
 end
