@@ -67,18 +67,21 @@ function M.fix_pio_compile_commands()
 
   print('PioFix3')
   if modified > 0 then
+    print('PioFix4')
     local out_file = io.open(filename, 'w')
     if out_file then
       -- Encode with 2-space indentation
       local success, json_str = pcall(vim.json.encode, data, { indent = '  ' })
 
-      print('PioFix4')
+      print('PioFix5')
       if success then
+        print('PioFix6')
         out_file:write(json_str)
         out_file:close()
         vim.notify('PIO: Paths fixed and JSON formatted.', vim.log.levels.INFO)
         M.lsp_restart('clangd')
       else
+        print('PioFix7')
         out_file:close()
         vim.notify('LSP: Failed to encode JSON', vim.log.levels.ERROR)
       end
