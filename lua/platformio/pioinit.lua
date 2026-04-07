@@ -12,6 +12,31 @@ local previewers = require('telescope.previewers')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
 
+local function fix_pio_compile_commands()
+  local fname = 'compile_commands.json'
+  local f = io.open(fname, 'r')
+  if not f then
+    return
+  end
+
+  local content = f:read('*all')
+  f:close()
+
+  -- Find the actual toolchain path
+  local toolchain_path = vim.fn.expand('~/.platformio/packages/toolchain-*/bin/')
+  local full_path = vim.fn.glob(toolchain_path):split('\n')[1] -- Get the first match
+
+  if full_path then
+    -- Replace short compiler name with full path (example for avr-gcc)
+    -- You can repeat this for xtensa-esp32-elf-gcc, etc.
+    local fixed_content = content:gsub('"command": "([^/][^"]*%-gcc)', '"command": "' .. full_path .. '%1')
+
+    local f_out = io.open(fname, 'w')
+    f_out:write(fixed_content)
+    f_out:close()
+  end
+end
+
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
     separator = '▏',
@@ -67,6 +92,7 @@ local function pick_framework(board_details)
             vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
             piolsp.gitignore_lsp_configs('compile_commands.json')
             boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+            fix_pio_compile_commands()
             piolsp.lsp_restart('clangd')
           end, 3000)
           -- utils.ToggleTerminal(command, 'float', function()
