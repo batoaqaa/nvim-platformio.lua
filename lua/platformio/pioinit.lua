@@ -13,29 +13,78 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
 
 local function fix_pio_compile_commands()
-  local fname = 'compile_commands.json'
-  local f = io.open(fname, 'r')
-  if not f then
+  local json_path = vim.fn.getcwd() .. '/compile_commands.json'
+  if vim.fn.filereadable(json_path) == 0 then
     return
   end
 
-  local content = f:read('*all')
-  f:close()
+  -- 1. Read and Parse JSON
+  local file = io.open(json_path, 'r')
+  local content = file:read('*all')
+  file:close()
 
-  -- Find the actual toolchain path
-  local toolchain_path = vim.fn.expand('~/.platformio/packages/toolchain-*/bin/')
-  local full_path = vim.fn.glob(toolchain_path):split('\n')[1] -- Get the first match
+  local ok, data = pcall(vim.fn.json_decode, content)
+  if not ok or type(data) ~= 'table' then
+    return
+  end
 
-  if full_path then
-    -- Replace short compiler name with full path (example for avr-gcc)
-    -- You can repeat this for xtensa-esp32-elf-gcc, etc.
-    local fixed_content = content:gsub('"command": "([^/][^"]*%-gcc)', '"command": "' .. full_path .. '%1')
+  -- 2. Find the PIO Toolchain Bin directory
+  -- This glob finds the first toolchain bin folder available in your PIO packages
+  local toolchain_bin = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
+  if toolchain_bin == '' then
+    return
+  end
+  toolchain_bin = toolchain_bin:split('\n')[1] -- Use the first match
 
-    local f_out = io.open(fname, 'w')
-    f_out:write(fixed_content)
-    f_out:close()
+  local changed = false
+  for _, entry in ipairs(data) do
+    -- 3. Check if 'command' starts with a raw compiler name (no leading slash)
+    -- This pattern looks for "compiler-name" and prepends the full path
+    if entry.command and not entry.command:match('^/') then
+      entry.command = toolchain_bin .. entry.command
+      changed = true
+    end
+  end
+
+  -- 4. Only write if we actually modified something
+  if changed then
+    local out_file = io.open(json_path, 'w')
+    out_file:write(vim.fn.json_encode(data))
+    out_file:close()
+    print('PIO: Fixed compiler paths in compile_commands.json')
   end
 end
+
+-- Run it automatically when entering a C/C++ file
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+  pattern = { '*.c', '*.cpp', '*.h', '*.hpp' },
+  callback = fix_pio_compile_commands,
+})
+
+-- local function fix_pio_compile_commands()
+--   local fname = 'compile_commands.json'
+--   local f = io.open(fname, 'r')
+--   if not f then
+--     return
+--   end
+--
+--   local content = f:read('*all')
+--   f:close()
+--
+--   -- Find the actual toolchain path
+--   local toolchain_path = vim.fn.expand('~/.platformio/packages/toolchain-*/bin/')
+--   local full_path = vim.fn.glob(toolchain_path):split('\n')[1] -- Get the first match
+--
+--   if full_path then
+--     -- Replace short compiler name with full path (example for avr-gcc)
+--     -- You can repeat this for xtensa-esp32-elf-gcc, etc.
+--     local fixed_content = content:gsub('"command": "([^/][^"]*%-gcc)', '"command": "' .. full_path .. '%1')
+--
+--     local f_out = io.open(fname, 'w')
+--     f_out:write(fixed_content)
+--     f_out:close()
+--   end
+-- end
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
