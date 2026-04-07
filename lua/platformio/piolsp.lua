@@ -38,7 +38,7 @@ function M.fix_pio_compile_commands()
           -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
           local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
           path_map[name] = driver_path
-          print('PioFix1')
+          print('PioFix1:' .. driver_path)
         end
       end
     end
