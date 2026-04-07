@@ -106,11 +106,12 @@ clangd
 --pch-storage=memory
 --pretty
 --ranking-model=decision_forest
---query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
+--query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
 ]],
   content = function(self)
     return string.format(self.template, vim.env.HOME)
   end,
+  --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
   --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
   --query-driver=**
   --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
