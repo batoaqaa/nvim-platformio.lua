@@ -1,4 +1,4 @@
-local piolsp = require('platformio.piolsp') --.piolsp
+-- local piolsp = require('platformio.piolsp') --.piolsp
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
@@ -105,7 +105,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 --   fix paths in compile_commands.json
 -- Create a manual command: :PioFixPaths
-vim.api.nvim_create_user_command('PioFixPaths', piolsp.fix_pio_compile_commands, {})
+-- vim.api.nvim_create_user_command('PioFixPaths', piolsp.fix_pio_compile_commands, {})
 
 vim.api.nvim_create_autocmd('LspDetach', {
   group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),

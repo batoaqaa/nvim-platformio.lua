@@ -2,6 +2,7 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
 local pioinit = require('platformio.pioinit')
 local M = {}
+M.selected_framework = ''
 
 local config = require('platformio').config
 

@@ -43,7 +43,6 @@ local boardentry_maker = function(opts)
   end
 end
 
-M.selected_framework = ''
 local function pick_framework(board_details)
   local opts = {}
   pickers
@@ -56,9 +55,9 @@ local function pick_framework(board_details)
         actions.select_default:replace(function()
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
-          M.selected_framework = selection[1]
+          utils.selected_framework = selection[1]
 
-          local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. M.selected_framework .. '"'
+          local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"'
           -- command = command .. ' && pio run -t compiledb'
 
           utils.ToggleTerminal(command, 'float', utils.handlePioinit)

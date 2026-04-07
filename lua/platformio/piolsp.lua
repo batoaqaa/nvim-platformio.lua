@@ -1,7 +1,5 @@
 local M = {}
 
-local utils = require('platformio.utils')
-local config = require('platformio').config
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 function M.cleanup(selected_framework)
