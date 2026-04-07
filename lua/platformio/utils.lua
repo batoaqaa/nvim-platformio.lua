@@ -31,7 +31,14 @@ function M.watch_once_and_run(file, callback, timeout)
       cleanup()
       local ok, msg = pcall(callback)
       if not ok then vim.notify("Error: "..tostring(msg), 4) end
-      pcall(os.remove, path)
+      -- pcall(os.remove, path)
+      -- Use the native libuv unlink for better cross-platform deletion
+      uv.fs_unlink(path, function(unlink_err)
+        if unlink_err then
+          -- If it fails, try a delayed retry (common for Windows locks)
+          vim.defer_fn(function() pcall(os.remove, path) end, 500)
+        end
+      end)
     end
   end))
 end
