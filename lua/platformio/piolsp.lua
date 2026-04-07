@@ -37,6 +37,7 @@ function M.fix_pio_compile_commands()
           -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
           local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
           path_map[name] = driver_path
+          print(driver_path)
         end
       end
     end
@@ -68,7 +69,7 @@ function M.fix_pio_compile_commands()
       out_file:write(vim.json.encode(data))
       out_file:close()
       vim.notify('PIO: Fixed ' .. modified .. ' toolchain paths (' .. vim.loop.os_uname().sysname .. ')', vim.log.levels.INFO)
-      vim.cmd('LspRestart')
+      M.lsp_restart('clangd')
     end
   end
 end
