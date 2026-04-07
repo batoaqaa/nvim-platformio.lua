@@ -5,7 +5,8 @@ local config = require('platformio').config
 
 function M.fix_pio_compile_commands()
   local cwd = vim.fn.getcwd()
-  local filename = cwd .. 'compile_commands.json'
+  local filename = cwd .. '/compile_commands.json'
+  print('PioFix0:' .. filename)
   local file = io.open(filename, 'r')
   if not file then
     return
