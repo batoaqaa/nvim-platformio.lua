@@ -6,7 +6,6 @@ local config = require('platformio').config
 function M.fix_pio_compile_commands()
   local cwd = vim.fn.getcwd()
   local filename = cwd .. '/compile_commands.json'
-  print('PioFix0:' .. filename)
   local file = io.open(filename, 'r')
   if not file then
     return
@@ -20,42 +19,35 @@ function M.fix_pio_compile_commands()
     return
   end
 
+  -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
-  local modified = 0
-  print('PioFix0')
-  -- Phase 1: Discover paths
-  for _, entry in ipairs(data) do
-    if type(entry.command) == 'string' then
-      -- Handle both spaces and potential escaped quotes in commands
-      local cmd_parts = vim.split(entry.command, ' ')
-      local driver_path = cmd_parts[1]
+  local pio_home = os.getenv('HOME') or os.getenv('USERPROFILE')
+  if pio_home then
+    -- Recursively find all binaries in PIO packages
+    local pio_packages = pio_home .. '/.platformio/packages/*/bin/*'
+    local found_binaries = vim.fn.glob(pio_packages, false, true)
 
-      if driver_path then
-        -- Detect Absolute Path: Starts with / (Linux) or X:\ (Windows)
-        local is_abs = driver_path:sub(1, 1) == '/' or driver_path:match('^%a:[/\\]')
-
-        if is_abs then
-          -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
-          local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-          path_map[name] = driver_path
-          print('PioFix1: driver_path=' .. driver_path .. ' name=' .. name)
-        end
-      end
+    for _, full_path in ipairs(found_binaries) do
+      -- Extract filename (e.g., riscv32-esp-elf-gcc)
+      local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+      path_map[name] = full_path
     end
   end
 
-  print('PioFix2')
-  -- Phase 2: Replace bare names
+  -- PHASE 2: Update JSON using the Map
+  local modified = 0
   for _, entry in ipairs(data) do
     if type(entry.command) == 'string' then
       local cmd_parts = vim.split(entry.command, ' ')
-      local first = cmd_parts[1]
+      local first_token = cmd_parts[1]
 
-      if first then
-        local is_abs = first:sub(1, 1) == '/' or first:match('^%a:[/\\]')
+      if first_token then
+        -- Check if it's already a short name (not an absolute path)
+        local is_abs = first_token:sub(1, 1) == '/' or first_token:match('^%a:[/\\]')
+
         if not is_abs then
-          local short_name = first:gsub('%.exe$', '')
-          print('PioFix20:' .. short_name)
+          local short_name = first_token:gsub('%.exe$', '')
+          -- Direct Query: Does this name exist in our discovered list?
           if path_map[short_name] then
             cmd_parts[1] = path_map[short_name]
             entry.command = table.concat(cmd_parts, ' ')
@@ -66,29 +58,104 @@ function M.fix_pio_compile_commands()
     end
   end
 
-  print('PioFix3')
+  -- PHASE 3: Save and Refresh
   if modified > 0 then
-    print('PioFix4')
     local out_file = io.open(filename, 'w')
     if out_file then
-      -- Encode with 2-space indentation
-      local success, json_str = pcall(vim.json.encode, data, { indent = '  ' })
-
-      print('PioFix5')
-      if success then
-        print('PioFix6')
-        out_file:write(json_str)
-        out_file:close()
-        vim.notify('PIO: Paths fixed and JSON formatted.', vim.log.levels.INFO)
-        M.lsp_restart('clangd')
-      else
-        print('PioFix7')
-        out_file:close()
-        vim.notify('LSP: Failed to encode JSON', vim.log.levels.ERROR)
-      end
+      out_file:write(vim.json.encode(data, { indent = '  ' }))
+      out_file:close()
+      vim.notify('PIO: Auto-resolved ' .. modified .. ' driver paths', vim.log.levels.INFO)
+      M.lsp_restart('clangd')
     end
   end
 end
+
+-- function M.fix_pio_compile_commands()
+--   local cwd = vim.fn.getcwd()
+--   local filename = cwd .. '/compile_commands.json'
+--   print('PioFix0:' .. filename)
+--   local file = io.open(filename, 'r')
+--   if not file then
+--     return
+--   end
+--
+--   local content = file:read('*a')
+--   file:close()
+--
+--   local ok, data = pcall(vim.json.decode, content)
+--   if not ok or type(data) ~= 'table' then
+--     return
+--   end
+--
+--   local path_map = {}
+--   local modified = 0
+--   print('PioFix0')
+--   -- Phase 1: Discover paths
+--   for _, entry in ipairs(data) do
+--     if type(entry.command) == 'string' then
+--       -- Handle both spaces and potential escaped quotes in commands
+--       local cmd_parts = vim.split(entry.command, ' ')
+--       local driver_path = cmd_parts[1]
+--
+--       if driver_path then
+--         -- Detect Absolute Path: Starts with / (Linux) or X:\ (Windows)
+--         local is_abs = driver_path:sub(1, 1) == '/' or driver_path:match('^%a:[/\\]')
+--
+--         if is_abs then
+--           -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
+--           local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+--           path_map[name] = driver_path
+--           print('PioFix1: driver_path=' .. driver_path .. ' name=' .. name)
+--         end
+--       end
+--     end
+--   end
+--
+--   print('PioFix2')
+--   -- Phase 2: Replace bare names
+--   for _, entry in ipairs(data) do
+--     if type(entry.command) == 'string' then
+--       local cmd_parts = vim.split(entry.command, ' ')
+--       local first = cmd_parts[1]
+--
+--       if first then
+--         local is_abs = first:sub(1, 1) == '/' or first:match('^%a:[/\\]')
+--         if not is_abs then
+--           local short_name = first:gsub('%.exe$', '')
+--           print('PioFix20:' .. short_name)
+--           if path_map[short_name] then
+--             cmd_parts[1] = path_map[short_name]
+--             entry.command = table.concat(cmd_parts, ' ')
+--             modified = modified + 1
+--           end
+--         end
+--       end
+--     end
+--   end
+--
+--   print('PioFix3')
+--   if modified > 0 then
+--     print('PioFix4')
+--     local out_file = io.open(filename, 'w')
+--     if out_file then
+--       -- Encode with 2-space indentation
+--       local success, json_str = pcall(vim.json.encode, data, { indent = '  ' })
+--
+--       print('PioFix5')
+--       if success then
+--         print('PioFix6')
+--         out_file:write(json_str)
+--         out_file:close()
+--         vim.notify('PIO: Paths fixed and JSON formatted.', vim.log.levels.INFO)
+--         M.lsp_restart('clangd')
+--       else
+--         print('PioFix7')
+--         out_file:close()
+--         vim.notify('LSP: Failed to encode JSON', vim.log.levels.ERROR)
+--       end
+--     end
+--   end
+-- end
 
 -- -- Cache the toolchain path once globally so we don't glob on every save
 -- local cached_toolchain = nil
