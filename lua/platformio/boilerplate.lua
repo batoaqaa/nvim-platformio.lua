@@ -60,12 +60,7 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 
 # Method 1: Safe retrieval with a default message
 print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
-
-# Method 2: Direct access (will raise an error if the key is missing)
-# print(env["COMPILATIONDB_INCLUDE_TOOLCHAIN"])
 print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
-# Optional: ensure it saves to the root of your project
-#env.Replace(COMPILATIONDB_PATH="compile_commands.json")
 ]],
   --   content = [[
   -- Import("env")
