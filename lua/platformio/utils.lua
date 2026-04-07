@@ -1,6 +1,6 @@
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
-local pioinit = require('platformio.pioinit')
+-- local pioinit = require('platformio.pioinit')
 local M = {}
 M.selected_framework = ''
 
@@ -33,7 +33,7 @@ function M.handlePioinit(_, _, data, _)
     if clean_line:find('___PIO_SUCCESS___') then
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
-        boilerplate_gen(pioinit.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+        boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
         local command = 'pio run -t compiledb'
         M.ToggleTerminal(command, 'float', M.handleDb)
       end)
