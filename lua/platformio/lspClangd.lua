@@ -89,7 +89,8 @@ local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
     -- ensure_installed = { 'clangd', 'pyrefly' },
-    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
+    ensure_installed = { 'ccls', 'lua_ls', 'pyrefly', 'yamlls' },
+    -- ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
@@ -115,6 +116,30 @@ vim.lsp.config('*', {
   root_markers = { '.git' },
   workspace_required = false,
 })
+
+----------------------------------------------------------------------------------------
+-- INFO: configure ccls lsp server
+-----------------------------------------------------------------------------------------
+-- vim.lsp.config('ccls', {
+--   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+--   root_markers = {
+--     'CMakeLists.txt',
+--     '.clangd',
+--     '.clang-tidy',
+--     '.clang-format',
+--     'compile_commands.json',
+--     'compile_flags.txt',
+--     'configure.ac',
+--     '.git',
+--     vim.uv.cwd(),
+--   },
+--   init_options = {
+--     diagnostics = {
+--       onChange = 100,
+--     },
+--   },
+-- })
+-- vim.lsp.enable('ccls')
 
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server

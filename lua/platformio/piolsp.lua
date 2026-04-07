@@ -4,64 +4,71 @@ local utils = require('platformio.utils')
 local config = require('platformio').config
 
 function M.fix_pio_compile_commands()
-  local filename = 'compile_commands.json'
+  local cwd = vim.fn.getcwd()
+  local filename = cwd .. 'compile_commands.json'
   local file = io.open(filename, 'r')
   if not file then
     return
-  end -- Gracefully exit if file is missing
+  end
 
   local content = file:read('*a')
   file:close()
 
-  -- Safe JSON decoding with error handling
   local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= 'table' then
-    vim.notify('LSP: Failed to parse compile_commands.json', vim.log.levels.ERROR)
     return
   end
 
   local path_map = {}
   local modified = 0
 
-  -- Phase 1: Discover absolute paths from existing entries
+  -- Phase 1: Discover paths
   for _, entry in ipairs(data) do
     if type(entry.command) == 'string' then
+      -- Handle both spaces and potential escaped quotes in commands
       local cmd_parts = vim.split(entry.command, ' ')
       local driver_path = cmd_parts[1]
-      -- Check for Linux (/...) or Windows (C:...) absolute paths
-      if driver_path and (driver_path:sub(1, 1) == '/' or driver_path:match('^%a:')) then
-        local driver_name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-        path_map[driver_name] = driver_path
-      end
-    end
-  end
 
-  -- Phase 2: Replace bare driver names with discovered absolute paths
-  for _, entry in ipairs(data) do
-    if type(entry.command) == 'string' then
-      local cmd_parts = vim.split(entry.command, ' ')
-      local first = cmd_parts[1]
-      if first and not (first:sub(1, 1) == '/' or first:match('^%a:')) then
-        local short_name = first:gsub('%.exe$', '')
-        if path_map[short_name] then
-          cmd_parts[1] = path_map[short_name]
-          entry.command = table.concat(cmd_parts, ' ')
-          modified = modified + 1
+      if driver_path then
+        -- Detect Absolute Path: Starts with / (Linux) or X:\ (Windows)
+        local is_abs = driver_path:sub(1, 1) == '/' or driver_path:match('^%a:[/\\]')
+
+        if is_abs then
+          -- Extract name: works for /path/to/gcc and C:\path\to\gcc.exe
+          local name = driver_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+          path_map[name] = driver_path
         end
       end
     end
   end
 
-  -- Save changes only if modifications were made
+  -- Phase 2: Replace bare names
+  for _, entry in ipairs(data) do
+    if type(entry.command) == 'string' then
+      local cmd_parts = vim.split(entry.command, ' ')
+      local first = cmd_parts[1]
+
+      if first then
+        local is_abs = first:sub(1, 1) == '/' or first:match('^%a:[/\\]')
+        if not is_abs then
+          local short_name = first:gsub('%.exe$', '')
+          if path_map[short_name] then
+            cmd_parts[1] = path_map[short_name]
+            entry.command = table.concat(cmd_parts, ' ')
+            modified = modified + 1
+          end
+        end
+      end
+    end
+  end
+
   if modified > 0 then
     local out_file = io.open(filename, 'w')
     if out_file then
       out_file:write(vim.json.encode(data))
       out_file:close()
-      vim.notify('Fixed ' .. modified .. ' paths in compile_commands.json', vim.log.levels.INFO)
-      -- Trigger LSP reload to pick up new paths
-      -- vim.cmd('LspRestart')
-      M.lsp_restart('clangd')
+      vim.notify('PIO: Fixed ' .. modified .. ' toolchain paths (' .. vim.loop.os_uname().sysname .. ')', vim.log.levels.INFO)
+      vim.cmd('LspRestart')
     end
   end
 end
