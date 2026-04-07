@@ -12,46 +12,6 @@ local previewers = require('telescope.previewers')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
 
-local function fix_pio_compile_commands()
-  local json_path = vim.fn.getcwd() .. '/compile_commands.json'
-  if vim.fn.filereadable(json_path) == 0 then
-    return
-  end
-
-  local file = io.open(json_path, 'r')
-  local content = file:read('*all')
-  file:close()
-
-  local ok, data = pcall(vim.fn.json_decode, content)
-  if not ok or type(data) ~= 'table' then
-    return
-  end
-
-  -- Use vim.fn.glob and vim.split for Neovim compatibility
-  local glob_result = vim.fn.glob(vim.env.HOME .. '/.platformio/packages/toolchain-*/bin/')
-  if glob_result == '' then
-    return
-  end
-
-  -- CORRECTED: Use vim.split() instead of :split()
-  local toolchain_bin = vim.split(glob_result, '\n')[1]
-
-  local changed = false
-  for _, entry in ipairs(data) do
-    if entry.command and not entry.command:match('^/') then
-      entry.command = toolchain_bin .. entry.command
-      changed = true
-    end
-  end
-
-  if changed then
-    local out_file = io.open(json_path, 'w')
-    out_file:write(vim.fn.json_encode(data))
-    out_file:close()
-    print('PIO: Fixed compiler paths in compile_commands.json')
-  end
-end
-
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
     separator = '▏',
