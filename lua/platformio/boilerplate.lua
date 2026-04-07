@@ -373,43 +373,42 @@ boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
   Add: [
-      --target=riscv32-esp-elf,
+    --target=riscv32-esp-elf,
   ]
   Remove: [
-      -misc-definitions-in-headers,
-      -fno-tree-switch-conversion,
-      -mtext-section-literals,
-      -mlong-calls,
-      -mlongcalls,
-      -fstrict-volatile-bitfields,
-      -free*,
-      -fipa-pta*,
-      -march=*,
-      -mabi=*,
-      -mcpu=*,
-    ]
+    -misc-definitions-in-headers,
+    -fno-tree-switch-conversion,
+    -mtext-section-literals,
+    -mlong-calls,
+    -mlongcalls,
+    -fstrict-volatile-bitfields,
+    -free*,
+    -fipa-pta*,
+    -march=*,
+    -mabi=*,
+    -mcpu=*,
+  ]
 Diagnostics:
   Suppress: [
-      "misc-definitions-in-headers",
-      "pp_including_mainfile_in_preamble",
-      "misc-unused-using-decls",
-      "unused-includes",
-    ]
+    "misc-definitions-in-headers",
+    "pp_including_mainfile_in_preamble",
+    "misc-unused-using-decls",
+    "unused-includes",
+  ]
   ClangTidy:
     Remove: [
-        readability-*,
-        cert-err58-cpp,
-        llvmlibc-*,
-        fuchsia-*,
-        hicpp-avoid-c-arrays,
-        cppcoreguidelines-*,
-        llvm-*,
-        google-*,
-        bugprone-*,
-        hicpp-vararg,
-        modernize-*,
-      ]
-
+      readability-*,
+      cert-err58-cpp,
+      llvmlibc-*,
+      fuchsia-*,
+      hicpp-avoid-c-arrays,
+      cppcoreguidelines-*,
+      llvm-*,
+      google-*,
+      bugprone-*,
+      hicpp-vararg,
+      modernize-*,
+    ]
 ]],
 }
 boilerplate['.stylua.toml'] = {
