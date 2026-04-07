@@ -1,3 +1,4 @@
+local piolsp = require('platformio.piolsp') --.piolsp
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
@@ -24,6 +25,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
             vim.cmd.edit(vim.uri_to_fname(result))
           end, bufnr)
         end, { desc = 'Switch between source/header' })
+        piolsp.fix_pio_compile_commands()
       end
 
       -- use lsp completion if no blink
@@ -91,20 +93,19 @@ vim.api.nvim_create_autocmd('LspAttach', {
     ------------------------------------------------------------------
     vim.cmd([[autocmd FileType * set formatoptions-=ro]])
     --
-    --   fix paths in compile_commands.json
-    local piolsp = require('platformio.piolsp') --.piolsp
-    -- Create a manual command: :PioFixPaths
-    vim.api.nvim_create_user_command('PioFixPaths', piolsp.fix_pio_compile_commands, {})
-
-    -- Optional: Auto-run every time you attach an LSP to a C/C++ file
-    vim.api.nvim_create_autocmd('LspAttach', {
-      pattern = { '*.c', '*.cpp', '*.h', '*.hpp' },
-      callback = function()
-        piolsp.fix_pio_compile_commands()
-      end,
-    })
+    -- -- Optional: Auto-run every time you attach an LSP to a C/C++ file
+    -- vim.api.nvim_create_autocmd('LspAttach', {
+    --   pattern = { '*.c', '*.cpp', '*.h', '*.hpp' },
+    --   callback = function()
+    --     piolsp.fix_pio_compile_commands()
+    --   end,
+    -- })
   end,
 })
+
+--   fix paths in compile_commands.json
+-- Create a manual command: :PioFixPaths
+vim.api.nvim_create_user_command('PioFixPaths', piolsp.fix_pio_compile_commands, {})
 
 vim.api.nvim_create_autocmd('LspDetach', {
   group = vim.api.nvim_create_augroup('LspCleanup', { clear = true }),
