@@ -54,7 +54,7 @@ function M.fix_pio_compile_commands()
     out_file:close()
 
     print('PIO: Paths localized in compile_commands.json')
-    vim.cmd('LspRestart clangd')
+    M.lsp_restart('clangd')
   end
 end
 
