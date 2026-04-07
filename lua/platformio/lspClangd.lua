@@ -89,8 +89,8 @@ local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
     -- ensure_installed = { 'clangd', 'pyrefly' },
-    ensure_installed = { 'ccls', 'lua_ls', 'pyrefly', 'yamlls' },
-    -- ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
+    -- ensure_installed = { 'ccls', 'lua_ls', 'pyrefly', 'yamlls' },
+    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
