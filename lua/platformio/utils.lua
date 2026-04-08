@@ -1,10 +1,13 @@
+local config = require('platformio').config
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local piolsp = require('platformio.piolsp') --.piolsp
+local is_windows = jit.os == 'Windows'
 -- local pioinit = require('platformio.pioinit')
-local M = {}
-M.selected_framework = ''
 
-local config = require('platformio').config
+local M = {}
+
+M.selected_framework = ''
+M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
@@ -13,38 +16,43 @@ local config = require('platformio').config
 -- INFO: Dispatcher
 M.queue = {}
 -- Unified Dispatcher
+-- stylua: ignore
 function M.dispatcher(_, _, data)
-  if #M.queue == 0 then
-    return
-  end
+  if #M.queue == 0 then return end
 
   for _, line in ipairs(data) do
-    -- Match format ___DONE___:SUCCESS or ___DONE___:FAILED
+    -- Regex match: captures 'SUCCESS' or 'FAILED'
     local status = line:match('^___DONE___:(%a+)')
     if status then
       if status == 'SUCCESS' then
         local task = table.remove(M.queue, 1)
-        if task then
-          vim.schedule(task)
-        end
+        if task then vim.schedule(task) end
       else
         M.queue = {} -- Clear queue on any other status (failure)
-        vim.schedule(function()
-          vim.notify('Sequence Aborted', 4)
-        end)
+        vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
       end
       break
     end
   end
 end
+
 -- Improved Runner: Accepts a table of { cmd = "...", cb = function }
+-- stylua: ignore
 M.run_sequence = function(tasks)
   local full_cmd = ''
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
-    -- Chain: (cmd && success_signal) || failure_signal
-    local part = string.format('(%s && echo "___DONE___:SUCCESS") || (echo "___DONE___:FAILED" && exit 1)', task.cmd)
-    full_cmd = full_cmd == '' and part or full_cmd .. ' && ' .. part
+
+    -- Windows CMD/PowerShell specific syntax:
+    -- No parentheses ensures compatibility with basic 'cmd.exe'
+    local success = 'echo ___DONE___:SUCCESS'
+    local failure = 'echo ___DONE___:FAILED'
+
+    -- Chain: command && success || failure
+    local part = string.format('%s && %s || %s', task.cmd, success, failure)
+
+    if full_cmd == '' then full_cmd = part
+    else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
   M.ToggleTerminal(full_cmd, 'float')
 end
@@ -84,9 +92,6 @@ local function pathmul(n)
 end
 
 ------------------------------------------------------
-local is_windows = jit.os == 'Windows'
-
-M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 -- INFO: get current OS enter
 function M.enter()
