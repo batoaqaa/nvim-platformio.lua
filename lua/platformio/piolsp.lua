@@ -80,7 +80,8 @@ function M.fix_pio_compile_commands()
     if out_file then
       out_file:write(json_str)
       out_file:close()
-      vim.cmd('LspRestart')
+      -- vim.cmd('LspRestart')
+      M.lsp_restart('clangd')
     end
   end
 end
