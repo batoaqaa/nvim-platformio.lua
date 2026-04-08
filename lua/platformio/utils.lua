@@ -9,8 +9,9 @@ local config = require('platformio').config
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+------------------------------------------------------
+-- INFO: Dispatcher
 M.queue = {}
-
 -- Unified Dispatcher
 function M.dispatcher(_, _, data)
   if #M.queue == 0 then
@@ -36,9 +37,6 @@ function M.dispatcher(_, _, data)
     end
   end
 end
-
--- M.term = Terminal:new({ on_stdout = M.dispatcher, hidden = true })
-
 -- Improved Runner: Accepts a table of { cmd = "...", cb = function }
 M.run_sequence = function(tasks)
   local full_cmd = ''
@@ -65,48 +63,8 @@ function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
   boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
+-- INFO: endDispatcher
 ------------------------------------------------------
--- local uv, active = vim.uv or vim.loop, {}
--- --stylua: ignore
--- function M.watch_once_and_run(file, callback, timeout)
---     local cwd, full = vim.fn.getcwd(), vim.fn.getcwd()..'/'..file
---     if type(callback) ~= 'function' or active[full] then return end
---
---     local event, timer = uv.new_fs_event(), uv.new_timer()
---     if not event or not timer then return end
---
---     local function cleanup()
---         active[full] = nil
---         if not timer:is_closing() then timer:stop(); timer:close() end
---         if not event:is_closing() then event:stop(); event:close() end
---     end
---
---     active[full] = true
---     timer:start(timeout or 300000, 0, vim.schedule_wrap(function()
---         if active[full] then cleanup(); vim.notify('Timeout: '..file, 3) end
---     end))
---
---     event:start(cwd, {}, vim.schedule_wrap(function(err, fname)
---         if not err and fname == file then
---             vim.defer_fn(function()
---                 if uv.fs_stat(full) then
---                     cleanup()
---                     local ok, msg = pcall(callback)
---                     if ok then
---                       -- pcall(os.remove, full)
---                       local deleted = pcall(os.remove, full)
---                       if not deleted then
---                         -- Final fallback for stubborn Windows locks
---                         vim.fn.system(string.format('rm "%s"', full))
---                       end
---                     else
---                         vim.notify('Callback Error: '..tostring(msg), 4)
---                     end
---                 end
---             end, 200)
---         end
---     end))
--- end
 
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
@@ -219,14 +177,7 @@ end
 
 ------------------------------------------------------
 -- INFO: ToggleTerminal
-function M.ToggleTerminal(command, direction, stdout_callback)
-  if type(stdout_callback) == 'function' then
-    command = command .. ' &&  echo ___PIO_SUCCESS___ || echo ___PIO_FAILED__'
-  else
-    -- stdout_callback = function(_, _, _, _) end
-    stdout_callback = nil
-  end
-
+function M.ToggleTerminal(command, direction)
   local status_ok, _ = pcall(require, 'toggleterm')
   if not status_ok then
     vim.api.nvim_echo({ { 'toggleterm not found!', 'ErrorMsg' } }, true, {})
@@ -352,7 +303,8 @@ function M.ToggleTerminal(command, direction, stdout_callback)
     -- end,
 
     -- INFO: on_stdout
-    on_stdout = stdout_callback,
+    -- on_stdout = stdout_callback,
+    on_stdout = M.dispatcher,
 
     -- INFO: on_create() {
     on_create = function(t)
