@@ -197,7 +197,8 @@ function M.ToggleTerminal(command, direction, stdout_callback)
   if type(stdout_callback) == 'function' then
     command = command .. ' &&  echo ___PIO_SUCCESS___ || echo ___PIO_FAILED__'
   else
-    stdout_callback = function(_, _, _, _) end
+    -- stdout_callback = function(_, _, _, _) end
+    stdout_callback = nil
   end
 
   local status_ok, _ = pcall(require, 'toggleterm')
