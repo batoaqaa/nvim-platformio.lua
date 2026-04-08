@@ -11,10 +11,16 @@ local config = require('platformio').config
 
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb(t, _, data, _)
+  -- Check if we've already marked this specific terminal as 'done'
+  if t.pio_done then
+    return
+  end
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('^___PIO_SUCCESS___') then
-      t.on_stdout = nil
+      -- Set the flag on the terminal object so we never enter this 'for' loop again
+      t.pio_done = true
+      t.on_stdout = function() end
       vim.schedule(function()
         vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
         piolsp.fix_pio_compile_commands()
@@ -28,10 +34,14 @@ function M.handleDb(t, _, data, _)
 end
 -- Handle after poioinit execution
 function M.handlePioinit(t, _, data, _)
+  if t.pio_done then
+    return
+  end
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('^___PIO_SUCCESS___') then
-      t.on_stdout = nil
+      t.pio_done = true
+      t.on_stdout = function() end
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
         boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
