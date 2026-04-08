@@ -63,10 +63,6 @@ local function pick_framework(board_details)
             {
               cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
               cb = utils.handlePioinit,
-              -- cb = function()
-              --   vim.notify('Pioinit: Success', vim.log.levels.INFO)
-              --   boilerplate_gen(utils.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-              -- end,
             },
             {
               cmd = 'pio run -t compiledb',

@@ -70,7 +70,7 @@ function M.fix_pio_compile_commands()
     if out_file then
       out_file:write(json_str)
       out_file:close()
-      -- vim.cmd('LspRestart')
+      vim.notify('compiledb: fixed', vim.log.levels.INFO)
       M.lsp_restart('clangd')
     end
   end

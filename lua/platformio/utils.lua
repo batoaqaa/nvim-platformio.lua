@@ -52,11 +52,9 @@ end
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()
   vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
-  piolsp.fix_pio_compile_commands()
-  vim.notify('compiledb: fixed', vim.log.levels.INFO)
   piolsp.gitignore_lsp_configs('compile_commands.json')
+  piolsp.fix_pio_compile_commands()
   piolsp.lsp_restart('clangd')
-  vim.notify('compiledb: Success', vim.log.levels.INFO)
 end
 -- Handle after poioinit execution
 function M.handlePioinit()
