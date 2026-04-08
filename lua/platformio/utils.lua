@@ -27,7 +27,6 @@ function M.handleDb(_, _, data, _)
 end
 -- Handle after poioinit execution
 function M.handlePioinit(_, _, data, _)
-  vim.notify('Pioinit: Success', vim.log.levels.INFO)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('___PIO_SUCCESS___') then
