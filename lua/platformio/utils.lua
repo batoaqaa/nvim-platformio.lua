@@ -9,18 +9,50 @@ local config = require('platformio').config
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
--- Handle after 'pio run -t compiledb' execution
-function M.handleDb(t, _, data, _)
-  -- Check if we've already marked this specific terminal as 'done'
+function M.pio_sequence_handler(t, _, data, _)
+  -- Table mapping terminal 'echo' signals to specific Lua functions
+  local actions = {
+    ['___FIX_PATHS___'] = function()
+      M.fix_pio_compile_commands()
+      vim.notify('Step 1: Paths Fixed')
+    end,
+    ['___RUN_LINT___'] = function()
+      -- Call a different function here
+      vim.notify('Step 2: Linter triggered')
+    end,
+    ['___CLEANUP___'] = function()
+      t.pio_done = true -- Mark terminal as finished
+      vim.notify('Sequence Complete')
+    end,
+  }
+
   if t.pio_done then
     return
   end
+
+  for _, line in ipairs(data) do
+    local clean_line = line:gsub('%s+', '')
+
+    -- Check if the line matches any of our defined signals
+    for signal, action_fn in pairs(actions) do
+      if clean_line:find(signal) then
+        vim.schedule(action_fn)
+      end
+    end
+  end
+end
+-- Handle after 'pio run -t compiledb' execution
+function M.handleDb(t, _, data, _)
+  -- Check if we've already marked this specific terminal as 'done'
+  -- if t.pio_done then
+  --   return
+  -- end
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('^___PIO_SUCCESS___') then
       -- Set the flag on the terminal object so we never enter this 'for' loop again
-      t.pio_done = true
-      t.on_stdout = function() end
+      -- t.pio_done = true
+      -- t.on_stdout = function() end
       vim.schedule(function()
         vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
         piolsp.fix_pio_compile_commands()
@@ -28,15 +60,17 @@ function M.handleDb(t, _, data, _)
         piolsp.gitignore_lsp_configs('compile_commands.json')
         piolsp.lsp_restart('clangd')
         vim.notify('compiledb: Success', vim.log.levels.INFO)
+        local command = 'echo ___COMPILEDB_SUCCESS___'
+        M.ToggleTerminal(command, 'float')
       end)
     end
   end
 end
 -- Handle after poioinit execution
 function M.handlePioinit(t, _, data, _)
-  if t.pio_done then
-    return
-  end
+  -- if t.pio_done then
+  --   return
+  -- end
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('^___PIO_SUCCESS___') then
@@ -45,8 +79,8 @@ function M.handlePioinit(t, _, data, _)
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
         boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+        -- t.pio_done = false
         local command = 'pio run -t compiledb'
-        t.pio_done = false
         M.ToggleTerminal(command, 'float', M.handleDb)
       end)
     end
