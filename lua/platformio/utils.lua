@@ -58,7 +58,7 @@ M.run_sequence = function(tasks)
     -- No parentheses ensures compatibility with basic 'cmd.exe'
     -- Chain: command && success || failure
     -- local part = string.format('(%s && %s || %s)', task.cmd, success, failure)
-    local part = string.format('%s && %s', task.cmd, success)
+    local part = string.format(('%s && %s'), task.cmd, success)
 
     if full_cmd == '' then full_cmd = part
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
