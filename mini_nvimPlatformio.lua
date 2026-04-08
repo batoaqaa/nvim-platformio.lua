@@ -88,7 +88,9 @@ local keymap = function(mode, lhs, rhs, opts)
   vim.keymap.set(mode, lhs, rhs, options)
 end
 
-keymap('n', 'gll', vim.cmd.edit(vim.lsp.log.get_filename()), { desc = 'open LSP [l]og' })
+keymap('n', 'gll', function()
+  vim.cmd.edit(vim.lsp.log.get_filename())
+end, { desc = 'open LSP [l]og' })
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --  See `:help wincmd` for a list of all window commands
