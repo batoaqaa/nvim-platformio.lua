@@ -9,72 +9,61 @@ local config = require('platformio').config
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
-function M.pio_sequence_handler(t, _, data, _)
-  -- Table mapping terminal 'echo' signals to specific Lua functions
-  local actions = {
-    ['___FIX_PATHS___'] = function()
-      M.fix_pio_compile_commands()
-      vim.notify('Step 1: Paths Fixed')
-    end,
-    ['___RUN_LINT___'] = function()
-      -- Call a different function here
-      vim.notify('Step 2: Linter triggered')
-    end,
-    ['___CLEANUP___'] = function()
-      t.pio_done = true -- Mark terminal as finished
-      vim.notify('Sequence Complete')
-    end,
-  }
+M.queue = {}
 
-  if t.pio_done then
+-- Unified Dispatcher
+function M.dispatcher(_, _, data)
+  if #M.queue == 0 then
     return
   end
 
   for _, line in ipairs(data) do
-    local clean_line = line:gsub('%s+', '')
-
-    -- Check if the line matches any of our defined signals
-    for signal, action_fn in pairs(actions) do
-      if clean_line:find(signal) then
-        vim.schedule(action_fn)
+    -- Match format ___DONE___:SUCCESS or ___DONE___:FAILED
+    local status = line:match('___DONE___:(%a+)')
+    if status then
+      if status == 'SUCCESS' then
+        local task = table.remove(M.queue, 1)
+        if task then
+          vim.schedule(task)
+        end
+      else
+        M.queue = {} -- Clear queue on any other status (failure)
+        vim.schedule(function()
+          vim.notify('Sequence Aborted', 4)
+        end)
       end
+      break
     end
   end
 end
--- Handle after 'pio run -t compiledb' execution
-function M.handleDb(t, _, data, _)
-  for _, line in ipairs(data) do
-    local clean_line = line:gsub('%s+', '')
-    if clean_line:find('^___PIO_SUCCESS___') then
-      vim.schedule(function()
-        vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
-        piolsp.fix_pio_compile_commands()
-        vim.notify('compiledb: fixed', vim.log.levels.INFO)
-        piolsp.gitignore_lsp_configs('compile_commands.json')
-        piolsp.lsp_restart('clangd')
-        vim.notify('compiledb: Success', vim.log.levels.INFO)
-        t.config.on_stdout = nil
-        local command = 'echo ___COMPILEDB_SUCCESS___'
-        M.ToggleTerminal(command, 'float')
-      end)
-    end
+
+-- M.term = Terminal:new({ on_stdout = M.dispatcher, hidden = true })
+
+-- Improved Runner: Accepts a table of { cmd = "...", cb = function }
+M.run_sequence = function(tasks)
+  local full_cmd = ''
+  for _, task in ipairs(tasks) do
+    table.insert(M.queue, task.cb)
+    -- Chain: (cmd && success_signal) || failure_signal
+    local part = string.format('(%s && echo "___DONE___:SUCCESS") || (echo "___DONE___:FAILED" && exit 1)', task.cmd)
+    full_cmd = full_cmd == '' and part or full_cmd .. ' && ' .. part
   end
+  M.ToggleTerminal(full_cmd, 'float')
+end
+
+-- Handle after 'pio run -t compiledb' execution
+function M.handleDb()
+  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+  piolsp.fix_pio_compile_commands()
+  vim.notify('compiledb: fixed', vim.log.levels.INFO)
+  piolsp.gitignore_lsp_configs('compile_commands.json')
+  piolsp.lsp_restart('clangd')
+  vim.notify('compiledb: Success', vim.log.levels.INFO)
 end
 -- Handle after poioinit execution
-function M.handlePioinit(t, _, data, _)
-  for _, line in ipairs(data) do
-    local clean_line = line:gsub('%s+', '')
-    if clean_line:find('^___PIO_SUCCESS___') then
-      t.on_stdout = function() end
-      vim.schedule(function()
-        vim.notify('Pioinit: Success', vim.log.levels.INFO)
-        boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-        t.config.on_stdout = nil
-        local command = 'pio run -t compiledb'
-        M.ToggleTerminal(command, 'float', M.handleDb)
-      end)
-    end
-  end
+function M.handlePioinit()
+  vim.notify('Pioinit: Success', vim.log.levels.INFO)
+  boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
 ------------------------------------------------------
 -- local uv, active = vim.uv or vim.loop, {}

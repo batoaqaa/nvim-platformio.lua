@@ -57,10 +57,21 @@ local function pick_framework(board_details)
           local selection = action_state.get_selected_entry()
           utils.selected_framework = selection[1]
 
-          local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"'
-          -- command = command .. ' && pio run -t compiledb'
+          utils.run_sequence({
+            {
+              cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
+              cb = utils.handlePioinit,
+            },
+            {
+              cmd = 'pio run -t compiledb',
+              cb = utils.handleDb,
+            },
+          })
 
-          utils.ToggleTerminal(command, 'float', utils.handlePioinit)
+          -- local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"'
+          -- -- command = command .. ' && pio run -t compiledb'
+          -- utils.ToggleTerminal(command, 'float', utils.handlePioinit)
+
           -- vim.defer_fn(function()
           --   vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
           --   piolsp.gitignore_lsp_configs('compile_commands.json')
