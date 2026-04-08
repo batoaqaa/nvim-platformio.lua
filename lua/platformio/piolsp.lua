@@ -21,22 +21,22 @@ function M.fix_pio_compile_commands()
     return
   end
 
-  print('PioFix0')
+  -- print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   -- local pio_home = os.getenv('HOME') or os.getenv('USERPROFILE')
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
   if pio_home then
     -- Recursively find all binaries in PIO packages
-    local pio_packages = pio_home .. '/packages/*/bin/*'
-    -- local pio_packages = pio_home .. '/.platformio/packages/toolchain-*/bin/*'
+    -- local pio_packages = pio_home .. '/packages/*/bin/*'
+    local pio_packages = pio_home .. '/packages/toolchain-*/*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
       -- Extract filename (e.g., riscv32-esp-elf-gcc)
       local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
       path_map[name] = full_path
-      print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
+      -- print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
     end
   end
 
@@ -53,11 +53,11 @@ function M.fix_pio_compile_commands()
 
         if not is_abs then
           local short_name = first_token:gsub('%.exe$', '')
-          print('PioFix2: short_name=' .. short_name)
+          -- print('PioFix2: short_name=' .. short_name)
           -- Direct Query: Does this name exist in our discovered list?
           if path_map[short_name] then
             cmd_parts[1] = path_map[short_name]
-            print('PioFix3: short_name=' .. cmd_parts[1])
+            -- print('PioFix3: full_name=' .. cmd_parts[1])
             entry.command = table.concat(cmd_parts, ' ')
             modified = modified + 1
           end
