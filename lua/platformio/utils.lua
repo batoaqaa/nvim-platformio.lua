@@ -40,12 +40,13 @@ function M.handlePioinit(t, _, data, _)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('^___PIO_SUCCESS___') then
-      t.pio_done = true
+      -- t.pio_done = true
       t.on_stdout = function() end
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
         boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
         local command = 'pio run -t compiledb'
+        t.pio_done = false
         M.ToggleTerminal(command, 'float', M.handleDb)
       end)
     end
