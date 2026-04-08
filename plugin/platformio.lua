@@ -94,7 +94,11 @@ end, {})
 ------------------------------------------------------
 
 -- INFO: fix paths in compile_commands.json
-vim.api.nvim_create_user_command('PioFixPaths', require('platformio.piolsp').fix_pio_compile_commands, {})
+-- vim.api.nvim_create_user_command('PioFixPaths', require('platformio.piolsp').fix_pio_compile_commands, {})
+vim.api.nvim_create_user_command('PioFixPaths', function()
+  local command = 'pio run -t compiledb'
+  utils.ToggleTerminal(command, 'float', require('platformio.piolsp').fix_pio_compile_commands)
+end, {})
 ------------------------------------------------------
 
 -- require('telescope').load_extension('ui-select')
