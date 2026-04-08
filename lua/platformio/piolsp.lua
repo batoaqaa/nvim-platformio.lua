@@ -25,6 +25,7 @@ function M.fix_pio_compile_commands()
   local path_map = {}
   -- local pio_home = os.getenv('HOME') or os.getenv('USERPROFILE')
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
+  print('PIO Home ' .. pio_home)
   if pio_home then
     -- Recursively find all binaries in PIO packages
     local pio_packages = pio_home .. '/.platformio/packages/*/bin/*'
