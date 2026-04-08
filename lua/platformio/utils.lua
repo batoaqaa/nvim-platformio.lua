@@ -57,7 +57,7 @@ M.run_sequence = function(tasks)
     local failure = 'echo ___DONE___:FAILED'
 
     -- Chain: command && success || failure
-    local part = string.format('%s && %s || %s', task.cmd, success, failure)
+    local part = string.format('(%s && %s || %s)', task.cmd, success, failure)
 
     if full_cmd == '' then full_cmd = part
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
