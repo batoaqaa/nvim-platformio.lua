@@ -36,7 +36,7 @@ function M.fix_pio_compile_commands()
       -- Extract filename (e.g., riscv32-esp-elf-gcc)
       local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
       path_map[name] = full_path
-      -- print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
+      print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
     end
   end
 
