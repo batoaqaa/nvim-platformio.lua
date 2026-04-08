@@ -63,7 +63,7 @@ M.run_sequence = function(tasks)
     if full_cmd == '' then full_cmd = part
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
-  full_cmd = full_cmd .. ' && ' .. failure
+  full_cmd = full_cmd .. ' || ' .. failure
   M.ToggleTerminal(full_cmd, 'float')
 end
 
