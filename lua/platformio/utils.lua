@@ -13,7 +13,7 @@ local config = require('platformio').config
 function M.handleDb(t, _, data, _)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
-    if clean_line:find('___PIO_SUCCESS___') then
+    if clean_line:find('^___PIO_SUCCESS___') then
       t.on_stdout = nil
       vim.schedule(function()
         vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
@@ -30,7 +30,7 @@ end
 function M.handlePioinit(t, _, data, _)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
-    if clean_line:find('___PIO_SUCCESS___') then
+    if clean_line:find('^___PIO_SUCCESS___') then
       t.on_stdout = nil
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
