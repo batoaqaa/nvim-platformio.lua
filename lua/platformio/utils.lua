@@ -326,7 +326,7 @@ function M.ToggleTerminal(command, direction, stdout_callback)
     -- end,
 
     -- INFO: on_stdout
-    stdout = stdout_callback,
+    on_stdout = stdout_callback,
 
     -- INFO: on_create() {
     on_create = function(t)
