@@ -140,7 +140,18 @@ function M.lsp_restart(name)
       end
     end
   else
-    vim.cmd('LspRestart')
+    local client_name = 'clangd'
+    local clients = vim.lsp.get_clients({ name = client_name })
+
+    for _, client in ipairs(clients) do
+      -- 1. Stop the specific client
+      client:stop()
+    end
+
+    -- 2. Reload all loaded buffers to trigger re-attachment for that client
+    -- (Note: 'checktime' is safer than 'bufdo edit' as it respects unsaved changes)
+    vim.cmd('checktime')
+    -- vim.cmd('LspRestart')
   end
 end
 
