@@ -93,6 +93,10 @@ end, {})
 
 ------------------------------------------------------
 
+-- INFO: fix paths in compile_commands.json
+vim.api.nvim_create_user_command('PioFixPaths', require('platformio.piolsp').fix_pio_compile_commands, {})
+------------------------------------------------------
+
 -- require('telescope').load_extension('ui-select')
 -- INFO: List ToggleTerminals
 vim.api.nvim_create_user_command('PioTermList', function()

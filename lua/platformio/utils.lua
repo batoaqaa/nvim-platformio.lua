@@ -33,8 +33,8 @@ function M.handlePioinit(_, _, data, _)
       vim.schedule(function()
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
         boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-        local command = 'pio run -t compiledb'
-        M.ToggleTerminal(command, 'float', M.handleDb)
+        -- local command = 'pio run -t compiledb'
+        -- M.ToggleTerminal(command, 'float', M.handleDb)
       end)
     end
   end
