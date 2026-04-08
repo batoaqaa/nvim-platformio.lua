@@ -14,8 +14,8 @@ function M.handleDb(t, _, data, _)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('___PIO_SUCCESS___') then
+      t.on_stdout = nil
       vim.schedule(function()
-        t.on_stdout = nil
         vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
         piolsp.fix_pio_compile_commands()
         vim.notify('compiledb: fixed', vim.log.levels.INFO)
@@ -31,8 +31,8 @@ function M.handlePioinit(t, _, data, _)
   for _, line in ipairs(data) do
     local clean_line = line:gsub('%s+', '')
     if clean_line:find('___PIO_SUCCESS___') then
+      t.on_stdout = nil
       vim.schedule(function()
-        t.on_stdout = nil
         vim.notify('Pioinit: Success', vim.log.levels.INFO)
         boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
         local command = 'pio run -t compiledb'
