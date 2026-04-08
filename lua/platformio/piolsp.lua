@@ -28,8 +28,8 @@ function M.fix_pio_compile_commands()
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
   if pio_home then
     -- Recursively find all binaries in PIO packages
-    -- local pio_packages = pio_home .. '/.platformio/packages/*/bin/*'
-    local pio_packages = pio_home .. '/.platformio/packages/toolchain-*/bin/*'
+    local pio_packages = pio_home .. '/.platformio/packages/*/bin/*'
+    -- local pio_packages = pio_home .. '/.platformio/packages/toolchain-*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
