@@ -21,8 +21,14 @@ function M.dispatcher(_, _, data)
   if #M.queue == 0 then return end
 
   for _, line in ipairs(data) do
+
+    -- 1. Strip ALL whitespace and non-printable control characters (like \r)
+    -- %s is whitespace, %c is control characters
+    local clean_line = line:gsub("[%s%c]", "")
+
+    -- 2. Look for the pattern in the fully sanitized string
     -- Regex match: captures 'SUCCESS' or 'FAILED'
-    local status = line:match('^___DONE___:(%a+)')
+    local status = clean_line:match('^___DONE___:(%a+)')
     if status then
       if status == 'SUCCESS' then
         local task = table.remove(M.queue, 1)
