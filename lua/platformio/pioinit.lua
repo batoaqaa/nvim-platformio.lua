@@ -9,6 +9,8 @@ local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
+-- local piolsp = require('platformio.piolsp')
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -60,7 +62,11 @@ local function pick_framework(board_details)
           utils.run_sequence({
             {
               cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
-              cb = utils.handlePioinit,
+              -- cb = utils.handlePioinit,
+              cb = function()
+                vim.notify('Pioinit: Success', vim.log.levels.INFO)
+                boilerplate_gen(utils.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+              end,
             },
             {
               cmd = 'pio run -t compiledb',

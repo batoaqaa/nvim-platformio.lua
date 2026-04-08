@@ -19,7 +19,7 @@ function M.dispatcher(_, _, data)
 
   for _, line in ipairs(data) do
     -- Match format ___DONE___:SUCCESS or ___DONE___:FAILED
-    local status = line:match('___DONE___:(%a+)')
+    local status = line:match('^___DONE___:(%a+)')
     if status then
       if status == 'SUCCESS' then
         local task = table.remove(M.queue, 1)
