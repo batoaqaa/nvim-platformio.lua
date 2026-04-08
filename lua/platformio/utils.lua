@@ -48,20 +48,22 @@ end
 -- stylua: ignore
 M.run_sequence = function(tasks)
   local full_cmd = ''
+  local success = 'echo ___DONE___:SUCCESS'
+  local failure = 'echo ___DONE___:FAILED'
+
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
 
     -- Windows CMD/PowerShell specific syntax:
     -- No parentheses ensures compatibility with basic 'cmd.exe'
-    local success = 'echo ___DONE___:SUCCESS'
-    local failure = 'echo ___DONE___:FAILED'
-
     -- Chain: command && success || failure
-    local part = string.format('(%s && %s || %s)', task.cmd, success, failure)
+    -- local part = string.format('(%s && %s || %s)', task.cmd, success, failure)
+    local part = string.format('%s && %s', task.cmd, success)
 
     if full_cmd == '' then full_cmd = part
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
+  full_cmd = full_cmd .. ' && ' .. failure
   M.ToggleTerminal(full_cmd, 'float')
 end
 
