@@ -15,68 +15,68 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 ------------------------------------------------------
 -- INFO: Dispatcher
 M.queue = {}
--- local pio_buffer = ''
---
--- M.dispatcher = function(_, _, data)
---   if #M.queue == 0 then
---     return
---   end
---
---   -- 1. Merge the list of lines into the persistent buffer
---   pio_buffer = pio_buffer .. table.concat(data, '')
---
---   -- 2. Strip ALL whitespace and control characters (like \r)
---   -- This ensures "___DONE___:SUCCESS\r\n" becomes "___DONE___:SUCCESS"
---   local clean_buffer = pio_buffer:gsub('[%s%c]', '')
---
---   -- 3. Check if our marker is in the clean buffer
---   if clean_buffer:find('___DONE___:SUCCESS') then
---     pio_buffer = '' -- Clear buffer immediately to prevent double-firing
---
---     local task = table.remove(M.queue, 1)
---     if task then
---       vim.schedule(task)
---     end
---   elseif clean_buffer:find('___DONE___:FAILED') then
---     pio_buffer = ''
---     M.queue = {}
---     vim.schedule(function()
---       vim.notify('PIO Sequence: Aborted', 4)
---     end)
---   end
---
---   -- 4. Safety: Cap buffer size so it doesn't grow forever
---   if #pio_buffer > 5000 then
---     pio_buffer = pio_buffer:sub(-2000)
---   end
--- end
+-- Outside the function to persist across multiple stdout calls
+local pio_buffer = ''
+
+function M.dispatcher(_, _, data, _)
+  if #M.queue == 0 then
+    return
+  end
+
+  -- 1. Join the list of strings into one string and append to buffer
+  -- On some OSs, 'data' is a list of partial lines
+  pio_buffer = pio_buffer .. table.concat(data, '')
+
+  -- 2. Clean the buffer of all whitespace and control characters (\r, \n, etc.)
+  local clean_output = pio_buffer:gsub('[%s%c]', '')
+
+  -- 3. Search for the success signal
+  if clean_output:find('___DONE___:SUCCESS') then
+    pio_buffer = '' -- Clear buffer immediately
+    local task = table.remove(M.queue, 1)
+    if task then
+      vim.schedule(task)
+    end
+  elseif clean_output:find('___DONE___:FAILED') then
+    pio_buffer = ''
+    M.queue = {} -- Clear queue on failure
+    vim.schedule(function()
+      vim.notify('PIO Sequence: Aborted', 4)
+    end)
+  end
+
+  -- 4. Safety: Prevent buffer overflow in very long logs
+  if #pio_buffer > 10000 then
+    pio_buffer = pio_buffer:sub(-5000)
+  end
+end
 
 -- Unified Dispatcher
 -- stylua: ignore
-function M.dispatcher(_, _, data)
-  if #M.queue == 0 then return end
-
-  for _, line in ipairs(data) do
-
-    -- 1. Strip ALL whitespace and non-printable control characters (like \r)
-    -- %s is whitespace, %c is control characters
-    local clean_line = line:gsub("[%s%c]", "")
-
-    -- 2. Look for the pattern in the fully sanitized string
-    -- Regex match: captures 'SUCCESS' or 'FAILED'
-    local status = clean_line:match('^___DONE___:(%a+)')
-    if status then
-      if status == 'SUCCESS' then
-        local task = table.remove(M.queue, 1)
-        if task then vim.schedule(task) end
-      else
-        M.queue = {} -- Clear queue on any other status (failure)
-        vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
-      end
-      break
-    end
-  end
-end
+-- function M.dispatcher(_, _, data)
+--   if #M.queue == 0 then return end
+--
+--   for _, line in ipairs(data) do
+--
+--     -- 1. Strip ALL whitespace and non-printable control characters (like \r)
+--     -- %s is whitespace, %c is control characters
+--     local clean_line = line:gsub("[%s%c]", "")
+--
+--     -- 2. Look for the pattern in the fully sanitized string
+--     -- Regex match: captures 'SUCCESS' or 'FAILED'
+--     local status = clean_line:match('^___DONE___:(%a+)')
+--     if status then
+--       if status == 'SUCCESS' then
+--         local task = table.remove(M.queue, 1)
+--         if task then vim.schedule(task) end
+--       else
+--         M.queue = {} -- Clear queue on any other status (failure)
+--         vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+--       end
+--       break
+--     end
+--   end
+-- end
 
 -- Improved Runner: Accepts a table of { cmd = "...", cb = function }
 -- stylua: ignore
