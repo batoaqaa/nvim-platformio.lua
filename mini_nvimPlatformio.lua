@@ -317,11 +317,11 @@ vim.api.nvim_create_autocmd('User', {
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
 if isWindows then
-  platformio_core_dir = vim.env.HOME .. '\\.platformio'
-  pynvim_env = platformio_core_dir .. '\\nenv'
-  pynvim_bin = pynvim_env .. '\\Scripts'
-  pynvim_python = pynvim_bin .. '\\python.exe'
-  pynvim_activate = pynvim_bin .. '\\Activate.ps1'
+  platformio_core_dir = vim.env.HOME .. '/.platformio'
+  pynvim_env = platformio_core_dir .. '/nenv'
+  pynvim_bin = pynvim_env .. '/Scripts'
+  pynvim_python = pynvim_bin .. '/python.exe'
+  pynvim_activate = pynvim_bin .. '/Activate.ps1'
 else
   platformio_core_dir = vim.env.HOME .. '/.platformio'
   pynvim_env = platformio_core_dir .. '/nenv'
