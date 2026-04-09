@@ -378,6 +378,8 @@ CompileFlags:
     --target=riscv32-esp-elf,
   ]
   Remove: [
+    -fno%-fat%-lto%-objects,
+    -fno%-canonical%-system%-headers,
     -misc-definitions-in-headers,
     -fno-tree-switch-conversion,
     -mtext-section-literals,

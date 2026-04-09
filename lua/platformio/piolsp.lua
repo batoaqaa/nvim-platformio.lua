@@ -132,13 +132,10 @@ function M.fix_pio_compile_commands()
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
-  print('PIO Home ' .. pio_home)
   if pio_home then
 
     -- Recursively find all binaries in PIO packages
     local pio_packages = M.get_pio_dir('packages') .. '/*/bin/*'
-    -- local pio_packages = pio_home .. '/packages/*/bin/*'
-    print(pio_packages)
 
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
