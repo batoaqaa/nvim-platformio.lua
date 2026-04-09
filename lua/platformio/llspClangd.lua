@@ -307,6 +307,6 @@ end
 
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
-  require('platformio.lspAttach')
+  require('platformio.lsp.attach')
 end
 ----------------------------------------------------------------------------------

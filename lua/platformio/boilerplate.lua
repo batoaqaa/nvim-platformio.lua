@@ -62,30 +62,7 @@ env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
 print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
 print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 ]],
-  --   content = [[
-  -- Import("env")
-  -- # This must be done in a PRE script to affect the database generation
-  -- env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
-  -- ]],
 }
-
--- boilerplate['generate_compile_commands.py'] = {
---   content = [[
--- # No 'import env' here!
--- import subprocess
--- from SCons.Script import COMMAND_LINE_TARGETS # Optional: for better IDE support
---
--- # This line MUST be here for PIO to provide the environment
--- Import("env")
---
--- def regenerate_database(source, target, env):
---     print("Regenerating...")
---     subprocess.run(["pio", "run", "-t", "compiledb"])
---
--- # Use the 'env' object that was imported above
--- env.AddPostAction("$BUILD_DIR/${PROGNAME}.elf", regenerate_database)
--- ]],
--- }
 
 boilerplate['.clangd_cmd'] = {
   template = [[
@@ -365,12 +342,9 @@ WhitespaceSensitiveMacros:
   - PP_STRINGIZE
   - STRINGIZE
 ...
-
 ]],
 }
 
--- local home = vim.env.HOME
--- print(home)
 boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
