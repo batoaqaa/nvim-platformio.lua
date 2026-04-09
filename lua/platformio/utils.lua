@@ -19,27 +19,83 @@ M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 --
 -- 1. The Dispatcher (The Brain)
--- stylua: ignore
+--- stylua: ignore
 function M.dispatcher(_, _, data)
-  if #M.queue == 0 then return end
-
-  -- Reassemble fragmented chunks into the persistent stream
-  pio_buffer = pio_buffer .. table.concat(data, '')
-  local clean_line = pio_buffer:gsub('[%s%c]', '')
-  local status = clean_line:match('^___DONE___:(%a+)')
-  if status then
-    if status == 'SUCCESS' then
-      pio_buffer = ''
-      local task = table.remove(M.queue, 1)
-      if task then vim.schedule(task) end
-    elseif status == 'FAILED' then
-      pio_buffer = ''
-      M.queue = {} -- Clear queue on any other status (failure)
-      vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
-    end
+  if #M.queue == 0 then
+    return
   end
+
+  pio_buffer = pio_buffer .. data[1]
+  -- 2. If the chunk has more than one element, we've encountered newlines
+  if #data > 1 then
+    -- 3. Process any "middle" lines which are guaranteed to be complete
+    for i = 2, #data - 1 do
+      pio_buffer = pio_buffer .. data[i]
+    end
+
+    for status in pio_buffer:gmatch('___DONE___:(%a+)') do
+      if status then
+        if status == 'SUCCESS' then
+          -- 4. Store the last element as the new partial buffer for the next call
+          pio_buffer = data[#data]
+          local task = table.remove(M.queue, 1)
+          if task then
+            vim.schedule(task)
+          end
+        elseif status == 'FAILED' then
+          M.queue = {} -- Clear queue on any other status (failure)
+          pio_buffer = ''
+          vim.schedule(function()
+            vim.notify('PIO Sequence: Aborted', 4)
+          end)
+        end
+        break
+      end
+    end
+    --
+    -- for _, line in ipairs(data) do
+    --   -- 1. Strip ALL whitespace and non-printable control characters (like \r)
+    --   -- %s is whitespace, %c is control characters
+    --   local clean_line = line:gsub('[%s%c]', '')
+    --
+    --   -- 2. Look for the pattern in the fully sanitized string
+    --   -- Regex match: captures 'SUCCESS' or 'FAILED'
+    --   local status = clean_line:match('^___DONE___:(%a+)')
+    --   if status then
+    --     if status == 'SUCCESS' then
+    --       local task = table.remove(M.queue, 1)
+    --       if task then
+    --         vim.schedule(task)
+    --       end
+    --     elseif status == 'FAILED' then
+    --       M.queue = {} -- Clear queue on any other status (failure)
+    --       vim.schedule(function()
+    --         vim.notify('PIO Sequence: Aborted', 4)
+    --       end)
+    --     end
+    --     break
+    --   end
+    -- end
+  end
+  -- Reassemble fragmented chunks into the persistent stream
+  -- pio_buffer = pio_buffer .. table.concat(data, '')
+  -- local clean_line = pio_buffer:gsub('[%s%c]', '')
+  -- local status = clean_line:match('[\r\n]___DONE___:(%a+)')
+  -- if status then
+  --   if status == 'SUCCESS' then
+  --     pio_buffer = ''
+  --     local task = table.remove(M.queue, 1)
+  --     if task then vim.schedule(task) end
+  --   elseif status == 'FAILED' then
+  --     pio_buffer = ''
+  --     M.queue = {} -- Clear queue on any other status (failure)
+  --     vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+  --   end
+  -- end
   -- Safety: Prevent memory leak by capping buffer size
-  if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
+  if #pio_buffer > 10000 then
+    pio_buffer = pio_buffer:sub(-5000)
+  end
 end
 
 -- Outside the function to persist across multiple stdout calls
