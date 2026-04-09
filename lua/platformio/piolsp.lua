@@ -1,5 +1,5 @@
 local M = {}
-function M.get_pio_packages_dir(envdir)
+function M.get_pio_packages_dir(_)
   -- Run the pio command to dump config in JSON format
   local cmd = 'pio project config --json-output'
   local output = vim.fn.system(cmd)
@@ -16,15 +16,15 @@ function M.get_pio_packages_dir(envdir)
     print('Failed to decode JSON from PlatformIO')
     return nil
   end
-  envdir = envdir .. '_dir'
+  -- envdir = envdir .. '_dir'
   -- The output is structured by [section], usually under 'platformio'
   -- or specific environments. We look for the global 'platformio' section.
-  if config and config.platformio then --and config.platformio.packages_dir
-    local result = config.platformio[envdir]
-    if result then
-      return result
-    end
-    -- return config.platformio.packages_dir
+  if config and config.platformio and config.platformio.packages_dir then
+    -- local result = config.platformio[envdir]
+    -- if result then
+    --   return result
+    -- end
+    return config.platformio.packages_dir
   end
 
   return nil
@@ -56,8 +56,9 @@ function M.fix_pio_compile_commands()
   if pio_home then
 
     -- Recursively find all binaries in PIO packages
-    -- local pio_packages = pio_home .. '/packages/*/bin/*'
-    local pio_packages = M.get_pio_packages_dir('packages') .. '/*/bin/*'
+    local pio_packages = pio_home .. '/packages/*/bin/*'
+    print(M.get_pio_packages_dir())
+    -- local pio_packages = M.get_pio_packages_dir('packages') .. '/*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
