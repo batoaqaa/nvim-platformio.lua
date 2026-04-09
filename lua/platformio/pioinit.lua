@@ -9,8 +9,6 @@ local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
 local previewers = require('telescope.previewers')
--- local piolsp = require('platformio.piolsp')
--- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local boardentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -45,89 +43,71 @@ local boardentry_maker = function(opts)
   end
 end
 
+-- stylua: ignore
 local function pick_framework(board_details)
   local opts = {}
-  pickers
-    .new(opts, {
-      prompt_title = 'frameworks',
-      finder = finders.new_table({
-        results = board_details['frameworks'],
-      }),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          utils.selected_framework = selection[1]
+  pickers.new(opts, {
+    prompt_title = 'frameworks',
+    finder = finders.new_table({
+      results = board_details['frameworks'],
+    }),
+    attach_mappings = function(prompt_bufnr, _)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        utils.selected_framework = selection[1]
 
-          utils.run_sequence({
-            {
-              cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
-              cb = utils.handlePioinit,
-            },
-            {
-              cmd = 'pio run -t compiledb',
-              cb = utils.handleDb,
-            },
-          })
-
-          -- local command = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"'
-          -- -- command = command .. ' && pio run -t compiledb'
-          -- utils.ToggleTerminal(command, 'float', utils.handlePioinit)
-
-          -- vim.defer_fn(function()
-          --   vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
-          --   piolsp.gitignore_lsp_configs('compile_commands.json')
-          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-          --   piolsp.lsp_restart('clangd')
-          -- end, 3000)
-          -- utils.ToggleTerminal(command, 'float', function()
-          --   -- require('platformio.piolsp').piolsp()
-          --   piolsp()
-          --   boilerplate_gen(selected_framework, vim.fn.getcwd() .. '/src')
-          -- end)
-        end)
-        return true
-      end,
-      sorter = telescope_conf.generic_sorter(opts),
-    })
-    :find()
+        utils.run_sequence({
+          {
+            cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
+            cb = utils.handlePioinit,
+          },
+          {
+            cmd = 'pio run -t compiledb',
+            cb = utils.handleDb,
+          },
+        })
+      end)
+      return true
+    end,
+    sorter = telescope_conf.generic_sorter(opts),
+  }):find()
 end
 
+-- stylua: ignore
 local function pick_board(json_data)
   local opts = {}
-  pickers
-    .new(opts, {
-      prompt_title = 'Boards',
-      finder = finders.new_table({
-        results = json_data,
-        entry_maker = opts.entry_maker or boardentry_maker(opts),
-      }),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          pick_framework(selection['value']['data'])
-        end)
-        return true
+  pickers.new(opts, {
+    prompt_title = 'Boards',
+    finder = finders.new_table({
+      results = json_data,
+      entry_maker = opts.entry_maker or boardentry_maker(opts),
+    }),
+    attach_mappings = function(prompt_bufnr, _)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        pick_framework(selection['value']['data'])
+      end)
+      return true
+    end,
+    previewer = previewers.new_buffer_previewer({
+      title = 'Board Info',
+      define_preview = function(self, entry, _)
+        local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
+        local bufnr = self.state.bufnr
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
+        vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
+        vim.defer_fn(function()
+          local win = self.state.winid
+          vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
+          vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
+          vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
+        end, 0)
       end,
-      previewer = previewers.new_buffer_previewer({
-        title = 'Board Info',
-        define_preview = function(self, entry, _)
-          local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
-          local bufnr = self.state.bufnr
-          vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
-          vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
-          vim.defer_fn(function()
-            local win = self.state.winid
-            vim.api.nvim_set_option_value('wrap', true, { scope = 'local', win = win })
-            vim.api.nvim_set_option_value('linebreak', true, { scope = 'local', win = win })
-            vim.api.nvim_set_option_value('wrapmargin', 2, { buf = bufnr })
-          end, 0)
-        end,
-      }),
-      sorter = telescope_conf.generic_sorter(opts),
-    })
-    :find()
+    }),
+    sorter = telescope_conf.generic_sorter(opts),
+  }):find()
 end
 
 function M.pioinit()
