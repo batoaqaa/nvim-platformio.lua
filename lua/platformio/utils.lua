@@ -84,8 +84,10 @@ M.run_sequence = function(tasks)
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  local success = 'echo ___DONE___":"SUCCESS'
-  local failure = 'echo ___DONE___":"FAILED'
+
+  local var = is_windows and '%EMPTY%' or '${EMPTY}'
+  local success = 'echo ___DONE___' .. var .. ':SUCCESS'
+  local failure = 'echo ___DONE___' .. var .. ':FAILED'
 
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
