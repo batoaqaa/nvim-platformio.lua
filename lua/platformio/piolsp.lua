@@ -176,8 +176,9 @@ function M.lsp_restart(name)
       local configc = c.config
       c:stop(true)
       vim.defer_fn(function()
-        vim.lsp.config(name, configc)
+        -- vim.lsp.config(name, configc)
         vim.lsp.enable(name)
+        vim.cmd('checktime')
       end, 600)
     end
     -- -- 1. Stop the specific client
