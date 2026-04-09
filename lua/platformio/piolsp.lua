@@ -33,7 +33,7 @@ function M.get_pio_dir(type)
   -- 4.0 Fallback Logic: INI -> Env Var -> Default
   local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
   core_dir = core_dir:gsub('\\', '/'):gsub('//+', '/')
-  if vim.fn.has('win32') == 1 then core_dir = core_dir():gsub('/', '\\') end
+  if vim.fn.has('win32') == 1 then core_dir = core_dir:gsub('/', '\\') end
   if type == 'core' then return core_dir end
 
   -- 4.1 Fallback Logic: INI -> Env Var -> Default
