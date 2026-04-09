@@ -33,14 +33,14 @@ function M.dispatcher(t, _, data)
   -- The terminal output will be: ___DONE___:SUCCESS
   -- Because the sent string doesn't have the brackets, Lua ignores the echo-back!
   -- Check for Success Signal
-  if clean_stream:find('%[___DONE___:SUCCESS%]') then
+  if clean_stream:find('___DONE___:SUCCESS') then
     pio_buffer = ''
     local task = table.remove(M.queue, 1)
     if task then
       vim.schedule(task)
     end
     -- Check for Failure Signal
-  elseif clean_stream:find('%[___DONE___:FAILED%]') then
+  elseif clean_stream:find('___DONE___:FAILED') then
     pio_buffer = ''
     M.queue = {}
     vim.notify('Aborted', 4)
@@ -84,8 +84,8 @@ M.run_sequence = function(tasks)
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  local success = 'echo [___DONE___:SUCCESS]'
-  local failure = 'echo [___DONE___:FAILED]'
+  local success = 'echo ___DONE___":"SUCCESS'
+  local failure = 'echo ___DONE___":"FAILED'
 
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
