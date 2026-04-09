@@ -59,7 +59,7 @@ function M.fix_pio_compile_commands()
     return
   end
 
-  -- print('PioFix0')
+  print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
@@ -74,7 +74,7 @@ function M.fix_pio_compile_commands()
       -- Extract filename (e.g., riscv32-esp-elf-gcc)
       local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
       path_map[name] = full_path
-      -- print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
+      print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
     end
   end
 
