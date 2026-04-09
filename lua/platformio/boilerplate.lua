@@ -83,7 +83,7 @@ clangd
 ]],
   content = function(self)
     local packages = require('platformio.piolsp')
-    return string.format(self.template, packages.get_pio_dir('packages'))
+    return string.format(self.template, packages.get_pio_dir('packages') or '**')
   end,
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
