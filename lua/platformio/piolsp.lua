@@ -4,7 +4,8 @@ local M = {}
 function M.get_pio_dir(type)
   -- 1. Setup Base Paths
   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
-  local core_dir = os.getenv('PLATFORMIO_CORE_DIR') or (home .. '/.platformio')
+  -- Ensure core_dir itself doesn't have trailing slashes for cleaner joins
+  local core_dir = (os.getenv('PLATFORMIO_CORE_DIR') or (home .. '/.platformio')):gsub('[\\/]+$', '')
 
   -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
   local map = {
@@ -22,7 +23,6 @@ function M.get_pio_dir(type)
 
   if inifile then
     for line in inifile:lines() do
-      -- Matches 'key = value', e.g., 'packages_dir = ...'
       raw_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)')
       if raw_val then break end
     end
@@ -33,13 +33,57 @@ function M.get_pio_dir(type)
   local result = raw_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
 
   -- 5. Expand ${platformio.core_dir}
-  result = result:gsub('%%${platformio.core_dir}', core_dir)
+  if result:find('${platformio.core_dir}', 1, true) then
+    result = result:gsub('%${platformio.core_dir}', core_dir)
+  end
 
   -- 6. Normalize Slashes for Windows
+  result = result:gsub('\\', '/'):gsub('//+', '/')
   if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
 
   return result
 end
+-- stylua: ignore
+-- k
+-- function M.get_pio_dir(type)
+--   -- 1. Setup Base Paths
+--   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
+--   local core_dir = os.getenv('PLATFORMIO_CORE_DIR') or (home .. '/.platformio')
+--
+--   -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
+--   local map = {
+--     packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
+--     platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
+--   }
+--
+--   local target_config = map[type]
+--   if not target_config then return nil end
+--
+--   -- 3. Try to get explicit value from platformio.ini
+--   local path = vim.fn.getcwd() .. '/platformio.ini'
+--   local inifile = io.open(path, 'r')
+--   local raw_val = nil
+--
+--   if inifile then
+--     for line in inifile:lines() do
+--       -- Matches 'key = value', e.g., 'packages_dir = ...'
+--       raw_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)')
+--       if raw_val then break end
+--     end
+--     inifile:close()
+--   end
+--
+--   -- 4. Fallback Logic: INI -> Env Var -> Default
+--   local result = raw_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
+--
+--   -- 5. Expand ${platformio.core_dir}
+--   result = result:gsub('%%${platformio.core_dir}', core_dir)
+--
+--   -- 6. Normalize Slashes for Windows
+--   if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
+--
+--   return result
+-- end
 
 
 -- function M.get_pio_packages_dir()
