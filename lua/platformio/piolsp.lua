@@ -73,7 +73,17 @@ function M.fix_pio_compile_commands()
     if out_file then
       local encode_ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
       if encode_ok and json_str then
-        out_file:write(json_str)
+        -- 1. Format the string using python's json.tool
+        -- The second argument to vim.fn.system() is the "stdin" passed to the command
+        local formatted_json = vim.fn.system('python -m json.tool', json_str)
+
+        -- 2. Write it to a file
+        -- -- vim.split is used because writefile expects a list of lines
+        -- local file_path = "config.json"
+        -- vim.fn.writefile(vim.split(formatted_json, "\n"), file_path)
+
+        -- out_file:write(json_str)
+        out_file:write(formatted_json)
         out_file:close()
         vim.notify('compiledb: fixed', vim.log.levels.INFO)
         M.lsp_restart('clangd')
