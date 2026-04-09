@@ -14,39 +14,82 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 ------------------------------------------------------
 -- INFO: Dispatcher
+
 M.queue = {}
--- Outside the function to persist across multiple stdout calls
+local pio_buffer = '' -- Persistent stream buffer
 
--- Unified Dispatcher
--- stylua: ignore
-function M.dispatcher(_, _, data)
-  if #M.queue == 0 then return end
+-- 1. The Dispatcher (The Brain)
+function M.dispatcher(_, _, data, _)
+  if #M.queue == 0 then
+    return
+  end
 
-  for _, line in ipairs(data) do
+  -- Reassemble fragmented chunks into the persistent stream
+  pio_buffer = pio_buffer .. table.concat(data, '')
 
-    -- 1. Strip ALL whitespace and non-printable control characters (like \r)
-    -- %s is whitespace, %c is control characters
-    local clean_line = line:gsub("[%s%c]", "")
+  -- Clean buffer: Remove whitespace and control characters (\r, \n)
+  -- This is the "secret sauce" for Windows compatibility
+  local clean_stream = pio_buffer:gsub('[%s%c]', '')
 
-    -- 2. Look for the pattern in the fully sanitized string
-    -- Regex match: captures 'SUCCESS' or 'FAILED'
-    local status = clean_line:match('^___DONE___:(%a+)')
-    if status then
-      if status == 'SUCCESS' then
-        local task = table.remove(M.queue, 1)
-        if task then vim.schedule(task) end
-      else
-        M.queue = {} -- Clear queue on any other status (failure)
-        vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
-      end
-      break
+  -- Check for Success Signal
+  if clean_stream:find('___DONE___:SUCCESS') then
+    pio_buffer = '' -- Reset buffer to prevent double-firing
+    local task = table.remove(M.queue, 1)
+    if task then
+      vim.schedule(task)
     end
+
+    -- Check for Failure Signal
+  elseif clean_stream:find('___DONE___:FAILED') then
+    pio_buffer = ''
+    M.queue = {} -- Wipe the queue on failure
+    vim.schedule(function()
+      vim.notify('PIO Sequence: Aborted', vim.log.levels.ERROR)
+    end)
+  end
+
+  -- Safety: Prevent memory leak by capping buffer size
+  if #pio_buffer > 10000 then
+    pio_buffer = pio_buffer:sub(-5000)
   end
 end
 
+-- M.queue = {}
+-- -- Outside the function to persist across multiple stdout calls
+--
+-- -- Unified Dispatcher
+-- -- stylua: ignore
+-- function M.dispatcher(_, _, data)
+--   if #M.queue == 0 then return end
+--
+--   for _, line in ipairs(data) do
+--
+--     -- 1. Strip ALL whitespace and non-printable control characters (like \r)
+--     -- %s is whitespace, %c is control characters
+--     local clean_line = line:gsub("[%s%c]", "")
+--
+--     -- 2. Look for the pattern in the fully sanitized string
+--     -- Regex match: captures 'SUCCESS' or 'FAILED'
+--     local status = clean_line:match('^___DONE___:(%a+)')
+--     if status then
+--       if status == 'SUCCESS' then
+--         local task = table.remove(M.queue, 1)
+--         if task then vim.schedule(task) end
+--       else
+--         M.queue = {} -- Clear queue on any other status (failure)
+--         vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+--       end
+--       break
+--     end
+--   end
+-- end
+
 -- Improved Runner: Accepts a table of { cmd = "...", cb = function }
--- stylua: ignore
+--- stylua: ignore
 M.run_sequence = function(tasks)
+  -- Reset local state for new run
+  M.queue = {}
+  pio_buffer = ''
   local full_cmd = ''
   local success = 'echo ___DONE___:SUCCESS'
   local failure = 'echo ___DONE___:FAILED'
@@ -58,10 +101,13 @@ M.run_sequence = function(tasks)
     -- No parentheses ensures compatibility with basic 'cmd.exe'
     -- Chain: command && success || failure
     -- local part = string.format('(%s && %s || %s)', task.cmd, success, failure)
-    local part = string.format(('%s && %s'), task.cmd, success)
+    local part = string.format('%s && %s', task.cmd, success)
 
-    if full_cmd == '' then full_cmd = part
-    else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
+    if full_cmd == '' then
+      full_cmd = part
+    else
+      full_cmd = full_cmd .. ' && ' .. part
+    end -- Chain multiple commands
   end
   full_cmd = full_cmd .. ' || ' .. failure
   M.ToggleTerminal(full_cmd, 'float')
