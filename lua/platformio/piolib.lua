@@ -9,8 +9,9 @@ local conf = require('telescope.config').values
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local utils = require('platformio.utils')
+local pio = require('platformio.utils.pio')
 local previewers = require('telescope.previewers')
-local piolsp = require('platformio.piolsp') --.piolsp
+-- local piolsp = require('platformio.piolsp') --.piolsp
 
 local libentry_maker = function(opts)
   local displayer = entry_display.create({
@@ -61,14 +62,14 @@ local function pick_library(json_data)
         -- local command = 'pio pkg install --library "' .. pkg_name .. '"'
         -- command = command .. ' && pio run -t compiledb'
 
-        utils.run_sequence({
+        pio.run_sequence({
           {
             cmd = 'pio pkg install --library "' .. pkg_name .. '"',
-            cb = utils.handlePiolib,
+            cb = pio.handlePiolib,
           },
           {
             cmd = 'pio run -t compiledb',
-            cb = utils.handleDb,
+            cb = pio.handleDb,
           },
         })
         -- utils.ToggleTerminal(command, 'float')

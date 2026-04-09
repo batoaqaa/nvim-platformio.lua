@@ -8,6 +8,7 @@ local action_state = require('telescope.actions.state')
 local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
 local utils = require('platformio.utils')
+local pio = require('platformio.utils.pio')
 local previewers = require('telescope.previewers')
 
 local boardentry_maker = function(opts)
@@ -55,16 +56,16 @@ local function pick_framework(board_details)
       actions.select_default:replace(function()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
-        utils.selected_framework = selection[1]
+        pio.selected_framework = selection[1]
 
-        utils.run_sequence({
+        pio.run_sequence({
           {
-            cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. utils.selected_framework .. '"',
-            cb = utils.handlePioinit,
+            cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
+            cb = pio.handlePioinit,
           },
           {
             cmd = 'pio run -t compiledb',
-            cb = utils.handleDb,
+            cb = pio.handleDb,
           },
         })
       end)

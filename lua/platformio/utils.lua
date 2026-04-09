@@ -1,6 +1,6 @@
 local config = require('platformio').config
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local piolsp = require('platformio.piolsp') --.piolsp
+-- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+local pio = require('platformio.utils.pio') --.piolsp
 local is_windows = jit.os == 'Windows'
 -- local pioinit = require('platformio.pioinit')
 
@@ -12,83 +12,83 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
-------------------------------------------------------
--- INFO: Dispatcher
-
-M.queue = {}
-local pio_buffer = '' -- Persistent stream buffer
-
--- 1. The Dispatcher (The Brain)
--- stylua: ignore
-function M.dispatcher(_, _, data)
-  if #M.queue == 0 then return end
-
-  pio_buffer = pio_buffer .. data[1]
-  -- 2. If the chunk has more than one element, we've encountered newlines
-  if #data > 1 then
-    -- 3. Process any "middle" lines which are guaranteed to be complete
-    for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
-
-    for status in pio_buffer:gmatch('___DONE___:(%a+)') do
-      if status then
-        if status == 'SUCCESS' then
-          -- 4. Store the last element as the new partial buffer for the next call
-          pio_buffer = data[#data]
-          local task = table.remove(M.queue, 1)
-          if task then vim.schedule(task) end
-        elseif status == 'FAILED' then
-          M.queue = {} -- Clear queue on any other status (failure)
-          pio_buffer = ''
-          vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
-        end
-        break
-      end
-    end
-  end
-  if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
-end
-
--- stylua: ignore
-M.run_sequence = function(tasks)
-  -- Reset local state for new run
-  M.queue = {}
-  -- pio_buffer = ''
-  local full_cmd = ''
-
-  local success = 'echo ___DONE___":"SUCCESS'
-  local failure = 'echo ___DONE___":"FAILED'
-
-  for _, task in ipairs(tasks) do
-    table.insert(M.queue, task.cb)
-    local part = string.format('%s && %s', task.cmd, success)
-    if full_cmd == '' then full_cmd = part
-    else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
-  end
-  full_cmd = full_cmd .. ' || ' .. failure
-  M.ToggleTerminal(full_cmd, 'float')
-end
-
--- Handle after 'pio run -t compiledb' execution
-function M.handleDb()
-  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
-  piolsp.gitignore_lsp_configs('compile_commands.json')
-  piolsp.fix_pio_compile_commands()
-  piolsp.lsp_restart('clangd')
-end
-
--- Handle after poioinit execution
--- stylua: ignore
-function M.handlePioinit()
-  vim.notify('Pioinit: Success', vim.log.levels.INFO)
-  boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-end
--- Handle after poioinit execution
--- stylua: ignore
-function M.handlePiolib()
-  vim.notify('Piolib: Success', vim.log.levels.INFO)
-end
--- INFO: endDispatcher
-------------------------------------------------------
+-- ------------------------------------------------------
+-- -- INFO: Dispatcher
+--
+-- M.queue = {}
+-- local pio_buffer = '' -- Persistent stream buffer
+--
+-- -- 1. The Dispatcher (The Brain)
+-- -- stylua: ignore
+-- function M.dispatcher(_, _, data)
+--   if #M.queue == 0 then return end
+--
+--   pio_buffer = pio_buffer .. data[1]
+--   -- 2. If the chunk has more than one element, we've encountered newlines
+--   if #data > 1 then
+--     -- 3. Process any "middle" lines which are guaranteed to be complete
+--     for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
+--
+--     for status in pio_buffer:gmatch('___DONE___:(%a+)') do
+--       if status then
+--         if status == 'SUCCESS' then
+--           -- 4. Store the last element as the new partial buffer for the next call
+--           pio_buffer = data[#data]
+--           local task = table.remove(M.queue, 1)
+--           if task then vim.schedule(task) end
+--         elseif status == 'FAILED' then
+--           M.queue = {} -- Clear queue on any other status (failure)
+--           pio_buffer = ''
+--           vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+--         end
+--         break
+--       end
+--     end
+--   end
+--   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
+-- end
+--
+-- -- stylua: ignore
+-- M.run_sequence = function(tasks)
+--   -- Reset local state for new run
+--   M.queue = {}
+--   -- pio_buffer = ''
+--   local full_cmd = ''
+--
+--   local success = 'echo ___DONE___":"SUCCESS'
+--   local failure = 'echo ___DONE___":"FAILED'
+--
+--   for _, task in ipairs(tasks) do
+--     table.insert(M.queue, task.cb)
+--     local part = string.format('%s && %s', task.cmd, success)
+--     if full_cmd == '' then full_cmd = part
+--     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
+--   end
+--   full_cmd = full_cmd .. ' || ' .. failure
+--   M.ToggleTerminal(full_cmd, 'float')
+-- end
+--
+-- -- Handle after 'pio run -t compiledb' execution
+-- function M.handleDb()
+--   vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+--   piolsp.gitignore_lsp_configs('compile_commands.json')
+--   piolsp.fix_pio_compile_commands()
+--   piolsp.lsp_restart('clangd')
+-- end
+--
+-- -- Handle after poioinit execution
+-- -- stylua: ignore
+-- function M.handlePioinit()
+--   vim.notify('Pioinit: Success', vim.log.levels.INFO)
+--   boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+-- end
+-- -- Handle after poioinit execution
+-- -- stylua: ignore
+-- function M.handlePiolib()
+--   vim.notify('Piolib: Success', vim.log.levels.INFO)
+-- end
+-- -- INFO: endDispatcher
+-- ------------------------------------------------------
 
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
@@ -327,7 +327,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    on_stdout = M.dispatcher,
+    on_stdout = pio.dispatcher,
 
     -- INFO: on_create() {
     on_create = function(t)

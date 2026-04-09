@@ -7,6 +7,7 @@
 -- -1: Zero or one argument (like ?, explicitly).
 
 local utils = require('platformio.utils')
+local pio = require('platformio.utils.pio')
 local piolsserial = require('platformio.piolsserial')
 
 -- Pioinit
@@ -17,7 +18,7 @@ end, { force = true })
 -- Piolsp
 vim.api.nvim_create_user_command('PioLSP', function()
   vim.schedule(function()
-    require('platformio.piolsp').piolsp()
+    require('platformio.lsp.piolsp').piolsp()
   end)
 end, {})
 
@@ -96,8 +97,14 @@ end, {})
 -- INFO: fix paths in compile_commands.json
 -- vim.api.nvim_create_user_command('PioFixPaths', require('platformio.piolsp').fix_pio_compile_commands, {})
 vim.api.nvim_create_user_command('PioFixPaths', function()
-  local command = 'pio run -t compiledb'
-  utils.ToggleTerminal(command, 'float', require('platformio.piolsp').fix_pio_compile_commands)
+  pio.run_sequence({
+    {
+      cmd = 'pio run -t compiledb',
+      cb = pio.handleDb,
+    },
+  })
+  -- local command = 'pio run -t compiledb'
+  -- utils.ToggleTerminal(command, 'float')
 end, {})
 ------------------------------------------------------
 

@@ -1,3 +1,4 @@
+local pio = require('platformio.utils.pio')
 local M = {}
 local uv = vim.loop
 
@@ -42,7 +43,7 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 lib_ldf_mode = chain+   ;Library dependencies Finder ldf
 ]],
   content = function(self)
-    return string.format(self.template, vim.env.PLATFORMIO_CORE_DIR)
+    return string.format(self.template, pio.get_pio_dir('core'))
   end,
 }
 
@@ -82,8 +83,7 @@ clangd
 --query-driver=%s/toolchain-*/**/bin/*
 ]],
   content = function(self)
-    local packages = require('platformio.piolsp')
-    return string.format(self.template, packages.get_pio_dir('packages') or '**')
+    return string.format(self.template, pio.get_pio_dir('packages') or '**')
   end,
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
