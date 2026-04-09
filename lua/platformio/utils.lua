@@ -81,12 +81,11 @@ end
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
   boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
-
-  -- print('Generating compile_commands.json...')
-  -- local output = vim.fn.system('pio run -t compiledb')
-  -- if vim.v.shell_error ~= 0 then
-  --   vim.notify('PIO Error: fail to generate compiledb' .. output, vim.log.levels.ERROR)
-  -- end
+end
+-- Handle after poioinit execution
+-- stylua: ignore
+function M.handlePiolib()
+  vim.notify('Piolib: Success', vim.log.levels.INFO)
 end
 -- INFO: endDispatcher
 ------------------------------------------------------
