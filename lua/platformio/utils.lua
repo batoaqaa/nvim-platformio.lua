@@ -19,7 +19,7 @@ M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
 -- 1. The Dispatcher (The Brain)
-function M.dispatcher(t, _, data)
+function M.dispatcher(_, _, data)
   if #M.queue == 0 then
     return
   end
@@ -294,6 +294,8 @@ function M.ToggleTerminal(command, direction)
       height = function()
         return math.ceil(vim.o.lines * 0.85)
       end,
+      -- shell = vim.o.shell,
+      shell = vim.o.shell,
       highlights = {
         border = 'FloatBorder',
         background = 'NormalFloat',
