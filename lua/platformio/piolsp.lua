@@ -68,14 +68,16 @@ function M.fix_pio_compile_commands()
 
   -- PHASE 3: Save and Refresh
   -- Safe JSON encoding
-  local encode_ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
-  if encode_ok and json_str then
+  if modified > 0 then
     local out_file = io.open(filename, 'w')
     if out_file then
-      out_file:write(json_str)
-      out_file:close()
-      vim.notify('compiledb: fixed', vim.log.levels.INFO)
-      M.lsp_restart('clangd')
+      local encode_ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
+      if encode_ok and json_str then
+        out_file:write(json_str)
+        out_file:close()
+        vim.notify('compiledb: fixed', vim.log.levels.INFO)
+        M.lsp_restart('clangd')
+      end
     end
   end
 end
@@ -102,89 +104,44 @@ function M.gitignore_lsp_configs(config_file)
   end
 end
 
+-- stylua: ignore
 function M.lsp_restarti(name)
   local clients = vim.lsp.get_clients({ name = name })
-
-  -- if #clients == 0 then
-  --   -- I'm using my own implementation of `vim.lsp.enable()`
-  --   -- To work with default one change group name from `MyLsp` to `nvim.lsp.enable`
-  --   -- It is not tested with default one, so not sure if it would 100% work.
-  --   vim.api.nvim_exec_autocmds('FileType', { group = 'nvim.lsp.enable', buffer = 0 })
-  --   return
-  -- end
-
   for _, c in ipairs(clients) do
     local configc = c.config
-    -- print(vim.inspect(configc))
     c:stop(true)
-
-    vim.defer_fn(function()
-      vim.lsp.config(name, configc)
-      vim.lsp.enable(name)
-    end, 600)
+    vim.defer_fn(function() vim.lsp.config(name, configc) vim.lsp.enable(name) end, 600)
   end
 end
 
+-- stylua: ignore
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') == 1 then
     -- local clients = vim.lsp.get_clients({ name = name })
     local clangd = vim.lsp.get_clients({ name = name })[1]
-
     if clangd then
-      -- Client is active, try to restart
       local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-      if not ok then
-        vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
-      else
-        vim.notify('LSP ' .. name .. ' restarted' .. err)
-      end
+      if not ok then vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
+      else vim.notify('LSP ' .. name .. ' restarted' .. err) end
     end
   else
     local client_name = 'clangd'
     local clients = vim.lsp.get_clients({ name = client_name })
-
-    for _, client in ipairs(clients) do
-      -- 1. Stop the specific client
-      client:stop()
-    end
+    -- 1. Stop the specific client
+    for _, client in ipairs(clients) do client:stop() end
 
     -- 2. Reload all loaded buffers to trigger re-attachment for that client
     -- (Note: 'checktime' is safer than 'bufdo edit' as it respects unsaved changes)
     vim.cmd('checktime')
-    -- vim.cmd('LspRestart')
   end
 end
 
+-- stylua: ignore
 function M.piolsp()
   local ok, err = pcall(vim.cmd.lsp, { args = { 'restart' } })
-  if ok then
-    vim.notify('LSP restarted' .. err)
-  else
-    vim.notify('LSP restart failed: ' .. err)
-  end
+  if ok then vim.notify('LSP restarted' .. err)
+  else vim.notify('LSP restart failed: ' .. err) end
   -- M.fix_pio_compile_commands()
-
-  -- if not utils.pio_install_check() then
-  --   return
-  -- end
-  -- utils.cd_pioini()
-  --
-  -- utils.shell_cmd_blocking('pio run -t compiledb')
-  -- vim.notify('LSP: compile_commands.json generation/update completed!', vim.log.levels.INFO)
-  -- M.gitignore_lsp_configs('compile_commands.json')
-  --
-  -- -- if vim.fn.has('nvim-0.12') then
-  -- -- local clangd = vim.lsp.get_clients({ name = 'clangd' })[1]
-  -- -- if clangd then
-  -- --   -- print('number of attaced: ' .. #clangd.attached_buffers)
-  -- --   -- print('piolsp: lsp restart ' .. clangd.name)
-  -- -- pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-  -- M.lsp_restart('clangd')
-  -- vim.cmd('lsp restart clangd')
-  -- end
-  -- else
-  -- vim.cmd('LspRestart')
-  -- end
 end
 
 return M
