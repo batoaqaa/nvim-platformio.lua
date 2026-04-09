@@ -18,11 +18,6 @@ function M.get_packages_dir_from_ini()
     end
   end
   f:close()
-  if packages_dir then
-    print('from ini: ' .. packages_dir)
-  else
-    print('from ini: nil')
-  end
   return packages_dir
 end
 
@@ -78,8 +73,8 @@ function M.fix_pio_compile_commands()
     local pio_packages = pio_home .. '/packages/*/bin/*'
 
     local envdir = M.get_packages_dir_from_ini()
-    if envdir then print('from pio: ' .. envdir)
-    else print('from pio: nil') end
+    if envdir then print('from ini: ' .. envdir)
+    else print('from ini: nil') end
 
     envdir = M.get_pio_packages_dir()
     if envdir then print('from pio: ' .. envdir)
