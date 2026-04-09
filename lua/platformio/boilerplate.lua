@@ -86,7 +86,8 @@ clangd
 --query-driver=%s/toolchain-*/**/bin/*
 ]],
   content = function(self)
-    return string.format(self.template, require('platformio.piolsp').get_pio_dir('packages'))
+    local packages = require('platformio.piolsp')
+    return string.format(self.template, packages().get_pio_dir('packages'))
   end,
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
