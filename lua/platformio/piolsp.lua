@@ -1,49 +1,71 @@
 local M = {}
 
 -- stylua: ignore
-function M.get_packages_dir_from_ini()
-  local file_path = vim.fn.getcwd() .. '/platformio.ini'
-  local f = io.open(file_path, 'r')
-  if not f then return nil end
+function M.get_pio_dir(type)
+  -- 1. Setup Base Paths
+  local home = os.getenv('HOME') or os.getenv('USERPROFILE')
+  local core_dir = os.getenv('PLATFORMIO_CORE_DIR') or (home .. '/.platformio')
 
-  local packages_dir = nil
-  for line in f:lines() do
-    -- Remove whitespace and look for packages_dir = value
-    -- The pattern ^%s* matches start of line + optional spaces
-    -- ([^;%s]+) captures the value, stopping at a comment (;) or space
-    local match = line:match('^%s*packages_dir%s*=%s*([^;%s]+)')
-    if match then
-      packages_dir = match
-      break
+  -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
+  local map = {
+    packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
+    platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
+  }
+
+  local target_config = map[type]
+  if not target_config then return nil end
+
+  -- 3. Try to get explicit value from platformio.ini
+  local path = vim.fn.getcwd() .. '/platformio.ini'
+  local inifile = io.open(path, 'r')
+  local raw_val = nil
+
+  if inifile then
+    for line in inifile:lines() do
+      -- Matches 'key = value', e.g., 'packages_dir = ...'
+      raw_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)')
+      if raw_val then break end
     end
+    inifile:close()
   end
-  f:close()
-  return packages_dir
+
+  -- 4. Fallback Logic: INI -> Env Var -> Default
+  local result = raw_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
+
+  -- 5. Expand ${platformio.core_dir}
+  result = result:gsub('%%${platformio.core_dir}', core_dir)
+
+  -- 6. Normalize Slashes for Windows
+  if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
+
+  return result
 end
 
-function M.get_pio_packages_dir()
-  -- Run the pio command to dump config in JSON format
-  local cmd = 'pio project config --json-output'
-  local output = vim.fn.system(cmd)
 
-  -- Check for errors in the command execution
-  if vim.v.shell_error ~= 0 then
-    print('Error running pio command: ' .. output)
-    return nil
-  end
+-- function M.get_pio_packages_dir()
+--   -- Run the pio command to dump config in JSON format
+--   local cmd = 'pio project config --json-output'
+--   local output = vim.fn.system(cmd)
+--
+--   -- Check for errors in the command execution
+--   if vim.v.shell_error ~= 0 then
+--     print('Error running pio command: ' .. output)
+--     return nil
+--   end
+--
+--   -- Decode the JSON output
+--   local ok, config = pcall(vim.json.decode, output)
+--   if not ok then
+--     print('Failed to decode JSON from PlatformIO')
+--     return nil
+--   end
+--   local packages_dir = nil
+--   if config and config.platformio then
+--     packages_dir = config.platformio.packages_dir
+--   end
+--   return packages_dir
+-- end
 
-  -- Decode the JSON output
-  local ok, config = pcall(vim.json.decode, output)
-  if not ok then
-    print('Failed to decode JSON from PlatformIO')
-    return nil
-  end
-  local packages_dir = nil
-  if config and config.platformio then
-    packages_dir = config.platformio.packages_dir
-  end
-  return packages_dir
-end
 
 -- stylua: ignore
 function M.fix_pio_compile_commands()
@@ -70,17 +92,10 @@ function M.fix_pio_compile_commands()
   if pio_home then
 
     -- Recursively find all binaries in PIO packages
-    local pio_packages = pio_home .. '/packages/*/bin/*'
+    local pio_packages = M.get_pio_dir('packages') .. '/*/bin/*'
+    -- local pio_packages = pio_home .. '/packages/*/bin/*'
+    print(pio_packages)
 
-    local envdir = M.get_packages_dir_from_ini()
-    if envdir then print('from ini: ' .. envdir)
-    else print('from ini: nil') end
-
-    envdir = M.get_pio_packages_dir()
-    if envdir then print('from pio: ' .. envdir)
-    else print('from pio: nil') end
-
-    -- local pio_packages = M.get_pio_packages_dir('packages') .. '/*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
