@@ -23,8 +23,8 @@ function M.get_pio_dir(type)
 
   if inifile then
     for line in inifile:lines() do
-      if core_val ~= nil then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
-      if ini_val ~= nil then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)') end
+      if core_val == nil then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
+      if ini_val == nil then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)') end
       if ini_val and core_val then break end
     end
     inifile:close()
