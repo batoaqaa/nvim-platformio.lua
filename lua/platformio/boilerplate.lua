@@ -86,6 +86,7 @@ clangd
 --query-driver=**/*riscv32-esp-elf-*,**/*gcc*,**/*g++*
 ]],
   content = function(self)
+    localjjjj
     return string.format(self.template, vim.env.HOME)
   end,
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*

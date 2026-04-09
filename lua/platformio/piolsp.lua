@@ -33,9 +33,7 @@ function M.get_pio_dir(type)
   local result = raw_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
 
   -- 5. Expand ${platformio.core_dir}
-  if result:find('${platformio.core_dir}', 1, true) then
-    result = result:gsub('%${platformio.core_dir}', core_dir)
-  end
+  if result:find('${platformio.core_dir}', 1, true) then result = result:gsub('%${platformio.core_dir}', core_dir) end
 
   -- 6. Normalize Slashes for Windows
   result = result:gsub('\\', '/'):gsub('//+', '/')
@@ -43,73 +41,6 @@ function M.get_pio_dir(type)
 
   return result
 end
--- stylua: ignore
--- k
--- function M.get_pio_dir(type)
---   -- 1. Setup Base Paths
---   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
---   local core_dir = os.getenv('PLATFORMIO_CORE_DIR') or (home .. '/.platformio')
---
---   -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
---   local map = {
---     packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
---     platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
---   }
---
---   local target_config = map[type]
---   if not target_config then return nil end
---
---   -- 3. Try to get explicit value from platformio.ini
---   local path = vim.fn.getcwd() .. '/platformio.ini'
---   local inifile = io.open(path, 'r')
---   local raw_val = nil
---
---   if inifile then
---     for line in inifile:lines() do
---       -- Matches 'key = value', e.g., 'packages_dir = ...'
---       raw_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)')
---       if raw_val then break end
---     end
---     inifile:close()
---   end
---
---   -- 4. Fallback Logic: INI -> Env Var -> Default
---   local result = raw_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
---
---   -- 5. Expand ${platformio.core_dir}
---   result = result:gsub('%%${platformio.core_dir}', core_dir)
---
---   -- 6. Normalize Slashes for Windows
---   if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
---
---   return result
--- end
-
-
--- function M.get_pio_packages_dir()
---   -- Run the pio command to dump config in JSON format
---   local cmd = 'pio project config --json-output'
---   local output = vim.fn.system(cmd)
---
---   -- Check for errors in the command execution
---   if vim.v.shell_error ~= 0 then
---     print('Error running pio command: ' .. output)
---     return nil
---   end
---
---   -- Decode the JSON output
---   local ok, config = pcall(vim.json.decode, output)
---   if not ok then
---     print('Failed to decode JSON from PlatformIO')
---     return nil
---   end
---   local packages_dir = nil
---   if config and config.platformio then
---     packages_dir = config.platformio.packages_dir
---   end
---   return packages_dir
--- end
-
 
 -- stylua: ignore
 function M.fix_pio_compile_commands()
@@ -226,25 +157,35 @@ function M.lsp_restarti(name)
   end
 end
 
--- stylua: ignore
+--- stylua: ignore
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') == 1 then
     -- local clients = vim.lsp.get_clients({ name = name })
     local clangd = vim.lsp.get_clients({ name = name })[1]
     if clangd then
       local ok, err = pcall(vim.cmd.lsp, { args = { 'restart', 'clangd' } })
-      if not ok then vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
-      else vim.notify('LSP ' .. name .. ' restarted' .. err) end
+      if not ok then
+        vim.notify('LSP ' .. name .. ' restart failed: ' .. err)
+      else
+        vim.notify('LSP ' .. name .. ' restarted' .. err)
+      end
     end
   else
-    local client_name = 'clangd'
-    local clients = vim.lsp.get_clients({ name = client_name })
-    -- 1. Stop the specific client
-    for _, client in ipairs(clients) do client:stop() end
-
-    -- 2. Reload all loaded buffers to trigger re-attachment for that client
-    -- (Note: 'checktime' is safer than 'bufdo edit' as it respects unsaved changes)
-    vim.cmd('checktime')
+    local clients = vim.lsp.get_clients({ name = name })
+    for _, c in ipairs(clients) do
+      local configc = c.config
+      c:stop(true)
+      vim.defer_fn(function()
+        vim.lsp.config(name, configc)
+        vim.lsp.enable(name)
+      end, 600)
+    end
+    -- -- 1. Stop the specific client
+    -- for _, client in ipairs(clients) do client:stop() end
+    --
+    -- -- 2. Reload all loaded buffers to trigger re-attachment for that client
+    -- -- (Note: 'checktime' is safer than 'bufdo edit' as it respects unsaved changes)
+    -- vim.cmd('checktime')
   end
 end
 
