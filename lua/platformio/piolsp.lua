@@ -23,16 +23,20 @@ function M.get_pio_dir(type)
 
   if inifile then
     for line in inifile:lines() do
-      if ~core_val then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
-      if ~ini_val then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)')
+      if core_val ~= nil then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
+      if ini_val ~= nil then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)') end
       if ini_val and core_val then break end
     end
     inifile:close()
   end
-  local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
-  if type == 'core' then return core_val end
 
-  -- 4. Fallback Logic: INI -> Env Var -> Default
+  -- 4.0 Fallback Logic: INI -> Env Var -> Default
+  local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
+  core_dir = core_dir:gsub('\\', '/'):gsub('//+', '/')
+  if vim.fn.has('win32') == 1 then core_dir = core_dir():gsub('/', '\\') end
+  if type == 'core' then return core_dir end
+
+  -- 4.1 Fallback Logic: INI -> Env Var -> Default
   local result = ini_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
 
   -- 5. Expand ${platformio.core_dir}
@@ -40,7 +44,7 @@ function M.get_pio_dir(type)
 
   -- 6. Normalize Slashes for Windows
   result = result:gsub('\\', '/'):gsub('//+', '/')
-  -- if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
+  if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
 
   -- Ensure core_dir itself doesn't have trailing slashes for cleaner joins
   return result
