@@ -1,5 +1,32 @@
 local M = {}
-function M.get_pio_packages_dir(_)
+
+-- stylua: ignore
+function M.get_packages_dir_from_ini()
+  local file_path = vim.fn.getcwd() .. '/platformio.ini'
+  local f = io.open(file_path, 'r')
+  if not f then return nil end
+
+  local packages_dir = nil
+  for line in f:lines() do
+    -- Remove whitespace and look for packages_dir = value
+    -- The pattern ^%s* matches start of line + optional spaces
+    -- ([^;%s]+) captures the value, stopping at a comment (;) or space
+    local match = line:match('^%s*packages_dir%s*=%s*([^;%s]+)')
+    if match then
+      packages_dir = match
+      break
+    end
+  end
+  f:close()
+  if packages_dir then
+    print('from ini: ' .. packages_dir)
+  else
+    print('from ini: nil')
+  end
+  return packages_dir
+end
+
+function M.get_pio_packages_dir()
   -- Run the pio command to dump config in JSON format
   local cmd = 'pio project config --json-output'
   local output = vim.fn.system(cmd)
@@ -16,24 +43,16 @@ function M.get_pio_packages_dir(_)
     print('Failed to decode JSON from PlatformIO')
     return nil
   end
-  -- envdir = envdir .. '_dir'
-  -- The output is structured by [section], usually under 'platformio'
-  -- or specific environments. We look for the global 'platformio' section.
-  if config and config.platformio and config.platformio.packages_dir then
-    -- local result = config.platformio[envdir]
-    -- if result then
-    --   return result
-    -- end
-    return config.platformio.packages_dir
+  local packages_dir = nil
+  if config and config.platformio then
+    packages_dir = config.platformio.packages_dir
   end
-
-  return nil
+  return packages_dir
 end
 
 -- stylua: ignore
 function M.fix_pio_compile_commands()
-  local cwd = vim.fn.getcwd()
-  local filename = cwd .. '/compile_commands.json'
+  local filename = vim.fn.getcwd() .. '/compile_commands.json'
   local file = io.open(filename, 'r')
   if not file then return end
 
@@ -57,7 +76,15 @@ function M.fix_pio_compile_commands()
 
     -- Recursively find all binaries in PIO packages
     local pio_packages = pio_home .. '/packages/*/bin/*'
-    print(M.get_pio_packages_dir())
+
+    local envdir = M.get_packages_dir_from_ini()
+    if envdir then print('from pio: ' .. envdir)
+    else print('from pio: nil') end
+
+    envdir = M.get_pio_packages_dir()
+    if envdir then print('from pio: ' .. envdir)
+    else print('from pio: nil') end
+
     -- local pio_packages = M.get_pio_packages_dir('packages') .. '/*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
@@ -105,11 +132,6 @@ function M.fix_pio_compile_commands()
         -- 1. Format the string using python's json.tool
         -- The second argument to vim.fn.system() is the "stdin" passed to the command
         local formatted_json = vim.fn.system('python -m json.tool', json_str)
-
-        -- 2. Write it to a file
-        -- -- vim.split is used because writefile expects a list of lines
-        -- local file_path = "config.json"
-        -- vim.fn.writefile(vim.split(formatted_json, "\n"), file_path)
 
         -- out_file:write(json_str)
         out_file:write(formatted_json)
