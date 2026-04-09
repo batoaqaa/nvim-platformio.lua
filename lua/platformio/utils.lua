@@ -19,38 +19,31 @@ M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
 -- 1. The Dispatcher (The Brain)
-function M.dispatcher(_, _, data, _)
+function M.dispatcher(t, _, data)
   if #M.queue == 0 then
     return
   end
 
   -- Reassemble fragmented chunks into the persistent stream
   pio_buffer = pio_buffer .. table.concat(data, '')
-
-  -- Clean buffer: Remove whitespace and control characters (\r, \n)
-  -- This is the "secret sauce" for Windows compatibility
   local clean_stream = pio_buffer:gsub('[%s%c]', '')
 
+  -- We check for the brackets.
+  -- The terminal command sent was: echo ___DONE___:SUCCESS
+  -- The terminal output will be: ___DONE___:SUCCESS
+  -- Because the sent string doesn't have the brackets, Lua ignores the echo-back!
   -- Check for Success Signal
-  if clean_stream:find('___DONE___:SUCCESS') then
-    pio_buffer = '' -- Reset buffer to prevent double-firing
+  if clean_stream:find('%[___DONE___:SUCCESS%]') then
+    pio_buffer = ''
     local task = table.remove(M.queue, 1)
     if task then
       vim.schedule(task)
     end
-
     -- Check for Failure Signal
-  elseif clean_stream:find('___DONE___:FAILED') then
+  elseif clean_stream:find('%[___DONE___:FAILED%]') then
     pio_buffer = ''
-    M.queue = {} -- Wipe the queue on failure
-    vim.schedule(function()
-      vim.notify('PIO Sequence: Aborted', vim.log.levels.ERROR)
-    end)
-  end
-
-  -- Safety: Prevent memory leak by capping buffer size
-  if #pio_buffer > 10000 then
-    pio_buffer = pio_buffer:sub(-5000)
+    M.queue = {}
+    vim.notify('Aborted', 4)
   end
 end
 
@@ -91,8 +84,8 @@ M.run_sequence = function(tasks)
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  local success = 'echo ___DONE___:SUCCESS'
-  local failure = 'echo ___DONE___:FAILED'
+  local success = '[echo ___DONE___:SUCCESS]'
+  local failure = '[echo ___DONE___:FAILED]'
 
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
