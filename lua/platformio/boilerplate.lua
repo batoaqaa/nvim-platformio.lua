@@ -83,16 +83,15 @@ clangd
 --pch-storage=memory
 --pretty
 --ranking-model=decision_forest
---query-driver=**/*riscv32-esp-elf-*,**/*gcc*,**/*g++*
+--query-driver=%s/toolchain-*/**/bin/*
 ]],
   content = function(self)
-    localjjjj
-    return string.format(self.template, vim.env.HOME)
+    return string.format(self.template, require('platformio.piolsp').get_pio_dir('packages'))
   end,
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
   --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
-  --query-driver=**
+  --query-driver=**/*riscv32-esp-elf-*,**/*gcc*,**/*g++*
   --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
 }
 
