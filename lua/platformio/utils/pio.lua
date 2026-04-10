@@ -211,7 +211,7 @@ end
 -- stylua: ignore
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
-  require('platformio.boilerplate').boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+  -- require('platformio.boilerplate').boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
 -- Handle after poioinit execution
 -- stylua: ignore
