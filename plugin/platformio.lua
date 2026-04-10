@@ -18,7 +18,7 @@ end, { force = true })
 -- Piolsp
 vim.api.nvim_create_user_command('PioLSP', function()
   vim.schedule(function()
-    require('platformio.lsp.piolsp').piolsp()
+    require('platformio.piolsp').piolsp()
   end)
 end, {})
 

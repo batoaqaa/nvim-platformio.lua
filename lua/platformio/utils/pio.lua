@@ -1,9 +1,10 @@
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local pio = require('platformio.utils.piolsp')
+-- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+local misc = require('platformio.utils.misc')
 local M = {}
 
 M.selected_framework = ''
 
+------------------------------------------------------
 -- stylua: ignore
 function M.get_pio_dir(type)
   -- 1. Setup Base Paths
@@ -54,6 +55,7 @@ function M.get_pio_dir(type)
   return result
 end
 
+------------------------------------------------------
 -- stylua: ignore
 function M.fix_pio_compile_commands()
   local filename = vim.fn.getcwd() .. '/compile_commands.json'
@@ -143,6 +145,7 @@ end
 M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
+------------------------------------------------------
 -- 1. The Dispatcher (The Brain)
 -- stylua: ignore
 function M.dispatcher(_, _, data)
@@ -173,6 +176,7 @@ function M.dispatcher(_, _, data)
   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
 end
 
+------------------------------------------------------
 -- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
@@ -193,19 +197,21 @@ M.run_sequence = function(tasks)
   M.ToggleTerminal(full_cmd, 'float')
 end
 
+------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()
   vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
-  pio.gitignore_lsp_configs('compile_commands.json')
-  pio.fix_pio_compile_commands()
-  pio.lsp_restart('clangd')
+  misc.gitignore_lsp_configs('compile_commands.json')
+  M.fix_pio_compile_commands()
+  misc.lsp_restart('clangd')
 end
 
+------------------------------------------------------
 -- Handle after poioinit execution
 -- stylua: ignore
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
-  boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+  require('platformio.boilerplate').boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
 -- Handle after poioinit execution
 -- stylua: ignore
