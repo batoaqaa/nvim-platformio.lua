@@ -7,8 +7,7 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local entry_display = require('telescope.pickers.entry_display')
 local make_entry = require('telescope.make_entry')
-local utils = require('platformio.utils')
-local pio = require('platformio.utils.pio')
+local misc = require('platformio.utils.misc')
 local previewers = require('telescope.previewers')
 
 local boardentry_maker = function(opts)
@@ -56,6 +55,8 @@ local function pick_framework(board_details)
       actions.select_default:replace(function()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
+
+        local pio = require('platformio.utils.pio')
         pio.selected_framework = selection[1]
 
         pio.run_sequence({
@@ -95,7 +96,7 @@ local function pick_board(json_data)
     previewer = previewers.new_buffer_previewer({
       title = 'Board Info',
       define_preview = function(self, entry, _)
-        local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
+        local json = misc.strsplit(vim.inspect(entry['value']['data']), '\n')
         local bufnr = self.state.bufnr
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
         vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
@@ -112,13 +113,13 @@ local function pick_board(json_data)
 end
 
 function M.pioinit()
-  if not utils.pio_install_check() then
+  if not misc.pio_install_check() then
     return
   end
 
   -- Read stdout
   local command = 'pio boards --json-output'
-  local handel = io.popen(command .. utils.devNul)
+  local handel = io.popen(command .. misc.devNul)
   if not handel then
     return
   end

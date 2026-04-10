@@ -1,5 +1,5 @@
 local M = {}
-local utils = require('platformio.utils')
+local misc = require('platformio.utils.misc')
 
 M.tty_list = {}
 
@@ -16,14 +16,14 @@ function M.parse_tty(lines)
 end
 
 function M.sync_ttylist()
-  utils.async_shell_cmd({ 'platformio', 'device', 'list', '--json-output' }, M.parse_tty)
+  misc.async_shell_cmd({ 'platformio', 'device', 'list', '--json-output' }, M.parse_tty)
 end
 
 function M.sync_ttylist_await()
   local done = false
   local result = nil
 
-  utils.async_shell_cmd({ 'platformio', 'device', 'list', '--json-output' }, function(lines, code)
+  misc.async_shell_cmd({ 'platformio', 'device', 'list', '--json-output' }, function(lines, code)
     result = { lines = lines, code = code }
     done = true
   end)

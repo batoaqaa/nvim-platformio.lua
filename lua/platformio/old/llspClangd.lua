@@ -5,8 +5,7 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
 
 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
--- local pio = require('platformio.utils.pio')
-boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+boilerplate_gen([[.clangd]], vim.env.PLATFORMIO_CORE_DIR)
 -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
 -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
 
@@ -308,6 +307,6 @@ end
 
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
-  require('platformio.lsp.attach')
+  require('platformio.lspConfig.attach')
 end
 ----------------------------------------------------------------------------------

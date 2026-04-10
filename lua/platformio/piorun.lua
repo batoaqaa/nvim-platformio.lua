@@ -1,33 +1,34 @@
 local M = {}
 
-local utils = require('platformio.utils')
+local misc = require('platformio.utils.misc')
+local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
 
 function M.piobuild()
-  utils.cd_pioini()
+  misc.cd_pioini()
   local command = 'pio run' -- .. utils.extra
-  utils.ToggleTerminal(command, 'float')
+  ToggleTerminal(command, 'float')
 end
 
 function M.pioupload()
-  utils.cd_pioini()
+  misc.cd_pioini()
   local command = 'pio run --target upload' -- .. utils.extra
-  utils.ToggleTerminal(command, 'float')
+  ToggleTerminal(command, 'float')
 end
 
 function M.piouploadfs()
-  utils.cd_pioini()
+  misc.cd_pioini()
   local command = 'pio run --target uploadfs' -- .. utils.extra
-  utils.ToggleTerminal(command, 'float')
+  ToggleTerminal(command, 'float')
 end
 
 function M.pioclean()
-  utils.cd_pioini()
+  misc.cd_pioini()
   local command = 'pio run --target clean' -- .. utils.extra
-  utils.ToggleTerminal(command, 'float')
+  ToggleTerminal(command, 'float')
 end
 
 function M.piorun(arg_table)
-  if not utils.pio_install_check() then
+  if not misc.pio_install_check() then
     return
   end
   if arg_table[1] == '' then

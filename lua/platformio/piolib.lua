@@ -8,8 +8,7 @@ local make_entry = require('telescope.make_entry')
 local conf = require('telescope.config').values
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
-local utils = require('platformio.utils')
-local pio = require('platformio.utils.pio')
+local misc = require('platformio.utils.misc')
 local previewers = require('telescope.previewers')
 -- local piolsp = require('platformio.piolsp') --.piolsp
 
@@ -62,6 +61,7 @@ local function pick_library(json_data)
         -- local command = 'pio pkg install --library "' .. pkg_name .. '"'
         -- command = command .. ' && pio run -t compiledb'
 
+        local pio = require('platformio.utils.pio')
         pio.run_sequence({
           {
             cmd = 'pio pkg install --library "' .. pkg_name .. '"',
@@ -79,7 +79,7 @@ local function pick_library(json_data)
     previewer = previewers.new_buffer_previewer({
       title = 'Package Info',
       define_preview = function(self, entry, _)
-        local json = utils.strsplit(vim.inspect(entry['value']['data']), '\n')
+        local json = misc.strsplit(vim.inspect(entry['value']['data']), '\n')
         local bufnr = self.state.bufnr
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, json)
         vim.api.nvim_set_option_value('filetype', 'lua', { buf = bufnr }) --fix deprecated function
@@ -96,7 +96,7 @@ local function pick_library(json_data)
 end
 
 function M.piolib(lib_arg_list)
-  if not utils.pio_install_check() then
+  if not misc.pio_install_check() then
     return
   end
 

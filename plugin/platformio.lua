@@ -18,7 +18,7 @@ end, { force = true })
 -- Piolsp
 vim.api.nvim_create_user_command('PioLSP', function()
   vim.schedule(function()
-    require('platformio.piolsp').piolsp()
+    require('platformio.pioCommands').piolsp()
   end)
 end, {})
 
@@ -37,7 +37,7 @@ end, {
 -- piolsserial.sync_ttylist()
 vim.api.nvim_create_user_command('Piomon', function(opts)
   local args = opts.fargs
-  require('platformio.piomon').piomon(args)
+  require('platformio.pioCommands').piomon(args)
 end, {
   nargs = '*',
 
@@ -74,7 +74,7 @@ end, {
 -- Piocmdh    Piocmd horizontal terminal
 vim.api.nvim_create_user_command('Piocmdh', function(opts)
   local cmd_table = vim.split(opts.args, ' ')
-  require('platformio.piocmd').piocmd(cmd_table, 'horizontal')
+  require('platformio.pioCommands').piocmd(cmd_table, 'horizontal')
 end, {
   nargs = '*',
 })
@@ -82,14 +82,14 @@ end, {
 -- Piocmdf    Piocmd float terminal
 vim.api.nvim_create_user_command('Piocmdf', function(opts)
   local cmd_table = vim.split(opts.args, ' ')
-  require('platformio.piocmd').piocmd(cmd_table, 'float')
+  require('platformio.pioCommands').piocmd(cmd_table, 'float')
 end, {
   nargs = '*',
 })
 
 -- Piodebug
 vim.api.nvim_create_user_command('Piodebug', function()
-  require('platformio.piodebug').piodebug()
+  require('platformio.pioCommands').piodebug()
 end, {})
 
 ------------------------------------------------------
@@ -103,8 +103,6 @@ vim.api.nvim_create_user_command('PioFixPaths', function()
       cb = pio.handleDb,
     },
   })
-  -- local command = 'pio run -t compiledb'
-  -- utils.ToggleTerminal(command, 'float')
 end, {})
 ------------------------------------------------------
 

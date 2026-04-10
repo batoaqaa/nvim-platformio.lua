@@ -3,6 +3,7 @@ local M = {}
 M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
+local lsp = require('platformio.utils.lsp')
 
 ------------------------------------------------------
 -- stylua: ignore
@@ -133,7 +134,7 @@ function M.fix_pio_compile_commands()
         out_file:write(formatted_json)
         out_file:close()
         vim.notify('compiledb: fixed', vim.log.levels.INFO)
-        M.lsp_restart('clangd')
+        lsp.lsp_restart('clangd')
       end
     end
   end
@@ -194,7 +195,8 @@ M.run_sequence = function(tasks)
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
   full_cmd = full_cmd .. ' || ' .. failure
-  M.ToggleTerminal(full_cmd, 'float')
+  local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+  ToggleTerminal(full_cmd, 'float')
 end
 
 ------------------------------------------------------
@@ -203,7 +205,7 @@ function M.handleDb()
   vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
   misc.gitignore_lsp_configs('compile_commands.json')
   M.fix_pio_compile_commands()
-  misc.lsp_restart('clangd')
+  lsp.lsp_restart('clangd')
 end
 
 ------------------------------------------------------
