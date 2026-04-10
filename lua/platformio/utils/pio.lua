@@ -58,6 +58,52 @@ end
 
 ------------------------------------------------------
 -- stylua: ignore
+function M.get_pio_toolchain_pattern()
+  -- 1. Performance: Check if we already found it for this project
+  if _G._pio_arch_cache then return _G._pio_arch_cache end
+
+  -- 2. Get the active environment's metadata via 'pio project config'
+  -- This is the most accurate way as it resolves all inheritance and board JSONs
+  local handle = io.popen('pio project config --json-output')
+  if not handle then return '/**/bin/*gcc*' end
+  local json_str = handle:read('*all')
+  handle:close()
+
+  local ok, config = pcall(vim.json.decode, json_str)
+  if not ok or not config then return '/**/bin/*gcc*' end
+
+  -- 3. Pick the right environment (handles multi-env projects)
+  local env_name = vim.g.pio_active_env or 'platformio'
+  local env_data = config[env_name] or config[next(config)]
+
+  -- 4. Find the 'toolchain' package in the platform's required packages
+  -- We query the platform details directly
+  local platform = env_data.platform
+  local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
+  if not p_handle then return '/**/bin/*gcc*' end
+  local p_json = p_handle:read('*all')
+  p_handle:close()
+
+  local p_ok, p_data = pcall(vim.json.decode, p_json)
+  if not p_ok or not p_data.packages then return '/**/bin/*gcc*' end
+
+  -- 5. Extract the architecture name from the toolchain package name
+  local arch_pattern = '/**/bin/*gcc*'
+  for pkg_name, _ in pairs(p_data.packages) do
+    if pkg_name:find('^toolchain%-') then
+      -- Strips 'toolchain-' and 'gcc' to get the core arch (e.g., 'riscv32-esp')
+      local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
+      arch_pattern = '/**/bin/*' .. arch .. '*gcc*'
+      break
+    end
+  end
+
+  -- 6. Cache it globally for the session to prevent lag
+  _G._pio_arch_cache = arch_pattern
+  return arch_pattern
+end
+------------------------------------------------------
+-- stylua: ignore
 function M.fix_pio_compile_commands()
   local filename = vim.fn.getcwd() .. '/compile_commands.json'
   local file = io.open(filename, 'r')
@@ -211,6 +257,7 @@ end
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+  boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
   boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
 -- Handle after poioinit execution
@@ -220,4 +267,5 @@ function M.handlePiolib()
 end
 -- INFO: endDispatcher
 ------------------------------------------------------
+
 return M
