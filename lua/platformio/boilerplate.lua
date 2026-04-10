@@ -1,5 +1,6 @@
-local pio = require('platformio.utils.pio')
 local M = {}
+
+local pio = require('platformio.utils.pio')
 local uv = vim.loop
 
 local boilerplate = {}

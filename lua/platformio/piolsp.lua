@@ -1,5 +1,6 @@
-local misc = require('platformio.utils.misc')
 local M = {}
+
+local misc = require('platformio.utils.misc')
 
 -- stylua: ignore
 function M.piolsp()

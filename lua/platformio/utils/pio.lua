@@ -1,8 +1,9 @@
 -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local misc = require('platformio.utils.misc')
 local M = {}
 
 M.selected_framework = ''
+
+local misc = require('platformio.utils.misc')
 
 ------------------------------------------------------
 -- stylua: ignore
@@ -211,7 +212,7 @@ end
 -- stylua: ignore
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
-  -- require('platformio.boilerplate').boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
+  require('platformio.boilerplate').boilerplate_gen(M.selected_framework, vim.fn.getcwd() .. '/src', 'main.cpp')
 end
 -- Handle after poioinit execution
 -- stylua: ignore
