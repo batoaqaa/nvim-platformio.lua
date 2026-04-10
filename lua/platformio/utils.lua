@@ -6,7 +6,6 @@ local is_windows = jit.os == 'Windows'
 
 local M = {}
 
-M.selected_framework = ''
 M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
