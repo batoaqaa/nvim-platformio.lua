@@ -194,9 +194,7 @@ M.run_sequence = function(tasks)
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
   full_cmd = full_cmd .. ' || ' .. failure
-  print(full_cmd)
-  print(M.selected_framework)
-  -- M.ToggleTerminal(full_cmd, 'float')
+  M.ToggleTerminal(full_cmd, 'float')
 end
 
 ------------------------------------------------------

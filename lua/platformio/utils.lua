@@ -245,7 +245,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    on_stdout = require('platformio.utils.pio').dispatcher,
+    on_stdout = nil, --require('platformio.utils.pio').dispatcher,
 
     -- INFO: on_create() {
     on_create = function(t)

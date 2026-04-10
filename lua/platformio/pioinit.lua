@@ -58,7 +58,6 @@ local function pick_framework(board_details)
         local selection = action_state.get_selected_entry()
         pio.selected_framework = selection[1]
 
-        print(pio.selected_framework)
         pio.run_sequence({
           {
             cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
