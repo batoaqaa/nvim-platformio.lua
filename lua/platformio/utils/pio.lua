@@ -56,6 +56,24 @@ function M.get_pio_dir(type)
   return result
 end
 
+function M.detect_pio_env()
+  local f = io.open(vim.fn.getcwd() .. '/platformio.ini', 'r')
+  if f then
+    for line in f:lines() do
+      -- Matches the name inside [env:NAME]
+      local env = line:match('^%[env:(.+)%]')
+      if env then
+        f:close()
+        return env
+      end
+    end
+    f:close()
+  end
+  return 'platformio' -- Fallback
+end
+
+-- Initialize the global variable
+vim.g.pio_active_env = detect_pio_env()
 ------------------------------------------------------
 -- stylua: ignore
 function M.get_pio_toolchain_pattern()
@@ -73,7 +91,7 @@ function M.get_pio_toolchain_pattern()
   if not ok or not config then return '**/toolchain-*/bin/*' end
 
   -- 3. Pick the right environment (handles multi-env projects)
-  local env_name = vim.g.pio_active_env or 'platformio'
+  local env_name = M.detect_pio_env()
   local env_data = config[env_name] or config[next(config)]
 
   -- 4. Find the 'toolchain' package in the platform's required packages
