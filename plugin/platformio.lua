@@ -6,7 +6,7 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
-local utils = require('platformio.utils')
+local misc = require('platformio.utils.misc')
 local pio = require('platformio.utils.pio')
 local piolsserial = require('platformio.piolsserial')
 
@@ -142,7 +142,7 @@ vim.api.nvim_create_user_command('PioTermList', function()
   if #terms ~= 0 then
     for i = 1, #terms do
       if terms[i].display_name and terms[i].display_name ~= '' and terms[i].display_name:find('pio', 1) then
-        local termtype = utils.strsplit(terms[i].display_name, ':')[1]
+        local termtype = misc.strsplit(terms[i].display_name, ':')[1]
         table.insert(toggleterm_list, {
           term = terms[i],
           termtype = termtype, -- Store the terminal type [piomon or piocli]
