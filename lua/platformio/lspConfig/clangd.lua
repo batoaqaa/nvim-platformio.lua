@@ -9,7 +9,7 @@ boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')
 -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
 -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
 
-boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+-- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 
 boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
