@@ -182,7 +182,7 @@ end
 M.run_sequence = function(tasks)
   -- Reset local state for new run
   M.queue = {}
-  -- pio_buffer = ''
+  pio_buffer = ''
   local full_cmd = ''
 
   local success = 'echo ___DONE___":"SUCCESS'
