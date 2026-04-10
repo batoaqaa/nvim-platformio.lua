@@ -1,15 +1,12 @@
-local config = require('platformio').config
--- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-local pio = require('platformio.utils.pio') --.piolsp
-local is_windows = jit.os == 'Windows'
--- local pioinit = require('platformio.pioinit')
-
 local M = {}
 
+local is_windows = jit.os == 'Windows'
 M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
-
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
+
+local config = require('platformio').config
+-- local pio = require('platformio.utils.pio') --.piolsp
 
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
@@ -248,7 +245,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    on_stdout = pio.dispatcher,
+    on_stdout = require('platformio.utils.pio').dispatcher,
 
     -- INFO: on_create() {
     on_create = function(t)
