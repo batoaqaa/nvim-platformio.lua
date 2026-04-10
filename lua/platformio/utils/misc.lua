@@ -6,6 +6,11 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 ------------------------------------------------------
+function M.normalize_path(path)
+  return path:gsub('\\', '/'):gsub('//+', '/')
+end
+
+------------------------------------------------------
 function M.strsplit(inputstr, del)
   local t = {}
   if type(inputstr) == 'string' and inputstr and inputstr ~= '' then

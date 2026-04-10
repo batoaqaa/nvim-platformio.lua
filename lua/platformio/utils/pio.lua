@@ -38,7 +38,7 @@ function M.get_pio_dir(type)
 
   -- 4.0 Fallback Logic: INI -> Env Var -> Default
   local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
-  core_dir = core_dir:gsub('\\', '/'):gsub('//+', '/')
+  core_dir = misc.normalize_path(core_dir) --core_dir:gsub('\\', '/'):gsub('//+', '/')
   -- if vim.fn.has('win32') == 1 then core_dir = core_dir:gsub('/', '\\') end
   if type == 'core' then return core_dir end
 
@@ -49,76 +49,102 @@ function M.get_pio_dir(type)
   if result:find('${platformio.core_dir}', 1, true) then result = result:gsub('%${platformio.core_dir}', core_dir) end
 
   -- 6. Normalize Slashes for Windows
-  result = result:gsub('\\', '/'):gsub('//+', '/')
+  result = misc.normalize_path(result) --result:gsub('\\', '/'):gsub('//+', '/')
   -- if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
 
   -- Ensure core_dir itself doesn't have trailing slashes for cleaner joins
   return result
 end
-
-function M.detect_pio_env()
-  local f = io.open(vim.fn.getcwd() .. '/platformio.ini', 'r')
-  if f then
-    for line in f:lines() do
-      -- Matches the name inside [env:NAME]
-      local env = line:match('^%[env:(.+)%]')
-      if env then
-        f:close()
-        return env
-      end
-    end
-    f:close()
-  end
-  return 'platformio' -- Fallback
-end
-
--- Initialize the global variable
-vim.g.pio_active_env = detect_pio_env()
 ------------------------------------------------------
--- stylua: ignore
-function M.get_pio_toolchain_pattern()
-  -- 1. Performance: Check if we already found it for this project
-  if _G._pio_arch_cache then return _G._pio_arch_cache end
 
-  -- 2. Get the active environment's metadata via 'pio project config'
-  -- This is the most accurate way as it resolves all inheritance and board JSONs
+function _G.get_pio_toolchain_pattern()
+  -- 1. Check Session Cache (Keyed by Current Working Directory + Active Env)
+  local cwd = vim.fn.getcwd()
+  local cache_key = cwd .. (vim.g.pio_active_env or 'default')
+  if _G._pio_cache and _G._pio_cache[cache_key] then
+    return _G._pio_cache[cache_key]
+  end
+
+  -- 2. Determine Active Environment Name
+  -- If not manually set via vim.g.pio_active_env, we'll find the first one in the file
+  local active_env = vim.g.pio_active_env
+  if not active_env then
+    local f = io.open(cwd .. '/platformio.ini', 'r')
+    if f then
+      for line in f:lines() do
+        active_env = line:match('^%[env:(.+)%]')
+        if active_env then
+          break
+        end
+      end
+      f:close()
+    end
+  end
+  active_env = active_env or 'platformio'
+
+  -- 3. Get Full Project Config (Resolves all inheritance/multiple envs)
   local handle = io.popen('pio project config --json-output')
-  if not handle then return '**/toolchain-*/bin/*' end
+  if not handle then
+    return '/**/bin/*gcc*'
+  end
   local json_str = handle:read('*all')
   handle:close()
 
   local ok, config = pcall(vim.json.decode, json_str)
-  if not ok or not config then return '**/toolchain-*/bin/*' end
+  if not ok or not config then
+    return '/**/bin/*gcc*'
+  end
 
-  -- 3. Pick the right environment (handles multi-env projects)
-  local env_name = M.detect_pio_env()
-  local env_data = config[env_name] or config[next(config)]
+  -- 4. Extract Platform for the specific Active Env
+  local env_data = config['env:' .. active_env] or config[active_env]
+  if not env_data or not env_data.platform then
+    -- Fallback to the first available env if active_env wasn't found
+    for name, data in pairs(config) do
+      if name:find('env:') then
+        env_data = data
+        break
+      end
+    end
+  end
 
-  -- 4. Find the 'toolchain' package in the platform's required packages
-  -- We query the platform details directly
-  local platform = env_data.platform
+  local platform = env_data and env_data.platform or ''
+  local core_dir = config.platformio and config.platformio.core_dir or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio')
+  local packages_base = misc.normalize_path(core_dir .. '/packages')
+
+  -- 5. Query the Platform for its Toolchain Package
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
-  if not p_handle then return '**/toolchain-*/bin/*' end
+  if not p_handle then
+    return misc.normalize_path(packages_base .. '/**/bin/*gcc*')
+  end
   local p_json = p_handle:read('*all')
   p_handle:close()
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
-  if not p_ok or not p_data.packages then return '**/toolchain-*/bin/*' end
+  if not p_ok or not p_data.packages then
+    return misc.normalize_path(packages_base .. '/**/bin/*gcc*')
+  end
 
-  -- 5. Extract the architecture name from the toolchain package name
-  local arch_pattern = '**/toolchain-*/bin/*'
+  -- 6. Identify the Arch Pattern
+  local arch_glob = '/**/bin/*gcc*'
   for pkg_name, _ in pairs(p_data.packages) do
     if pkg_name:find('^toolchain%-') then
-      -- Strips 'toolchain-' and 'gcc' to get the core arch (e.g., 'riscv32-esp')
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
-      arch_pattern = '/**/bin/*' .. arch .. '*gcc*'
+      arch_glob = '/**/bin/*' .. arch .. '*gcc*'
       break
     end
   end
 
-  -- 6. Cache it globally for the session to prevent lag
-  _G._pio_arch_cache = arch_pattern
-  return arch_pattern
+  -- 7. Final Path & Windows Normalization
+  local final_pattern = misc.normalize_path(packages_base .. arch_glob)
+  if vim.fn.has('win32') == 1 then
+    final_pattern = final_pattern:gsub('/', '\\')
+  end
+
+  -- Cache the result for this project/env combo
+  _G._pio_cache = _G._pio_cache or {}
+  _G._pio_cache[cache_key] = final_pattern
+
+  return final_pattern
 end
 ------------------------------------------------------
 -- stylua: ignore

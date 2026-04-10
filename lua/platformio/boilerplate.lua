@@ -86,7 +86,7 @@ clangd
   content = function(self)
     local pio = require('platformio.utils.pio')
     -- return string.format(self.template, pio.get_pio_dir('packages') or '**')
-    return string.format(self.template, pio.get_pio_toolchain_pattern() or '**')
+    return string.format(self.template, get_pio_toolchain_pattern() or '**')
   end,
   --query-driver=%s/toolchain-*/**/bin/*
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
