@@ -90,6 +90,7 @@ function _G.get_pio_toolchain_pattern()
     -- B. Check default_envs in [platformio] section
     if not active_env and config.platformio and config.platformio.default_envs then
       active_env = config.platformio.default_envs
+      print("toolchain: 3.0 " .. active_env)
       -- default_envs can be a comma-separated list; we take the first one
       active_env = active_env:match('([^,%s]+)')
     end
@@ -100,6 +101,7 @@ function _G.get_pio_toolchain_pattern()
         local env_match = name:match('^env:(.+)')
         if env_match then
           active_env = env_match
+          print("toolchain: 3.1 " .. active_env)
           break
         end
       end
