@@ -94,8 +94,9 @@ function _G.get_pio_toolchain_pattern()
       print("toolchain: 3.0 " .. active_env)
       -- default_envs can be a comma-separated list; we take the first one
       if active_env then
-      active_env = active_env:match('([^,%s]+)')
+        active_env = active_env:match('([^,%s]+)')
       end
+    end
 
     -- C. Fallback: Find the first [env:...] section
     if not active_env then
