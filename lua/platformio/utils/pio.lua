@@ -73,7 +73,7 @@ function M.fix_pio_compile_commands()
     return
   end
 
-  print('PioFix0')
+  -- print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
@@ -194,7 +194,9 @@ M.run_sequence = function(tasks)
     else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
   end
   full_cmd = full_cmd .. ' || ' .. failure
-  M.ToggleTerminal(full_cmd, 'float')
+  print(full_cmd)
+  print(M.selected_framework)
+  -- M.ToggleTerminal(full_cmd, 'float')
 end
 
 ------------------------------------------------------
