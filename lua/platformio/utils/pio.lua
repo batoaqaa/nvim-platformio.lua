@@ -81,7 +81,8 @@ function _G.get_pio_toolchain_pattern()
 
   print("toolchain: 3")
   -- 3. Determine Active Environment
-  local active_env = vim.g.pio_active_env -- Manual override (from Picker)
+  -- local active_env = vim.g.pio_active_env -- Manual override (from Picker)
+  local active_env = nil
 
   if not active_env then
     -- A. Check Environment Variable PLATFORMIO_DEFAULT_ENVS
@@ -92,8 +93,9 @@ function _G.get_pio_toolchain_pattern()
       active_env = config.platformio.default_envs
       print("toolchain: 3.0 " .. active_env)
       -- default_envs can be a comma-separated list; we take the first one
+      if active_env then
       active_env = active_env:match('([^,%s]+)')
-    end
+      end
 
     -- C. Fallback: Find the first [env:...] section
     if not active_env then
