@@ -60,7 +60,7 @@ end
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
   local cwd = vim.fn.getcwd()
-  -- vim.g.pio_active_env = 'env:seeed_xiao_esp32c3'
+  vim.g.pio_active_env = 'seeed_xiao_esp32c3'
   -- 1. Check Session Cache
   print("toolchain: 1")
   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
