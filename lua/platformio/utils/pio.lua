@@ -57,28 +57,29 @@ function M.get_pio_dir(type)
 end
 ------------------------------------------------------
 
+-- stylua: ignore
 function _G.get_pio_toolchain_pattern()
   local cwd = vim.fn.getcwd()
-  vim.g.pio_active_env = 'env:seeed_xiao_esp32c3'
+  -- vim.g.pio_active_env = 'env:seeed_xiao_esp32c3'
   -- 1. Check Session Cache
+  print("toolchain: 1")
   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
   if _G._pio_cache and _G._pio_cache[cache_key] then
     return _G._pio_cache[cache_key]
   end
 
+  print("toolchain: 2")
   -- 2. Get Full Project Config via JSON (Handles variable resolution)
   local handle = io.popen('pio project config --json-output')
-  if not handle then
-    return '/**/bin/*gcc*'
-  end
+  if not handle then return '/**/bin/*gcc*' end
   local json_str = handle:read('*all')
   handle:close()
 
+  print("toolchain: 2.0")
   local ok, config = pcall(vim.json.decode, json_str)
-  if not ok or not config then
-    return '/**/bin/*gcc*'
-  end
+  if not ok or not config then return '/**/bin/*gcc*' end
 
+  print("toolchain: 3")
   -- 3. Determine Active Environment
   local active_env = vim.g.pio_active_env -- Manual override (from Picker)
 
@@ -105,6 +106,7 @@ function _G.get_pio_toolchain_pattern()
     end
   end
 
+  print("toolchain: 4")
   -- 4. Extract Data for the Target Environment
   local env_key = 'env:' .. (active_env or '')
   local env_data = config[env_key] or config[active_env]
@@ -113,6 +115,7 @@ function _G.get_pio_toolchain_pattern()
     return '/**/bin/*gcc*'
   end
 
+  print("toolchain: 5")
   -- 5. Build Package Path & Query Platform for Toolchain
   local core_dir = config.platformio and config.platformio.core_dir or (os.getenv('USERPROFILE') or os.getenv('HOME')) .. '/.platformio'
   local packages_base = (core_dir .. '/packages'):gsub('\\', '/'):gsub('//+', '/')
@@ -121,6 +124,8 @@ function _G.get_pio_toolchain_pattern()
   if not p_handle then
     return packages_base .. '/**/bin/*gcc*'
   end
+  print("toolchain: 5.0")
+
   local p_json = p_handle:read('*all')
   p_handle:close()
 
@@ -128,7 +133,9 @@ function _G.get_pio_toolchain_pattern()
   if not p_ok or not p_data.packages then
     return packages_base .. '/**/bin/*gcc*'
   end
+  print("toolchain: 5.1")
 
+  print("toolchain: 6")
   -- 6. Extract Toolchain Architecture
   local arch_glob = '/**/bin/*gcc*'
   for pkg_name, _ in pairs(p_data.packages) do
@@ -144,6 +151,7 @@ function _G.get_pio_toolchain_pattern()
     final_pattern = final_pattern:gsub('/', '\\')
   end
 
+  print("toolchain: 7")
   -- 7. Update Cache
   _G._pio_cache = _G._pio_cache or {}
   _G._pio_cache[cache_key] = final_pattern
