@@ -65,12 +65,12 @@ function M.get_pio_toolchain_pattern()
   -- 2. Get the active environment's metadata via 'pio project config'
   -- This is the most accurate way as it resolves all inheritance and board JSONs
   local handle = io.popen('pio project config --json-output')
-  if not handle then return '/**/bin/*gcc*' end
+  if not handle then return '**/toolchain-*/bin/*' end
   local json_str = handle:read('*all')
   handle:close()
 
   local ok, config = pcall(vim.json.decode, json_str)
-  if not ok or not config then return '/**/bin/*gcc*' end
+  if not ok or not config then return '**/toolchain-*/bin/*' end
 
   -- 3. Pick the right environment (handles multi-env projects)
   local env_name = vim.g.pio_active_env or 'platformio'
@@ -80,15 +80,15 @@ function M.get_pio_toolchain_pattern()
   -- We query the platform details directly
   local platform = env_data.platform
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
-  if not p_handle then return '/**/bin/*gcc*' end
+  if not p_handle then return '**/toolchain-*/bin/*' end
   local p_json = p_handle:read('*all')
   p_handle:close()
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
-  if not p_ok or not p_data.packages then return '/**/bin/*gcc*' end
+  if not p_ok or not p_data.packages then return '**/toolchain-*/bin/*' end
 
   -- 5. Extract the architecture name from the toolchain package name
-  local arch_pattern = '/**/bin/*gcc*'
+  local arch_pattern = '**/toolchain-*/bin/*'
   for pkg_name, _ in pairs(p_data.packages) do
     if pkg_name:find('^toolchain%-') then
       -- Strips 'toolchain-' and 'gcc' to get the core arch (e.g., 'riscv32-esp')
