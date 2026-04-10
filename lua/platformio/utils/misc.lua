@@ -55,9 +55,9 @@ function M.cd_pioini()
 end
 
 function M.pio_install_check()
-  local handel = (jit.os == 'Windows') and assert(io.popen('where.exe pio 2>./nul')) or assert(io.popen('which pio 2>/dev/null'))
-  local pio_path = assert(handel:read('*a'))
-  handel:close()
+  local handle = (jit.os == 'Windows') and assert(io.popen('where.exe pio 2>./nul')) or assert(io.popen('which pio 2>/dev/null'))
+  local pio_path = assert(handle():read('*a'))
+  handle():close()
 
   if #pio_path == 0 then
     vim.notify('Platformio not found in the path', vim.log.levels.ERROR)
