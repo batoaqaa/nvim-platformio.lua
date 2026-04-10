@@ -112,6 +112,7 @@ function _G.get_pio_toolchain_pattern()
   -- 4. Extract Data for the Target Environment
   local env_key = 'env:' .. (active_env or '')
   local env_data = config[env_key] or config[active_env]
+  print(vim.inspect(config))
   print("toolchain: 4.0 " .. env_key)
 
   if not env_data or not env_data.platform then
