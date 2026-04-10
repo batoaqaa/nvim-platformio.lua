@@ -8,7 +8,7 @@ function M.parse_tty(lines)
     M.tty_list[k] = nil
   end
   local json_data = vim.json.decode(lines[1])
-  for key, value in pairs(json_data) do
+  for _, value in pairs(json_data) do
     if value['description'] ~= 'n/a' then
       table.insert(M.tty_list, { port = value['port'], description = value['description'] })
     end

@@ -79,17 +79,15 @@ function M.fix_pio_compile_commands()
   local path_map = {}
   local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
   if pio_home then
-
     -- Recursively find all binaries in PIO packages
     local pio_packages = M.get_pio_dir('packages') .. '/*/bin/*'
-
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
       -- Extract filename (e.g., riscv32-esp-elf-gcc)
       local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
       path_map[name] = full_path
-      print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
+      -- print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
     end
   end
 
@@ -99,11 +97,9 @@ function M.fix_pio_compile_commands()
     if type(entry.command) == 'string' then
       local cmd_parts = vim.split(entry.command, ' ')
       local first_token = cmd_parts[1]
-
       if first_token then
         -- Check if it's already a short name (not an absolute path)
         local is_abs = first_token:sub(1, 1) == '/' or first_token:match('^%a:[/\\]')
-
         if not is_abs then
           local short_name = first_token:gsub('%.exe$', '')
           -- print('PioFix2: short_name=' .. short_name)
@@ -147,11 +143,12 @@ M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
 ------------------------------------------------------
--- 1. The Dispatcher (The Brain)
+-- The Dispatcher (The Brain)
 -- stylua: ignore
 function M.dispatcher(_, _, data)
   if #M.queue == 0 then return end
 
+  -- 1. attach partial buffer from previous data last line to 1st line 
   pio_buffer = pio_buffer .. data[1]
   -- 2. If the chunk has more than one element, we've encountered newlines
   if #data > 1 then
