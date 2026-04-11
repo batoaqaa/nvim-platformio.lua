@@ -90,6 +90,7 @@ function _G.get_pio_toolchain_pattern()
 
     -- B. Fallback: Find the first environment name starting with "env:"
     if not active_env then
+      print(vim.inspect(config))
       for name, _ in pairs(config) do
         print("toolchain 3.0: name=" .. name)
         -- FIX: Check type to prevent "attempt to index local 'name' (a number value)"
