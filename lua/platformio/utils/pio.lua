@@ -89,7 +89,7 @@ function _G.get_pio_toolchain_pattern()
       -- Identify the global 'platformio' config block
       if item.name == 'platformio' then
         core_dir = item.core_dir or core_dir
-        print('toolchain 1.1: core_dir= ' .. core_dir)
+        print('toolchain 1.1: core_dir= ' .. item.core_dir)
         -- Priority: If no manual env is set, try to get default_envs
         if not active_env and item.default_envs then
           active_env = tostring(item.default_envs):match('([^,%s]+)')
