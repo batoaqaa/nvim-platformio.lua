@@ -58,60 +58,48 @@ end
 ------------------------------------------------------
 
 --- stylua: ignore
-local function normalize(path)
-  return path:gsub('\\', '/'):gsub('//+', '/')
-end
-
 function _G.get_pio_toolchain_pattern()
   local cwd = vim.fn.getcwd()
   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
 
-  -- 1. Session Cache for Speed
   _G._pio_cache = _G._pio_cache or {}
   if _G._pio_cache[cache_key] then
     return _G._pio_cache[cache_key]
   end
 
-  -- 2. Fetch Project Config
   local handle = io.popen('pio project config --json-output')
   if not handle then
     return '/**/bin/*gcc*'
   end
   local json_str = handle:read('*all')
   handle:close()
-  print('tollchain 2.0')
 
   local ok, config = pcall(vim.json.decode, json_str)
   if not ok or not config then
     return '/**/bin/*gcc*'
   end
-  print('tollchain 2.1')
 
   local active_env = vim.g.pio_active_env
   local target_platform = nil
-  local home = os.getenv('HOME') or os.getenv('USERPROFILE')
-  local core_dir = home .. '/.platformio'
+  local core_dir = (os.getenv('HOME') or os.getenv('USERPROFILE')) .. '/.platformio'
 
-  -- 3. Parse Nested Array Structure
-  -- Structure: { { "section_name", { {"key", "val"}, ... } }, ... }
-
-  -- First Pass: Determine Active Env if not set
+  -- 1. Pass One: Extract default_envs and core_dir from 'platformio' section
   if not active_env then
     for _, section in ipairs(config) do
       if section[1] == 'platformio' then
         for _, kv in ipairs(section[2]) do
           if kv[1] == 'default_envs' then
             active_env = tostring(kv[2]):match('([^,%s]+)')
-          elseif kv[1] == 'core_dir' then
+          end
+          if kv[1] == 'core_dir' then
             core_dir = kv[2]
           end
         end
       end
     end
   end
-  print('tollchain 3.0')
 
-  -- Second Pass: Find Platform for the Active Env
+  -- 2. Pass Two: Find the platform for the active environment
   for _, section in ipairs(config) do
     local name = section[1]
     if active_env and (name == 'env:' .. active_env or name == active_env) then
@@ -123,11 +111,10 @@ function _G.get_pio_toolchain_pattern()
     end
   end
 
-  print('tollchain 4.0')
-  -- Fallback: If still no env, pick the first one available
+  -- 3. Fallback: If still nothing, take the first platform from any 'env:' section
   if not target_platform then
     for _, section in ipairs(config) do
-      if section[1]:find('^env:') then
+      if type(section[1]) == 'string' and section[1]:find('^env:') then
         for _, kv in ipairs(section[2]) do
           if kv[1] == 'platform' then
             target_platform = kv[2]
@@ -143,14 +130,12 @@ function _G.get_pio_toolchain_pattern()
   if not target_platform then
     return '/**/bin/*gcc*'
   end
-  print('tollchain 5.0')
 
-  -- 4. Query Platform for Toolchain Package Name
+  -- 4. Query the platform for the toolchain package name
   local p_handle = io.popen('pio platform show ' .. target_platform .. ' --json-output')
   if not p_handle then
     return '/**/bin/*gcc*'
   end
-  print('tollchain 6.0')
   local p_json = p_handle:read('*all')
   p_handle:close()
 
@@ -158,9 +143,8 @@ function _G.get_pio_toolchain_pattern()
   if not p_ok or not p_data.packages then
     return '/**/bin/*gcc*'
   end
-  print('tollchain 7.0')
 
-  -- 5. Extract Arch and Build Pattern
+  -- 5. Extract Arch
   local arch_glob = '/**/bin/*gcc*'
   for pkg_name, _ in pairs(p_data.packages) do
     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
@@ -170,223 +154,142 @@ function _G.get_pio_toolchain_pattern()
     end
   end
 
-  print('tollchain 8.0')
-  -- 6. Final Path Assembly
-  local packages_path = normalize(core_dir .. '/packages')
-  local final_pattern = normalize(packages_path .. arch_glob)
+  local final_pattern = (core_dir:gsub('\\', '/') .. '/packages' .. arch_glob):gsub('//+', '/')
+  -- if vim.fn.has('win32') == 1 then
+  --   final_pattern = final_pattern:gsub('/', '\\')
+  -- end
 
-  if vim.fn.has('win32') == 1 then
-    final_pattern = final_pattern:gsub('/', '\\')
-  end
-
-  print('tollchain 9.0: final_pattern=' .. final_pattern)
   _G._pio_cache[cache_key] = final_pattern
+  print('tollchain 9.0: final_pattern=' .. final_pattern)
   return final_pattern
 end
-
----
+-- local function normalize(path)
+--   return path:gsub('\\', '/'):gsub('//+', '/')
+-- end
+--
 -- function _G.get_pio_toolchain_pattern()
 --   local cwd = vim.fn.getcwd()
 --   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
 --
---   if _G._pio_cache and _G._pio_cache[cache_key] then
+--   -- 1. Session Cache for Speed
+--   _G._pio_cache = _G._pio_cache or {}
+--   if _G._pio_cache[cache_key] then
 --     return _G._pio_cache[cache_key]
 --   end
 --
+--   -- 2. Fetch Project Config
 --   local handle = io.popen('pio project config --json-output')
 --   if not handle then
 --     return '/**/bin/*gcc*'
 --   end
 --   local json_str = handle:read('*all')
 --   handle:close()
+--   print('tollchain 2.0')
 --
 --   local ok, config = pcall(vim.json.decode, json_str)
 --   if not ok or not config then
 --     return '/**/bin/*gcc*'
 --   end
+--   print('tollchain 2.1')
 --
 --   local active_env = vim.g.pio_active_env
---   local env_data = nil
---   local core_dir = (os.getenv('HOME') or os.getenv('USERPROFILE')) .. '/.platformio'
+--   local target_platform = nil
+--   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
+--   local core_dir = home .. '/.platformio'
 --
---   print('toolchain 1.0: core_dir= ' .. core_dir)
---   -- 1. Find the target environment in the array of objects
---   for _, item in ipairs(config) do
---     if type(item) == 'table' then
---       -- Identify the global 'platformio' config block
---       if item.name == 'platformio' then
---         core_dir = item.core_dir or core_dir
---         print('toolchain 1.1: core_dir= ' .. item.core_dir)
---         -- Priority: If no manual env is set, try to get default_envs
---         if not active_env and item.default_envs then
---           active_env = tostring(item.default_envs):match('([^,%s]+)')
---           print('toolchain 1.1: active_env= ' .. active_env)
---         end
---       end
+--   -- 3. Parse Nested Array Structure
+--   -- Structure: { { "section_name", { {"key", "val"}, ... } }, ... }
 --
---       -- If we have an active_env, find its specific table
---       if active_env and (item.name == 'env:' .. active_env or item.name == active_env) then
---         env_data = item
---         print('toolchain 1.2: env_data= ' .. env_data)
---       end
---     end
---   end
---
---   -- 2. Fallback: If no env_data found yet, pick the first item starting with 'env:'
---   print('toolchain 2.0')
---   if not env_data then
---     for _, item in ipairs(config) do
---       if type(item) == 'table' then
---         print('toolchain 2.1')
---         print(vim.inspect(item))
---         if type(item.name) == 'table' then
---           print('toolchain 2.2')
---           print(vim.inspect(item.name))
---         end
---         if item.name then
---           print('toolchain 2.3: item.name= ' .. item.name)
---           if item.name:find('^env:') then
---             env_data = item
---             print('toolchain 2.4: env_data= ' .. env_data)
---             break
+--   -- First Pass: Determine Active Env if not set
+--   if not active_env then
+--     for _, section in ipairs(config) do
+--       if section[1] == 'platformio' then
+--         for _, kv in ipairs(section[2]) do
+--           if kv[1] == 'default_envs' then
+--             active_env = tostring(kv[2]):match('([^,%s]+)')
+--           elseif kv[1] == 'core_dir' then
+--             core_dir = kv[2]
 --           end
 --         end
 --       end
 --     end
 --   end
+--   print('tollchain 3.0')
 --
---   if not env_data or not env_data.platform then
+--   -- Second Pass: Find Platform for the Active Env
+--   for _, section in ipairs(config) do
+--     local name = section[1]
+--     if active_env and (name == 'env:' .. active_env or name == active_env) then
+--       for _, kv in ipairs(section[2]) do
+--         if kv[1] == 'platform' then
+--           target_platform = kv[2]
+--         end
+--       end
+--     end
+--   end
+--
+--   print('tollchain 4.0')
+--   -- Fallback: If still no env, pick the first one available
+--   if not target_platform then
+--     for _, section in ipairs(config) do
+--       if section[1]:find('^env:') then
+--         for _, kv in ipairs(section[2]) do
+--           if kv[1] == 'platform' then
+--             target_platform = kv[2]
+--           end
+--         end
+--         if target_platform then
+--           break
+--         end
+--       end
+--     end
+--   end
+--
+--   if not target_platform then
 --     return '/**/bin/*gcc*'
 --   end
---   print('toolchain 3.0')
+--   print('tollchain 5.0')
 --
---   -- 3. Resolve the Toolchain Path
---   local packages_base = core_dir:gsub('\\', '/') .. '/packages'
---   local p_handle = io.popen('pio platform show ' .. env_data.platform .. ' --json-output')
+--   -- 4. Query Platform for Toolchain Package Name
+--   local p_handle = io.popen('pio platform show ' .. target_platform .. ' --json-output')
 --   if not p_handle then
---     return packages_base .. '/**/bin/*gcc*'
+--     return '/**/bin/*gcc*'
 --   end
---   print('toolchain 3.1')
+--   print('tollchain 6.0')
 --   local p_json = p_handle:read('*all')
 --   p_handle:close()
 --
 --   local p_ok, p_data = pcall(vim.json.decode, p_json)
 --   if not p_ok or not p_data.packages then
---     return packages_base .. '/**/bin/*gcc*'
+--     return '/**/bin/*gcc*'
 --   end
+--   print('tollchain 7.0')
 --
---   print('toolchain 3.2')
+--   -- 5. Extract Arch and Build Pattern
 --   local arch_glob = '/**/bin/*gcc*'
 --   for pkg_name, _ in pairs(p_data.packages) do
 --     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
 --       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
 --       arch_glob = '/**/bin/*' .. arch .. '*gcc*'
---       print('toolchain 3.3: arch_glob=' .. arch_glob)
 --       break
 --     end
 --   end
 --
---   local final_pattern = (packages_base .. arch_glob):gsub('//+', '/')
+--   print('tollchain 8.0')
+--   -- 6. Final Path Assembly
+--   local packages_path = normalize(core_dir .. '/packages')
+--   local final_pattern = normalize(packages_path .. arch_glob)
+--
 --   if vim.fn.has('win32') == 1 then
 --     final_pattern = final_pattern:gsub('/', '\\')
---     print('toolchain 3.3: final_pattern=' .. final_pattern)
 --   end
 --
---   _G._pio_cache = _G._pio_cache or {}
+--   print('tollchain 9.0: final_pattern=' .. final_pattern)
 --   _G._pio_cache[cache_key] = final_pattern
 --   return final_pattern
 -- end
--- function _G.get_pio_toolchain_pattern()
---   local cwd = vim.fn.getcwd()
 --
---   -- 1. Performance: Check Session Cache
---   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
---   if _G._pio_cache and _G._pio_cache[cache_key] then return _G._pio_cache[cache_key] end
---   print("toolchain 1:")
---
---   -- 2. Get Full Project Config via JSON
---   local handle = io.popen('pio project config --json-output')
---   if not handle then return '/**/bin/*gcc*' end
---   local json_str = handle:read('*all')
---   handle:close()
---   print("toolchain 2:")
---
---   local ok, config = pcall(vim.json.decode, json_str)
---   if not ok or not config then return '/**/bin/*gcc*' end
---
---   -- 3. Determine Active Environment (Priority: Manual > default_envs > First [env:])
---   local active_env = vim.g.pio_active_env
---   print("toolchain 3:")
---
---   if not active_env then
---     -- A. Check if default_envs is defined in [platformio]
---     if config.platformio and config.platformio.default_envs then
---       -- Handles comma-separated lists like "env1, env2"
---       active_env = tostring(config.platformio.default_envs):match('([^,%s]+)')
---     end
---     print("toolchain 3.0:")
---
---     -- B. Fallback: Find the first environment name starting with "env:"
---     if not active_env then
---       print(vim.inspect(config))
---       for name, value in pairs(config) do
---         print("toolchain 3.0: name=" .. name .. ' value=' .. value)
---         -- FIX: Check type to prevent "attempt to index local 'name' (a number value)"
---         if type(name) == 'string' then
---           local env_match = name:match('^env:(.+)')
---           print("toolchain 3.0: env_match=" .. env_match)
---           if env_match then active_env = env_match break
---           end
---         end
---       end
---     end
---   end
---
---   -- 4. Target the specific config block
---   -- PIO JSON uses "env:NAME" keys for environments
---   local env_key = 'env:' .. (active_env or '')
---   local env_data = config[env_key] or config[active_env]
---   print("toolchain 4:")
---
---   if not env_data or not env_data.platform then return '/**/bin/*gcc*' end
---
---   print("toolchain 5:")
---   -- 5. Build Paths (Normalizing for Windows/Linux)
---   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
---   local core_dir = (config.platformio and config.platformio.core_dir) or (home .. '/.platformio')
---   local packages_base = core_dir:gsub('\\', '/') .. '/packages'
---
---   -- 6. Query PIO for the Toolchain Architecture
---   local p_handle = io.popen('pio platform show ' .. env_data.platform .. ' --json-output')
---   if not p_handle then return packages_base .. '/**/bin/*gcc*' end
---   local p_json = p_handle:read('*all')
---   p_handle:close()
---   print("toolchain 6:")
---
---   local p_ok, p_data = pcall(vim.json.decode, p_json)
---   if not p_ok or not p_data.packages then return packages_base .. '/**/bin/*gcc*' end
---   print("toolchain 6.0:")
---
---   local arch_glob = '/**/bin/*gcc*'
---   for pkg_name, _ in pairs(p_data.packages) do
---     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
---       print("toolchain 6.1: pkg_name=" .. pkg_name)
---       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
---       arch_glob = '/**/bin/*' .. arch .. '*gcc*'
---       break
---     end
---   end
---
---   -- 7. Final Path Normalization
---   local final_pattern = (packages_base .. arch_glob):gsub('//+', '/')
---   if vim.fn.has('win32') == 1 then final_pattern = final_pattern:gsub('/', '\\') end
---   print("toolchain 6.1: final_pattern=" .. final_pattern)
---
---   -- Save to cache
---   _G._pio_cache = _G._pio_cache or {}
---   _G._pio_cache[cache_key] = final_pattern
---   return final_pattern
--- end
+---
 ------------------------------------------------------
 -- stylua: ignore
 function M.fix_pio_compile_commands()
