@@ -64,18 +64,21 @@ function _G.get_pio_toolchain_pattern()
   -- 1. Performance: Check Session Cache
   local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
   if _G._pio_cache and _G._pio_cache[cache_key] then return _G._pio_cache[cache_key] end
+  print("toolchain 1:")
 
   -- 2. Get Full Project Config via JSON
   local handle = io.popen('pio project config --json-output')
   if not handle then return '/**/bin/*gcc*' end
   local json_str = handle:read('*all')
   handle:close()
+  print("toolchain 2:")
 
   local ok, config = pcall(vim.json.decode, json_str)
   if not ok or not config then return '/**/bin/*gcc*' end
 
   -- 3. Determine Active Environment (Priority: Manual > default_envs > First [env:])
   local active_env = vim.g.pio_active_env
+  print("toolchain 3:")
 
   if not active_env then
     -- A. Check if default_envs is defined in [platformio]
@@ -83,13 +86,16 @@ function _G.get_pio_toolchain_pattern()
       -- Handles comma-separated lists like "env1, env2"
       active_env = tostring(config.platformio.default_envs):match('([^,%s]+)')
     end
+    print("toolchain 3.0:")
 
     -- B. Fallback: Find the first environment name starting with "env:"
     if not active_env then
       for name, _ in pairs(config) do
+        print("toolchain 3.0: name=" .. name)
         -- FIX: Check type to prevent "attempt to index local 'name' (a number value)"
         if type(name) == 'string' then
           local env_match = name:match('^env:(.+)')
+          print("toolchain 3.0: env_match=" .. env_match)
           if env_match then active_env = env_match break
           end
         end
@@ -101,9 +107,11 @@ function _G.get_pio_toolchain_pattern()
   -- PIO JSON uses "env:NAME" keys for environments
   local env_key = 'env:' .. (active_env or '')
   local env_data = config[env_key] or config[active_env]
+  print("toolchain 4:")
 
   if not env_data or not env_data.platform then return '/**/bin/*gcc*' end
 
+  print("toolchain 5:")
   -- 5. Build Paths (Normalizing for Windows/Linux)
   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
   local core_dir = (config.platformio and config.platformio.core_dir) or (home .. '/.platformio')
@@ -114,13 +122,16 @@ function _G.get_pio_toolchain_pattern()
   if not p_handle then return packages_base .. '/**/bin/*gcc*' end
   local p_json = p_handle:read('*all')
   p_handle:close()
+  print("toolchain 6:")
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
   if not p_ok or not p_data.packages then return packages_base .. '/**/bin/*gcc*' end
+  print("toolchain 6.0:")
 
   local arch_glob = '/**/bin/*gcc*'
   for pkg_name, _ in pairs(p_data.packages) do
     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
+      print("toolchain 6.1: pkg_name=" .. pkg_name)
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
       arch_glob = '/**/bin/*' .. arch .. '*gcc*'
       break
@@ -130,6 +141,7 @@ function _G.get_pio_toolchain_pattern()
   -- 7. Final Path Normalization
   local final_pattern = (packages_base .. arch_glob):gsub('//+', '/')
   if vim.fn.has('win32') == 1 then final_pattern = final_pattern:gsub('/', '\\') end
+  print("toolchain 6.1: final_pattern=" .. final_pattern)
 
   -- Save to cache
   _G._pio_cache = _G._pio_cache or {}
