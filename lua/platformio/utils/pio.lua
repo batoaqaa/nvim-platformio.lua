@@ -129,14 +129,14 @@ function _G.get_pio_toolchain_pattern()
 
   local handle = io.popen('pio project config --json-output')
   if not handle then
-    return '/**/bin/*'
+    return '/toolchain-*/**/bin/*'
   end
   local json_str = handle:read('*all')
   handle:close()
 
   local ok, config = pcall(vim.json.decode, json_str)
   if not ok or not config then
-    return '/**/bin/*'
+    return '/toolchain-*/**/bin/*'
   end
 
   local active_env = vim.g.pio_active_env
@@ -188,24 +188,24 @@ function _G.get_pio_toolchain_pattern()
   end
 
   if not target_platform then
-    return '/**/bin/*'
+    return '/toolchain-*/**/bin/*'
   end
 
   -- 4. Query the platform for the toolchain package name
   local p_handle = io.popen('pio platform show ' .. target_platform .. ' --json-output')
   if not p_handle then
-    return '/**/bin/*'
+    return '/toolchain-*/**/bin/*'
   end
   local p_json = p_handle:read('*all')
   p_handle:close()
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
   if not p_ok or not p_data.packages then
-    return '/**/bin/*'
+    return '/toolchain-*/**/bin/*'
   end
 
   -- 5. Extract Arch
-  local arch_glob = '/**/bin/*'
+  local arch_glob = '/toolchain-*/**/bin/*'
   for pkg_name, _ in pairs(p_data.packages) do
     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
