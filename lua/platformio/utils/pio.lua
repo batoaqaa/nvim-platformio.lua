@@ -109,9 +109,10 @@ function _G.get_pio_toolchain_pattern()
   print('toolchain 2.0')
   if not env_data then
     for _, item in ipairs(config) do
+      print('toolchain 2.1: item.name= ' .. item.name)
       if type(item) == 'table' and item.name and item.name:find('^env:') then
         env_data = item
-        print('toolchain 2.1: env_data= ' .. env_data)
+        print('toolchain 2.2: env_data= ' .. env_data)
         break
       end
     end
