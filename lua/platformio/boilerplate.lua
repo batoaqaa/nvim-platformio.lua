@@ -74,7 +74,7 @@ clangd
 --completion-parse=always
 --completion-style=detailed
 --header-insertion=iwyu
---fallback-style=llvm,
+--fallback-style=llvm
 --header-insertion-decorators
 -j=12
 --log=verbose
