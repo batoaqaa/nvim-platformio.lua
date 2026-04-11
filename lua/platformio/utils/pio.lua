@@ -18,43 +18,103 @@ function M.get_pio_dir(type)
     platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
   }
 
-  local target_config = map[type]
-  if not target_config then return nil end
+  local core_ini, dir_ini = nil, nil
+  local core_map, dir_map = map['core'], map[type]
+  if not core_map and not dir_map then
+    return nil
+  end
 
   -- 3. Try to get explicit value from platformio.ini
-  local path = vim.fn.getcwd() .. '/platformio.ini'
-  local inifile = io.open(path, 'r')
-  local ini_val = nil
-  local core_val = nil
-
-  if inifile then
-    for line in inifile:lines() do
-      if core_val == nil then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
-      if ini_val == nil then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)') end
-      if ini_val and core_val then break end
+  local handle = io.popen('pio project config --json-output')
+  if handle then
+    local json_str = handle:read('*all')
+    local _, config = pcall(vim.json.decode, json_str)
+    for _, section in ipairs(config) do
+      if section[1] == 'platformio' then
+        for _, kv in ipairs(section[2]) do
+          if kv[1] == dir_map.ini then
+            dir_ini = tostring(kv[2]):match('([^,%s]+)')
+          end
+          if kv[1] == core_map.ini then
+            core_ini = kv[2]
+          end
+        end
+        break
+      end
     end
-    inifile:close()
+    handle:close()
   end
 
   -- 4.0 Fallback Logic: INI -> Env Var -> Default
-  local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
+  local core_dir = core_ini or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
   core_dir = misc.normalize_path(core_dir) --core_dir:gsub('\\', '/'):gsub('//+', '/')
-  -- if vim.fn.has('win32') == 1 then core_dir = core_dir:gsub('/', '\\') end
-  if type == 'core' then return core_dir end
 
-  -- 4.1 Fallback Logic: INI -> Env Var -> Default
-  local result = ini_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
+  if type == 'core' then
+    return core_dir
+  end
+
+  local  result = dir_ini or os.getenv(dir_map.env) or (core_dir .. dir_map.sub)
 
   -- 5. Expand ${platformio.core_dir}
-  if result:find('${platformio.core_dir}', 1, true) then result = result:gsub('%${platformio.core_dir}', core_dir) end
+  if result:find('${platformio.core_dir}', 1, true) then
+    result = result:gsub('%${platformio.core_dir}', core_dir)
+  end
 
   -- 6. Normalize Slashes for Windows
   result = misc.normalize_path(result) --result:gsub('\\', '/'):gsub('//+', '/')
-  -- if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
-
-  -- Ensure core_dir itself doesn't have trailing slashes for cleaner joins
   return result
 end
+-- function M.get_pio_dir(type)
+--   -- 1. Setup Base Paths
+--   local home = os.getenv('HOME') or os.getenv('USERPROFILE')
+--
+--   -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
+--   local map = {
+--     core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
+--     packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
+--     platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
+--   }
+--
+--   local target_config = map[type]
+--   if not target_config then return nil end
+--
+--   -- 3. Try to get explicit value from platformio.ini
+--   local path = vim.fn.getcwd() .. '/platformio.ini'
+--   local inifile = io.open(path, 'r')
+--   local ini_val = nil
+--   local core_val = nil
+--   -----------------------------------------------------
+--   ---
+--   -----------------------------------------------------
+--
+--   if inifile then
+--     for line in inifile:lines() do
+--       if core_val == nil then core_val = line:match('^%s*' .. map['core'].ini .. '%s*=%s*([^;%s]+)') end
+--       if ini_val == nil then ini_val = line:match('^%s*' .. target_config.ini .. '%s*=%s*([^;%s]+)') end
+--       if ini_val and core_val then break end
+--     end
+--     inifile:close()
+--   end
+--
+--   -- 4.0 Fallback Logic: INI -> Env Var -> Default
+--   local core_dir = core_val or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
+--   core_dir = misc.normalize_path(core_dir) --core_dir:gsub('\\', '/'):gsub('//+', '/')
+--   -- if vim.fn.has('win32') == 1 then core_dir = core_dir:gsub('/', '\\') end
+--   if type == 'core' then return core_dir end
+--
+--   -- 4.1 Fallback Logic: INI -> Env Var -> Default
+--   local result = ini_val or os.getenv(target_config.env) or (core_dir .. target_config.sub)
+--
+--   -- 5. Expand ${platformio.core_dir}
+--   if result:find('${platformio.core_dir}', 1, true) then result = result:gsub('%${platformio.core_dir}', core_dir) end
+--
+--   -- 6. Normalize Slashes for Windows
+--   result = misc.normalize_path(result) --result:gsub('\\', '/'):gsub('//+', '/')
+--   -- if vim.fn.has('win32') == 1 then result = result:gsub('/', '\\') end
+--
+--   -- Ensure core_dir itself doesn't have trailing slashes for cleaner joins
+--   return result
+-- end
 ------------------------------------------------------
 
 --- stylua: ignore
@@ -69,14 +129,14 @@ function _G.get_pio_toolchain_pattern()
 
   local handle = io.popen('pio project config --json-output')
   if not handle then
-    return '/**/bin/*gcc*'
+    return '**/toolchain-*/**/bin/*'
   end
   local json_str = handle:read('*all')
   handle:close()
 
   local ok, config = pcall(vim.json.decode, json_str)
   if not ok or not config then
-    return '/**/bin/*gcc*'
+    return '**/toolchain-*/**/bin/*'
   end
 
   local active_env = vim.g.pio_active_env
@@ -128,24 +188,24 @@ function _G.get_pio_toolchain_pattern()
   end
 
   if not target_platform then
-    return '/**/bin/*gcc*'
+    return '**/toolchain-*/**/bin/*'
   end
 
   -- 4. Query the platform for the toolchain package name
   local p_handle = io.popen('pio platform show ' .. target_platform .. ' --json-output')
   if not p_handle then
-    return '/**/bin/*gcc*'
+    return '**/toolchain-*/**/bin/*'
   end
   local p_json = p_handle:read('*all')
   p_handle:close()
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
   if not p_ok or not p_data.packages then
-    return '/**/bin/*gcc*'
+    return '**/toolchain-*/**/bin/*'
   end
 
   -- 5. Extract Arch
-  local arch_glob = '/**/bin/*gcc*'
+  local arch_glob = '**/toolchain-*/**/bin/*'
   for pkg_name, _ in pairs(p_data.packages) do
     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
