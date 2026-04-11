@@ -101,12 +101,15 @@ function _G.get_pio_toolchain_pattern()
     -- C. Fallback: Find the first [env:...] section
     if not active_env then
       for name, _ in pairs(config) do
-        local env_match = name:match('^env:(.+)')
-        if env_match then
-          active_env = env_match
-          print("toolchain: 3.1 " .. active_env)
-          break
+        if type(name) == 'string' then
+          local env_match = name:match('^env:(.+)')
+          if env_match then
+            active_env = env_match
+            print("toolchain: 3.1 " .. active_env)
+            break
+          end
         end
+
       end
     end
   end
