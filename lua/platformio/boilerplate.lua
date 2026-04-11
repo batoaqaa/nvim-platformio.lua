@@ -73,8 +73,8 @@ clangd
 --enable-config
 --completion-parse=always
 --completion-style=detailed
---header-insertion=never
---header-insertion-decorators=false
+--header-insertion=iwyu
+--detect-completion-context
 --fallback-style=llvm
 -j=12
 --log=verbose
