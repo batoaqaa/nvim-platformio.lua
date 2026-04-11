@@ -74,8 +74,8 @@ clangd
 --completion-parse=always
 --completion-style=detailed
 --header-insertion=never
+--header-insertion-decorators=false
 --fallback-style=llvm
---header-insertion-decorators
 -j=12
 --log=verbose
 --offset-encoding=utf-8
@@ -90,6 +90,7 @@ clangd
     return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
   end,
   --header-insertion=iwyu
+  --header-insertion-decorators
   --query-driver=%s/toolchain-*/**/bin/*
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
