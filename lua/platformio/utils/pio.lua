@@ -209,7 +209,7 @@ function _G.get_pio_toolchain_pattern()
   for pkg_name, _ in pairs(p_data.packages) do
     if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
-      arch_glob = '/**/bin/*' .. arch .. '*gcc*'
+      arch_glob = '/**/bin/*' .. arch .. '*'
       break
     end
   end
