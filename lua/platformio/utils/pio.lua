@@ -110,9 +110,9 @@ function _G.get_pio_toolchain_pattern()
   if not env_data then
     for _, item in ipairs(config) do
       if type(item) == 'table' then
-        print('toolchain 2.1: item.name= ' .. item.name)
         print(vim.inspect(item))
         if item.name then
+          print('toolchain 2.1: item.name= ' .. item.name)
           if item.name:find('^env:') then
             env_data = item
             print('toolchain 2.2: env_data= ' .. env_data)
