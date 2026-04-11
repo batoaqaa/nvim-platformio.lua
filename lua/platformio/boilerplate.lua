@@ -74,6 +74,7 @@ clangd
 --completion-parse=always
 --completion-style=detailed
 --header-insertion=iwyu
+--fallback-style=llvm,
 --header-insertion-decorators
 -j=12
 --log=verbose
@@ -88,12 +89,75 @@ clangd
     -- return string.format(self.template, pio.get_pio_dir('packages') or '**')
     return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
   end,
+  --header-insertion=iwyu
   --query-driver=%s/toolchain-*/**/bin/*
   --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
   --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
   --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
   --query-driver=**/*riscv32-esp-elf-*,**/*gcc*,**/*g++*
   --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
+}
+
+boilerplate['.clangd'] = {
+  content = [[
+CompileFlags:
+  Add: [
+    --target=riscv32-esp-elf,
+  ]
+  Remove: [
+    -fno-fat-lto-objects
+    -fno%-fat%-lto%-objects,
+    -fno%-canonical%-system%-headers,
+    -misc-definitions-in-headers,
+    -fno-tree-switch-conversion,
+    -mtext-section-literals,
+    -mlong-calls,
+    -mlongcalls,
+    -fstrict-volatile-bitfields,
+    -free*,
+    -fipa-pta*,
+    -march=*,
+    -mabi=*,
+    -mcpu=*,
+  ]
+Diagnostics:
+  Suppress: [
+    "misc-definitions-in-headers",
+    "pp_including_mainfile_in_preamble",
+    "misc-unused-using-decls",
+    "unused-includes",
+  ]
+  ClangTidy:
+    Remove: [
+      readability-*,
+      cert-err58-cpp,
+      llvmlibc-*,
+      fuchsia-*,
+      hicpp-avoid-c-arrays,
+      cppcoreguidelines-*,
+      llvm-*,
+      google-*,
+      bugprone-*,
+      hicpp-vararg,
+      modernize-*,
+    ]
+]],
+}
+boilerplate['.stylua.toml'] = {
+  content = [[
+syntax = "All"
+column_width = 132
+line_endings = "Unix"
+indent_type = "Spaces"
+indent_width = 2
+quote_style = "AutoPreferSingle"
+call_parentheses = "Always"
+collapse_simple_statement = "Never"
+space_after_function_names = "Never"
+
+[sort_requires]
+enabled = false
+]],
 }
 
 boilerplate['.clang-format'] = {
@@ -343,68 +407,6 @@ WhitespaceSensitiveMacros:
   - PP_STRINGIZE
   - STRINGIZE
 ...
-]],
-}
-
-boilerplate['.clangd'] = {
-  content = [[
-CompileFlags:
-  Add: [
-    --target=riscv32-esp-elf,
-  ]
-  Remove: [
-    -fno-fat-lto-objects
-    -fno%-fat%-lto%-objects,
-    -fno%-canonical%-system%-headers,
-    -misc-definitions-in-headers,
-    -fno-tree-switch-conversion,
-    -mtext-section-literals,
-    -mlong-calls,
-    -mlongcalls,
-    -fstrict-volatile-bitfields,
-    -free*,
-    -fipa-pta*,
-    -march=*,
-    -mabi=*,
-    -mcpu=*,
-  ]
-Diagnostics:
-  Suppress: [
-    "misc-definitions-in-headers",
-    "pp_including_mainfile_in_preamble",
-    "misc-unused-using-decls",
-    "unused-includes",
-  ]
-  ClangTidy:
-    Remove: [
-      readability-*,
-      cert-err58-cpp,
-      llvmlibc-*,
-      fuchsia-*,
-      hicpp-avoid-c-arrays,
-      cppcoreguidelines-*,
-      llvm-*,
-      google-*,
-      bugprone-*,
-      hicpp-vararg,
-      modernize-*,
-    ]
-]],
-}
-boilerplate['.stylua.toml'] = {
-  content = [[
-syntax = "All"
-column_width = 132
-line_endings = "Unix"
-indent_type = "Spaces"
-indent_width = 2
-quote_style = "AutoPreferSingle"
-call_parentheses = "Always"
-collapse_simple_statement = "Never"
-space_after_function_names = "Never"
-
-[sort_requires]
-enabled = false
 ]],
 }
 
