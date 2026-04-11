@@ -111,6 +111,9 @@ function _G.get_pio_toolchain_pattern()
     for _, item in ipairs(config) do
       if type(item) == 'table' then
         print(vim.inspect(item))
+        if type(item.name) == 'table' then
+          print(vim.inspect(item.name))
+        end
         if item.name then
           print('toolchain 2.1: item.name= ' .. item.name)
           if item.name:find('^env:') then
