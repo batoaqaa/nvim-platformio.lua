@@ -136,7 +136,7 @@ function _G.get_pio_toolchain_pattern()
   local active_env = vim.g.pio_active_env
   local target_platform = nil
   local core_dir = (os.getenv('HOME') or os.getenv('USERPROFILE')) .. '/.platformio'
-  if active_env then print('active_env0: ' .. active_env) end
+if active_env then print('active_env0: ' .. active_env) end
   -- 1. Pass One: Extract default_envs and core_dir from 'platformio' section
   if not active_env then
     for _, section in ipairs(config) do
@@ -153,7 +153,7 @@ function _G.get_pio_toolchain_pattern()
     end
   end
 
-  if active_env then print('active_env1: ' .. active_env) end
+if active_env then print(vim.inspect(active_env)) end
   -- 2. Pass Two: Find the platform for the active environment
   for _, section in ipairs(config) do
     local name = section[1]
@@ -179,7 +179,7 @@ function _G.get_pio_toolchain_pattern()
   end
 
   if not target_platform then return '/toolchain-*/**/bin/*' end
-  if active_env then print('target_platform4: ' .. target_platform) end
+if active_env then print('target_platform4: ' .. target_platform) end
 
   -- 4. Query the platform for the toolchain package name
   local p_handle = io.popen('pio platform show ' .. target_platform .. ' --json-output')
