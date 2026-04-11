@@ -60,114 +60,82 @@ end
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
   local cwd = vim.fn.getcwd()
-  vim.g.pio_active_env = 'seeed_xiao_esp32c3'
-  -- 1. Check Session Cache
-  print("toolchain: 1")
-  local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
-  if _G._pio_cache and _G._pio_cache[cache_key] then
-    return _G._pio_cache[cache_key]
-  end
 
-  print("toolchain: 2")
-  -- 2. Get Full Project Config via JSON (Handles variable resolution)
+  -- 1. Performance: Check Session Cache
+  local cache_key = cwd .. (vim.g.pio_active_env or 'auto')
+  if _G._pio_cache and _G._pio_cache[cache_key] then return _G._pio_cache[cache_key] end
+
+  -- 2. Get Full Project Config via JSON
   local handle = io.popen('pio project config --json-output')
   if not handle then return '/**/bin/*gcc*' end
   local json_str = handle:read('*all')
   handle:close()
 
-  print("toolchain: 2.0")
   local ok, config = pcall(vim.json.decode, json_str)
   if not ok or not config then return '/**/bin/*gcc*' end
 
-  print("toolchain: 3")
-  -- 3. Determine Active Environment
-  -- local active_env = vim.g.pio_active_env -- Manual override (from Picker)
-  local active_env = nil
+  -- 3. Determine Active Environment (Priority: Manual > default_envs > First [env:])
+  local active_env = vim.g.pio_active_env
 
   if not active_env then
-    -- A. Check Environment Variable PLATFORMIO_DEFAULT_ENVS
-    active_env = os.getenv('PLATFORMIO_DEFAULT_ENVS')
-
-    -- B. Check default_envs in [platformio] section
-    if not active_env and config.platformio and config.platformio.default_envs then
-      active_env = config.platformio.default_envs
-      print("toolchain: 3.0 " .. active_env)
-      -- default_envs can be a comma-separated list; we take the first one
-      if active_env then
-        active_env = active_env:match('([^,%s]+)')
-      end
+    -- A. Check if default_envs is defined in [platformio]
+    if config.platformio and config.platformio.default_envs then
+      -- Handles comma-separated lists like "env1, env2"
+      active_env = tostring(config.platformio.default_envs):match('([^,%s]+)')
     end
 
-    -- C. Fallback: Find the first [env:...] section
+    -- B. Fallback: Find the first environment name starting with "env:"
     if not active_env then
       for name, _ in pairs(config) do
+        -- FIX: Check type to prevent "attempt to index local 'name' (a number value)"
         if type(name) == 'string' then
           local env_match = name:match('^env:(.+)')
-          if env_match then
-            active_env = env_match
-            print("toolchain: 3.1 " .. active_env)
-            break
+          if env_match then active_env = env_match break
           end
         end
-
       end
     end
   end
 
-  print("toolchain: 4")
-  -- 4. Extract Data for the Target Environment
+  -- 4. Target the specific config block
+  -- PIO JSON uses "env:NAME" keys for environments
   local env_key = 'env:' .. (active_env or '')
   local env_data = config[env_key] or config[active_env]
-  print(vim.inspect(config[env_key]))
-  print("toolchain: 4.0 " .. env_key)
 
-  if not env_data or not env_data.platform then
-    return '/**/bin/*gcc*'
-  end
+  if not env_data or not env_data.platform then return '/**/bin/*gcc*' end
 
-  print("toolchain: 5")
-  -- 5. Build Package Path & Query Platform for Toolchain
-  local core_dir = config.platformio and config.platformio.core_dir or (os.getenv('USERPROFILE') or os.getenv('HOME')) .. '/.platformio'
-  local packages_base = (core_dir .. '/packages'):gsub('\\', '/'):gsub('//+', '/')
+  -- 5. Build Paths (Normalizing for Windows/Linux)
+  local home = os.getenv('HOME') or os.getenv('USERPROFILE')
+  local core_dir = (config.platformio and config.platformio.core_dir) or (home .. '/.platformio')
+  local packages_base = core_dir:gsub('\\', '/') .. '/packages'
 
+  -- 6. Query PIO for the Toolchain Architecture
   local p_handle = io.popen('pio platform show ' .. env_data.platform .. ' --json-output')
-  if not p_handle then
-    return packages_base .. '/**/bin/*gcc*'
-  end
-  print("toolchain: 5.0")
-
+  if not p_handle then return packages_base .. '/**/bin/*gcc*' end
   local p_json = p_handle:read('*all')
   p_handle:close()
 
   local p_ok, p_data = pcall(vim.json.decode, p_json)
-  if not p_ok or not p_data.packages then
-    return packages_base .. '/**/bin/*gcc*'
-  end
-  print("toolchain: 5.1")
+  if not p_ok or not p_data.packages then return packages_base .. '/**/bin/*gcc*' end
 
-  print("toolchain: 6")
-  -- 6. Extract Toolchain Architecture
   local arch_glob = '/**/bin/*gcc*'
   for pkg_name, _ in pairs(p_data.packages) do
-    if pkg_name:find('^toolchain%-') then
+    if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
       local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
       arch_glob = '/**/bin/*' .. arch .. '*gcc*'
       break
     end
   end
 
+  -- 7. Final Path Normalization
   local final_pattern = (packages_base .. arch_glob):gsub('//+', '/')
-  if vim.fn.has('win32') == 1 then
-    final_pattern = final_pattern:gsub('/', '\\')
-  end
+  if vim.fn.has('win32') == 1 then final_pattern = final_pattern:gsub('/', '\\') end
 
-  print("toolchain: 7")
-  -- 7. Update Cache
+  -- Save to cache
   _G._pio_cache = _G._pio_cache or {}
   _G._pio_cache[cache_key] = final_pattern
   return final_pattern
 end
-
 ------------------------------------------------------
 -- stylua: ignore
 function M.fix_pio_compile_commands()
