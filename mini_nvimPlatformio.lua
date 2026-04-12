@@ -377,6 +377,9 @@ if not vim.uv.fs_stat(pynvim_env) then
   -- vim.fn.system({ 'pip', 'install', '-U', 'platformio' })
 end
 
+-- Load the PIO logic
+local pio = require('pio_setup')
+pio.init()
 ----------------------------------------------------------------------------------------
 -- INFO: configure nvim-platformio and load
 -----------------------------------------------------------------------------------------
