@@ -102,46 +102,42 @@ clangd
 boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
-  Add: [
-    --target=riscv32-esp-elf,
-  ]
-  Remove: [
-    -fno-fat-lto-objects
-    -fno%-fat%-lto%-objects,
-    -fno%-canonical%-system%-headers,
-    -misc-definitions-in-headers,
-    -fno-tree-switch-conversion,
-    -mtext-section-literals,
-    -mlong-calls,
-    -mlongcalls,
-    -fstrict-volatile-bitfields,
-    -free*,
-    -fipa-pta*,
-    -march=*,
-    -mabi=*,
-    -mcpu=*,
-  ]
+  Add:
+    - "--target=riscv32-esp-elf"
+  Remove:
+    - "-fno-fat-lto-objects"
+    - "-fno%-fat%-lto%-objects"
+    - "-fno%-canonical%-system%-headers"
+    - "-misc-definitions-in-headers"
+    - "-fno-tree-switch-conversion"
+    - "-mtext-section-literals"
+    - "-mlong-calls"
+    - "-mlongcalls"
+    - "-fstrict-volatile-bitfields"
+    - "-free*"
+    - "-fipa-pta*"
+    - "-march=*"
+    - "-mabi=*"
+    - "-mcpu=*"
 Diagnostics:
-  Suppress: [
-    "misc-definitions-in-headers",
-    "pp_including_mainfile_in_preamble",
-    "misc-unused-using-decls",
-    "unused-includes",
-  ]
+  Suppress:
+    - "misc-definitions-in-headers"
+    - "pp_including_mainfile_in_preamble"
+    - "misc-unused-using-decls"
+    - "unused-includes"
   ClangTidy:
-    Remove: [
-      readability-*,
-      cert-err58-cpp,
-      llvmlibc-*,
-      fuchsia-*,
-      hicpp-avoid-c-arrays,
-      cppcoreguidelines-*,
-      llvm-*,
-      google-*,
-      bugprone-*,
-      hicpp-vararg,
-      modernize-*,
-    ]
+    Remove:
+      - "readability-*"
+      - "cert-err58-cpp"
+      - "llvmlibc-*"
+      - "fuchsia-*"
+      - "hicpp-avoid-c-arrays"
+      - "cppcoreguidelines-*"
+      - "llvm-*"
+      - "google-*"
+      - "bugprone-*"
+      - "hicpp-vararg"
+      - "modernize-*"
 ]],
 }
 boilerplate['.stylua.toml'] = {

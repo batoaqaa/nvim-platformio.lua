@@ -183,10 +183,8 @@ function M.setup(user_config)
 
   require('platformio.piomenu').piomenu(M.config)
 
-  if M.config.lspClangd.enabled == true then
-    -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
-    require('platformio.lspConfig.clangd')
-  end
+  -- Load the PIO setup logic
+  require('platformio.pio_setup').init()
 end
 
 return M

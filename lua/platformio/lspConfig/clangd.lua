@@ -298,12 +298,4 @@ vim.lsp.config('pyrefly', pyrefly)
 
 -- restart lsp
 require('platformio.utils.lsp').lsp_restart('clangd')
-
--- Load the PIO logic
-require('platformio.pio_setup').init()
-
-local config = require('platformio').config
-if config.lspClangd.attach.enabled then
-  require('platformio.lspConfig.attach')
-end
 ----------------------------------------------------------------------------------

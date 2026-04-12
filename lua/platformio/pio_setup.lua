@@ -1,5 +1,6 @@
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.utils.lsp')
+
 -- INFO: 1. The Core PIO Manager & Generic Extractor
 --This manages the data cache and navigates your specific nested-list JSON structure.
 -- stylua: ignore
@@ -10,17 +11,18 @@ local pio_manager = (function()
   local function find_in_data(data, section_name, key_name)
     if not data or type(data) ~= 'table' then return nil end
 
-    -- INFO:  1. SPECIFIC SEARCH
+    -- INFO:  1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
     if section_name then
       for _, section in ipairs(data) do
         if type(section) == 'table' and #section >= 2 then
-          if section[1] == section_name and type(section[2]) == 'table' then
-            for _, kv in ipairs(section[2]) do
-              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
-                -- Check if value is valid (not nil, not empty string, not empty table)
-                local val = kv[2]
-                if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
-                  return val
+          local s_id = section[1]
+          local s_body = section[2]
+          if s_id == section_name and type(s_body) == "table" then
+            for _, kv in ipairs(s_body) do
+             if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+               local val = kv[2]
+               if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
+                 return val
                 end
               end
             end
@@ -34,6 +36,7 @@ local pio_manager = (function()
     for _, section in ipairs(data) do
       if type(section) == 'table' and #section >= 2 then
         local s_id = section[1]
+        local s_body = section[2]
         -- Look for hardware envs like [env:seeed_xiao_esp32c3], skipping generic [env]
         if type(s_id) == 'string' and s_id:find('^env:') then
           fallback_env_found = s_id:match('^env:(.+)')
@@ -47,8 +50,8 @@ local pio_manager = (function()
           end
 
           -- If looking for a key (like 'platform') inside this fallback env
-          if type(section[2]) == 'table' then
-            for _, kv in ipairs(section[2]) do
+          if type(s_body) == 'table' then
+            for _, kv in ipairs(s_body) do
               if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
                 local val = kv[2]
                 if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
@@ -67,83 +70,17 @@ local pio_manager = (function()
     -- INFO:  3. FINAL ERROR If even fallback fails
     if key_name == 'platform' or key_name == 'packages_dir' then
       vim.schedule(function()
-        vim.notify("PIO: Critical key '" .. key_name .. "' not found anywhere!", vim.log.levels.ERROR)
+        vim.notify("PIO: Critical key '" .. key_name .. "' not found anywhere!", vim.log.levels.INFO)
       end)
     end
-    -- -- 1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
-    -- if section_name then
-    --   for _, section in ipairs(data) do
-    --     if type(section) == 'table' and #section >= 2 then
-    --       local section_id = section[1]
-    --       local section_body = section[2]
-    --
-    --       -- Match specific section or fallback to first "env:" found
-    --       local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
-    --       if match_section and type(section_body) == 'table' then
-    --         for _, kv in ipairs(section_body) do
-    --           if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
-    --           if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
-    --             local val = kv[2]
-    --             -- Nil Check: Only return if the value is not nil or an empty table
-    --             if val ~= nil and (type(val) ~= "table" or #val > 0) then
-    --               return val
-    --             end
-    --           end
-    --         end
-    --       end
-    --     end
-    --   end
-    -- else
-    -- end
-    -- -- 2. FALLBACK: Search all 'env:' sections if specific search failed or was skipped
-    -- for _, section in ipairs(data) do
-    --   if type(section) == "table" and #section >= 2 then
-    --     local s_id = section[1]
-    --     local s_body = section[2]
-    --
-    --     -- Match only hardware environments, skipping global [env]
-    --     if type(s_id) == "string" and s_id:find("^env:") then
-    --       -- Return extracted environment name if looking for default_envs
-    --       if key_name == "default_envs" then
-    --         return s_id:match("^env:(.+)")
-    --       end
-    --
-    --       -- Otherwise, look for the requested key inside this first env
-    --       if type(s_body) == "table" then
-    --         for _, kv in ipairs(s_body) do
-    --           if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
-    --             local val = kv[2]
-    --             if val ~= nil and (type(val) ~= "table" or #val > 0) then
-    --               return val
-    --             end
-    --           end
-    --         end
-    --       end
-    --     end
-    --   end
-    -- end
     return nil
   end
+  ------------------------------------------------------------------------------------------
 
   local function refresh(callback)
     -- Using vim.system to detect if the command exists
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
-      if obj.code == 0 then
-        local ok, decoded = pcall(vim.json.decode, obj.stdout)
-        if ok and decoded then
-          cache = decoded
-          -- if type(cache) == 'table' then print(vim.inspect(cache))
-          -- else print('no cahce')end
-          if not cache or type(cache) ~= 'table' then
-            print('no cahce')
-          else
-            print('refreshed')
-          end
-          if callback then
-            vim.schedule(callback)
-          end
-        end
-      else
+      if obj.code ~= 0 then
         -- Schedule notification to avoid error in the system callback thread
         vim.schedule(function()
           if obj.code == 127 then
@@ -152,6 +89,17 @@ local pio_manager = (function()
             vim.notify('PIO Manager: Failed to fetch config (Error ' .. obj.code .. ')', vim.log.levels.WARN)
           end
         end)
+        return
+      end
+      local ok, decoded = pcall(vim.json.decode, obj.stdout)
+      if ok and decoded then
+        cache = decoded
+        if not cache or type(cache) ~= 'table' then
+          print('no cahce')
+        else
+          print('cahced ok')
+        end
+        if callback then vim.schedule(callback) end
       end
     end)
   end
@@ -163,6 +111,7 @@ local pio_manager = (function()
   }
 end)()
 
+------------------------------------------------------------------------------------------------------
 -- INFO: 2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
 -- Gets the compiler glob for clangd --query-driver
 -- stylua: ignore
@@ -202,6 +151,7 @@ function _G.get_pio_toolchain_pattern()
       if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
         local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
         arch_glob = '/**/bin/*' .. arch .. '*'
+        print('toolchain 4: arch_glob=' .. arch_glob)
         break
       end
     end
@@ -255,6 +205,7 @@ local function pio_generate_db()
   end)
 end
 
+------------------------------------------------------------------------------------------------------
 -- INFO: 4. Automation & File Watcher
 --This handles the background synchronization when you save your project.
 -- stylua: ignore
@@ -284,11 +235,20 @@ local function start_pio_watcher()
   )
 end
 
--- INFO:  Exported setup function
+------------------------------------------------------------------------------------------------------
+-- INFO: 5.  Exported setup function
 return {
   init = function()
     if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
       vim.notify('PIO setup initialize', vim.log.levels.INFO)
+      local config = require('platformio').config
+      if config.lspClangd.enabled == true then
+        -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
+        require('platformio.lspConfig.clangd')
+      end
+      if config.lspClangd.attach.enabled then
+        require('platformio.lspConfig.attach')
+      end
       pio_manager.refresh(function()
         pio_generate_db()
         start_pio_watcher()
@@ -296,20 +256,3 @@ return {
     end
   end,
 }
-
--- -- init.lua
---
--- -- 1. Load the PIO logic
--- local pio = require("pio_setup")
--- pio.init()
---
--- -- 2. Your LSP Setup
--- require('lspconfig').clangd.setup({
---     cmd = {
---         "clangd",
---         "--background-index",
---         -- It calls the global function defined in pio_setup.lua
---         "--query-driver=" .. _G.get_pio_toolchain_pattern(),
---         "--header-insertion=never"
---     },
--- })
