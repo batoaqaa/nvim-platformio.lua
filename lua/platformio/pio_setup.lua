@@ -1,15 +1,14 @@
 local misc = require('platformio.utils.misc')
+local lsp = require('platformio.utils.lsp')
 --1. The Core PIO Manager & Generic Extractor
 --This manages the data cache and navigates your specific nested-list JSON structure.
---- stylua: ignore
+-- stylua: ignore
 local pio_manager = (function()
   local cache = nil
 
   -- Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
-    if not data or type(data) ~= 'table' then
-      return nil
-    end
+    if not data or type(data) ~= 'table' then return nil end
     for _, section in ipairs(data) do
       if type(section) == 'table' and #section >= 2 then
         local section_id = section[1]
@@ -19,9 +18,7 @@ local pio_manager = (function()
         local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
         if match_section and type(section_body) == 'table' then
           for _, kv in ipairs(section_body) do
-            if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
-              return kv[2]
-            end
+            if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
           end
         end
       end
@@ -36,9 +33,7 @@ local pio_manager = (function()
         local ok, decoded = pcall(vim.json.decode, obj.stdout)
         if ok and decoded then
           cache = decoded
-          if callback then
-            vim.schedule(callback)
-          end
+          if callback then vim.schedule(callback) end
         end
       else
         -- Schedule notification to avoid error in the system callback thread
@@ -54,37 +49,30 @@ local pio_manager = (function()
   end
   return {
     refresh = refresh,
-    get = function(s, k)
-      return find_in_data(cache, s, k)
-    end,
+    get = function(s, k) return find_in_data(cache, s, k) end,
   }
 end)()
 
 --2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
 -- Gets the compiler glob for clangd --query-driver
+-- stylua: ignore
 function _G.get_pio_toolchain_pattern()
   print('toolchain 0:')
   local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
 
   print('toolchain 1:')
   -- Handle default_envs being a list/table
-  if type(active_env) == 'table' then
-    active_env = active_env[1]
-  end
+  if type(active_env) == 'table' then active_env = active_env[1] end
   print('toolchain 2:')
   local target_env = active_env and ('env:' .. active_env) or nil
   local platform = pio_manager.get(target_env, 'platform')
   local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio/packages')
-  if not platform then
-    return '/**/bin/*'
-  end
+  if not platform then return '/**/bin/*' end
 
   print('toolchain 3:')
   -- Sync call for toolchain name
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
-  if not p_handle then
-    return '/**/bin/*'
-  end
+  if not p_handle then return '/**/bin/*' end
 
   print('toolchain 4:')
   local p_json = p_handle:read('*all')
@@ -109,12 +97,11 @@ end
 
 --3. Patches compile_commands.json with --sysroot to fix <algorithm>
 -- Helper to generate the compilation database
+-- stylua: ignore
 local function pio_generate_db()
   -- This runs in the background so it doesn't freeze Neovim
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    if obj.code ~= 0 then
-      return
-    end
+    if obj.code ~= 0 then return end
     local pattern = _G.get_pio_toolchain_pattern()
     local toolchain_root = pattern:match('(.*toolchain%-[^/\\]+)')
     if not toolchain_root or vim.fn.isdirectory(toolchain_root) == 0 then
@@ -133,9 +120,7 @@ local function pio_generate_db()
     if sysroot_path then
       local db_path = vim.fn.getcwd() .. '/compile_commands.json'
       local f = io.open(db_path, 'r')
-      if not f then
-        return
-      end
+      if not f then return end
       local content = f:read('*all')
       f:close()
 
@@ -145,9 +130,7 @@ local function pio_generate_db()
       if out then
         out:write(patched)
         out:close()
-        vim.schedule(function()
-          vim.notify('PIO: DB & Sysroot Patched')
-        end)
+        vim.schedule(function() vim.notify('PIO: DB & Sysroot Patched') end)
       end
     end
   end)
@@ -155,15 +138,12 @@ end
 
 --4. Automation & File Watcher
 --This handles the background synchronization when you save your project.
+-- stylua: ignore
 local function start_pio_watcher()
   local path = vim.fn.getcwd() .. '/platformio.ini'
-  if vim.fn.filereadable(path) == 0 then
-    return
-  end
+  if vim.fn.filereadable(path) == 0 then return end
   local w = vim.uv.new_fs_event()
-  if not w then
-    return
-  end
+  if not w then return end
   w:start(
     path,
     {},
@@ -176,7 +156,8 @@ local function start_pio_watcher()
       if events.change then
         pio_manager.refresh(function()
           pio_generate_db()
-          vim.cmd('LspRestart clangd')
+          lsp.lsp_restart('clangd')
+          -- vim.cmd('LspRestart clangd')
           vim.notify('PIO Auto-Sync Complete', vim.log.levels.INFO)
         end)
       end
