@@ -181,6 +181,7 @@ end
 -- INFO:  Exported setup function
 return {
   init = function()
+    print('pio_setup initialize')
     if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
       pio_manager.refresh(function()
         pio_generate_db()
