@@ -8,7 +8,6 @@ local pio_manager = (function()
 
   -- Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
-    print('find data')
     if not data or type(data) ~= 'table' then return nil end
     for _, section in ipairs(data) do
       if type(section) == 'table' and #section >= 2 then
@@ -31,14 +30,13 @@ local pio_manager = (function()
     print('refresh')
     -- Using vim.system to detect if the command exists
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
-      print('obj')
       if obj.code == 0 then
         local ok, decoded = pcall(vim.json.decode, obj.stdout)
         if ok and decoded then
           cache = decoded
-          if type(cache) == 'table' then print(vim.inspect(cache))
-          else print('no cahce')end
-
+          -- if type(cache) == 'table' then print(vim.inspect(cache))
+          -- else print('no cahce')end
+          if not cache or type(cache) ~= 'table' then print('no cahce') end
           if callback then vim.schedule(callback) end
         end
       else
@@ -63,7 +61,6 @@ end)()
 -- Gets the compiler glob for clangd --query-driver
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
-  print('toolchain 0:')
   local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
 
   print('toolchain 1:')
@@ -112,6 +109,7 @@ end
 -- Helper to generate the compilation database
 -- stylua: ignore
 local function pio_generate_db()
+  print('pio_generate_db 0')
   -- This runs in the background so it doesn't freeze Neovim
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     if obj.code ~= 0 then return end

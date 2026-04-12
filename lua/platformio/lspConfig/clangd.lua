@@ -296,12 +296,11 @@ local pyrefly = {
 }
 vim.lsp.config('pyrefly', pyrefly)
 
-local lsp = require('platformio.utils.lsp')
-lsp.lsp_restart('clangd')
+-- restart lsp
+require('platformio.utils.lsp').lsp_restart('clangd')
 
 -- Load the PIO logic
-local pio_setup = require('platformio.pio_setup')
-pio_setup.init()
+require('platformio.pio_setup').init()
 
 local config = require('platformio').config
 if config.lspClangd.attach.enabled then
