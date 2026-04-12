@@ -1,6 +1,6 @@
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.utils.lsp')
---1. The Core PIO Manager & Generic Extractor
+-- INFO: 1. The Core PIO Manager & Generic Extractor
 --This manages the data cache and navigates your specific nested-list JSON structure.
 -- stylua: ignore
 local pio_manager = (function()
@@ -53,7 +53,7 @@ local pio_manager = (function()
   }
 end)()
 
---2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
+-- INFO: 2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
 -- Gets the compiler glob for clangd --query-driver
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
@@ -63,10 +63,17 @@ function _G.get_pio_toolchain_pattern()
   print('toolchain 1:')
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then active_env = active_env[1] end
-  print('toolchain 2:')
+  if active_env then print('toolchain 2:active_env=' .. active_env) end
+
   local target_env = active_env and ('env:' .. active_env) or nil
+  if target_env then print('toolchain 2.0:target_env=' .. target_env) end
+
   local platform = pio_manager.get(target_env, 'platform')
+  if platform then print('toolchain 2.1:platformio=' .. platform) end
+
   local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio/packages')
+  if packages_dir then print('toolchain 2.2:packages_dir=' .. packages_dir) end
+
   if not platform then return '/**/bin/*' end
 
   print('toolchain 3:')
@@ -95,7 +102,7 @@ function _G.get_pio_toolchain_pattern()
   -- return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
 end
 
---3. Patches compile_commands.json with --sysroot to fix <algorithm>
+-- INFO: 3. Patches compile_commands.json with --sysroot to fix <algorithm>
 -- Helper to generate the compilation database
 -- stylua: ignore
 local function pio_generate_db()
@@ -136,7 +143,7 @@ local function pio_generate_db()
   end)
 end
 
---4. Automation & File Watcher
+-- INFO: 4. Automation & File Watcher
 --This handles the background synchronization when you save your project.
 -- stylua: ignore
 local function start_pio_watcher()
@@ -165,7 +172,7 @@ local function start_pio_watcher()
   )
 end
 
--- Exported setup function
+-- INFO:  Exported setup function
 return {
   init = function()
     if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
