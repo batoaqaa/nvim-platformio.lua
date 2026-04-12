@@ -44,7 +44,7 @@ local pio_manager = (function()
           -- If we were looking for default_envs, we just found our fallback
           if key_name == 'default_envs' then
             vim.schedule(function()
-              vim.notify("PIO: 'default_envs' empty. Falling back to: " .. fallback_env_found, vim.log.levels.WARN)
+              vim.notify("PIO: 'default_envs' empty. Falling back to: " .. fallback_env_found, vim.log.levels.INFO)
             end)
             return fallback_env_found
           end
