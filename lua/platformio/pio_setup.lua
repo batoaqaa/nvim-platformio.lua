@@ -208,36 +208,7 @@ end
 ------------------------------------------------------------------------------------------------------
 -- INFO: 4. Automation & File Watcher
 --This handles the background synchronization when you save your project.
--- stylua: ignore
--- local function start_pio_watcher()
---   local path = vim.fn.getcwd() .. '/platformio.ini'
---   if vim.fn.filereadable(path) == 0 then return end
---   local w = vim.uv.new_fs_event()
---   if not w then return end
---   w:start(
---     path,
---     {},
---     vim.schedule_wrap(function(err, _, events)
---       if err then
---         vim.notify('PIO Auto-Sync error', vim.log.levels.ERROR)
---         w:stop()
---         return
---       end
---       if events.change then
---         pio_manager.refresh(function()
---           pio_generate_db()
---           lsp.lsp_restart('clangd')
---           -- vim.cmd('LspRestart clangd')
---           vim.notify('PIO Auto-Sync Complete', vim.log.levels.INFO)
---         end)
---       end
---     end)
---   )
--- end
-
--- INFO: 5. Automation & File Watcher
---This handles the background synchronization when you save your project platformio.ini
-local last_trigger = 0 -- Global variable to track time
+local debounce_timer = vim.uv.new_timer()
 -- stylua: ignore
 local function start_pio_watcher()
   local path = vim.fn.getcwd() .. '/platformio.ini'
@@ -247,25 +218,26 @@ local function start_pio_watcher()
   if not w then return end
 
   w:start(
-    path,
-    {},
+    path, {},
     vim.schedule_wrap(function(err, _, events)
-      if err then w:stop() return end
+      if err or not events.change then return end
 
-      -- 1. Check if we've triggered too recently (5-second cooldown)
-      local current_time = os.time()
-      -- Skip this event to prevent infinite loop
-      if (current_time - last_trigger) < 5 then return end
+      -- 1. Stop any existing timer (cancel previous "half-finished" events)
+      if debounce_timer then
+        debounce_timer:stop()
 
-      if events.change then
-        last_trigger = current_time -- Update last trigger time
+        -- 2. Start a 500ms window. Logic only runs if NO more events happen in this time.
+        debounce_timer:start( 500, 0,
+          vim.schedule_wrap(function()
+            vim.notify('PIO: Config change detected. Refreshing...', vim.log.levels.INFO)
 
-        vim.notify('PIO: Auto-Syncing changes...', vim.log.levels.INFO)
-
-        pio_manager.refresh(function()
-          pio_generate_db()
-          lsp.lsp_restart('clangd')
-        end)
+            pio_manager.refresh(function()
+              pio_generate_db()
+              -- 3. Only restart LSP if the pattern actually changed or DB was updated
+              lsp.lsp_restart('clangd')
+            end)
+          end)
+        )
       end
     end)
   )
