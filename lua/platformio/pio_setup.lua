@@ -8,6 +8,7 @@ local pio_manager = (function()
 
   -- Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
+    print('find data')
     if not data or type(data) ~= 'table' then return nil end
     for _, section in ipairs(data) do
       if type(section) == 'table' and #section >= 2 then
