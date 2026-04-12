@@ -33,6 +33,8 @@ local pio_manager = (function()
         local ok, decoded = pcall(vim.json.decode, obj.stdout)
         if ok and decoded then
           cache = decoded
+          if type(cache) == 'table' then print(vim.inspect(cache)) end
+
           if callback then vim.schedule(callback) end
         end
       else
