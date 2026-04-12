@@ -7,11 +7,11 @@ local lsp = require('platformio.utils.lsp')
 local pio_manager = (function()
   local cache = nil
 
-  -- Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
+  --  INFO: 1 Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
     if not data or type(data) ~= 'table' then return nil end
 
-    -- INFO:  1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
+    -- INFO:  1.0 SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
     if section_name then
       for _, section in ipairs(data) do
         if type(section) == 'table' and #section >= 2 then
@@ -31,7 +31,7 @@ local pio_manager = (function()
       end
     end
 
-    -- INFO:  2. FALLBACK SEARCH (If we reach here, Step 1 failed or was skipped)
+    -- INFO:  1.1 FALLBACK SEARCH (If we reach here, Step 1 failed or was skipped)
     local fallback_env_found = nil
     for _, section in ipairs(data) do
       if type(section) == 'table' and #section >= 2 then
@@ -67,7 +67,7 @@ local pio_manager = (function()
       end
     end
 
-    -- INFO:  3. FINAL ERROR If even fallback fails
+    -- INFO:  1.2 FINAL ERROR If even fallback fails
     if key_name == 'platform' or key_name == 'packages_dir' then
       vim.schedule(function()
         vim.notify("PIO: Critical key '" .. key_name .. "' not found anywhere!", vim.log.levels.INFO)
@@ -77,6 +77,7 @@ local pio_manager = (function()
   end
   ------------------------------------------------------------------------------------------
 
+  --  INFO: 2. Asynchronous Refresh
   local function refresh(callback)
     -- Using vim.system to detect if the command exists
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
@@ -116,10 +117,8 @@ end)()
 -- Gets the compiler glob for clangd --query-driver
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
-  -- local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
-    local active_env = vim.g.pio_active_env
-                    or pio_manager.get("platformio", "default_envs")
-                    or pio_manager.get(nil, "default_envs")
+  local active_env = vim.g.pio_active_env or pio_manager.get("platformio", "default_envs")
+                    -- or pio_manager.get(nil, "default_envs")
 
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then active_env = active_env[1] end
