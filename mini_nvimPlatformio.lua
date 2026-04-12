@@ -397,6 +397,3 @@ if pok then
   -- print("here" .. vim.inspect(pioConfig))
   platformio.setup(pioConfig)
 end
--- Load the PIO logic
-local pio = require('platformio.pio_setup')
-pio.init()

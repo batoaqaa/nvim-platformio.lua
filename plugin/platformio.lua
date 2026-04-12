@@ -6,6 +6,10 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
+-- Load the PIO logic
+local pio_setup = require('platformio.pio_setup')
+pio_setup.init()
+
 local misc = require('platformio.utils.misc')
 local pio = require('platformio.utils.pio')
 local piolsserial = require('platformio.piolsserial')
