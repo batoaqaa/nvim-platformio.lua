@@ -239,20 +239,40 @@ end
 -- INFO: 5.  Exported setup function
 return {
   init = function()
-    if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
+    local config = require('platformio').config
+    if config.lspClangd.enabled == true then
       vim.notify('PIO setup initialize', vim.log.levels.INFO)
-      local config = require('platformio').config
-      if config.lspClangd.enabled == true then
-        -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
-        require('platformio.lspConfig.clangd')
-      end
+      ----------------------------------------------------------------------------------------
+      -- INFO: create clangd required files
+      -----------------------------------------------------------------------------------------
+      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+      boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+
+      boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+      boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+      -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
+      -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+
+      -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+
+      boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+
+      boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
+      -- boilerplate_gen([[enable_toolchain.py]], vim.g.platformioRootDir)
+      -- boilerplate_gen([[generate_compile_commands.py]], vim.g.platformioRootDir)
+      ---------------------------------------------------------------------------------
+
+      -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
+      require('platformio.lspConfig.clangd')
       if config.lspClangd.attach.enabled then
         require('platformio.lspConfig.attach')
       end
-      pio_manager.refresh(function()
-        pio_generate_db()
-        start_pio_watcher()
-      end)
+      if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
+        pio_manager.refresh(function()
+          pio_generate_db()
+          start_pio_watcher()
+        end)
+      end
     end
   end,
 }
