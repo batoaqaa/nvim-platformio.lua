@@ -10,22 +10,16 @@ local pio_manager = (function()
   local function find_in_data(data, section_name, key_name)
     if not data or type(data) ~= 'table' then return nil end
 
-    -- 1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
+    -- INFO:  1. SPECIFIC SEARCH
     if section_name then
       for _, section in ipairs(data) do
         if type(section) == 'table' and #section >= 2 then
-          local section_id = section[1]
-          local section_body = section[2]
-
-          -- Match specific section or fallback to first "env:" found
-          local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
-          if match_section and type(section_body) == 'table' then
-            for _, kv in ipairs(section_body) do
-              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
-              if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+          if section[1] == section_name and type(section[2]) == 'table' then
+            for _, kv in ipairs(section[2]) do
+              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
+                -- Check if value is valid (not nil, not empty string, not empty table)
                 local val = kv[2]
-                -- Nil Check: Only return if the value is not nil or an empty table
-                if val ~= nil and (type(val) ~= "table" or #val > 0) then
+                if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
                   return val
                 end
               end
@@ -33,27 +27,34 @@ local pio_manager = (function()
           end
         end
       end
-    else
     end
-    -- 2. FALLBACK: Search all 'env:' sections if specific search failed or was skipped
+
+    -- INFO:  2. FALLBACK SEARCH (If we reach here, Step 1 failed or was skipped)
+    local fallback_env_found = nil
     for _, section in ipairs(data) do
-      if type(section) == "table" and #section >= 2 then
+      if type(section) == 'table' and #section >= 2 then
         local s_id = section[1]
-        local s_body = section[2]
+        -- Look for hardware envs like [env:seeed_xiao_esp32c3], skipping generic [env]
+        if type(s_id) == 'string' and s_id:find('^env:') then
+          fallback_env_found = s_id:match('^env:(.+)')
 
-        -- Match only hardware environments, skipping global [env]
-        if type(s_id) == "string" and s_id:find("^env:") then
-          -- Return extracted environment name if looking for default_envs
-          if key_name == "default_envs" then
-            return s_id:match("^env:(.+)")
+          -- If we were looking for default_envs, we just found our fallback
+          if key_name == 'default_envs' then
+            vim.schedule(function()
+              vim.notify("PIO: 'default_envs' empty. Falling back to: " .. fallback_env_found, vim.log.levels.WARN)
+            end)
+            return fallback_env_found
           end
 
-          -- Otherwise, look for the requested key inside this first env
-          if type(s_body) == "table" then
-            for _, kv in ipairs(s_body) do
-              if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+          -- If looking for a key (like 'platform') inside this fallback env
+          if type(section[2]) == 'table' then
+            for _, kv in ipairs(section[2]) do
+              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
                 local val = kv[2]
-                if val ~= nil and (type(val) ~= "table" or #val > 0) then
+                if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
+                  vim.schedule(function()
+                    vim.notify("PIO: Using '" .. key_name .. "' from fallback env: " .. fallback_env_found, vim.log.levels.INFO)
+                  end)
                   return val
                 end
               end
@@ -62,6 +63,65 @@ local pio_manager = (function()
         end
       end
     end
+
+    -- INFO:  3. FINAL ERROR If even fallback fails
+    if key_name == 'platform' or key_name == 'packages_dir' then
+      vim.schedule(function()
+        vim.notify("PIO: Critical key '" .. key_name .. "' not found anywhere!", vim.log.levels.ERROR)
+      end)
+    end
+    -- -- 1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
+    -- if section_name then
+    --   for _, section in ipairs(data) do
+    --     if type(section) == 'table' and #section >= 2 then
+    --       local section_id = section[1]
+    --       local section_body = section[2]
+    --
+    --       -- Match specific section or fallback to first "env:" found
+    --       local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
+    --       if match_section and type(section_body) == 'table' then
+    --         for _, kv in ipairs(section_body) do
+    --           if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
+    --           if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+    --             local val = kv[2]
+    --             -- Nil Check: Only return if the value is not nil or an empty table
+    --             if val ~= nil and (type(val) ~= "table" or #val > 0) then
+    --               return val
+    --             end
+    --           end
+    --         end
+    --       end
+    --     end
+    --   end
+    -- else
+    -- end
+    -- -- 2. FALLBACK: Search all 'env:' sections if specific search failed or was skipped
+    -- for _, section in ipairs(data) do
+    --   if type(section) == "table" and #section >= 2 then
+    --     local s_id = section[1]
+    --     local s_body = section[2]
+    --
+    --     -- Match only hardware environments, skipping global [env]
+    --     if type(s_id) == "string" and s_id:find("^env:") then
+    --       -- Return extracted environment name if looking for default_envs
+    --       if key_name == "default_envs" then
+    --         return s_id:match("^env:(.+)")
+    --       end
+    --
+    --       -- Otherwise, look for the requested key inside this first env
+    --       if type(s_body) == "table" then
+    --         for _, kv in ipairs(s_body) do
+    --           if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+    --             local val = kv[2]
+    --             if val ~= nil and (type(val) ~= "table" or #val > 0) then
+    --               return val
+    --             end
+    --           end
+    --         end
+    --       end
+    --     end
+    --   end
+    -- end
     return nil
   end
 
@@ -74,9 +134,14 @@ local pio_manager = (function()
           cache = decoded
           -- if type(cache) == 'table' then print(vim.inspect(cache))
           -- else print('no cahce')end
-          if not cache or type(cache) ~= 'table' then print('no cahce')
-          else print('refreshed') end
-          if callback then vim.schedule(callback) end
+          if not cache or type(cache) ~= 'table' then
+            print('no cahce')
+          else
+            print('refreshed')
+          end
+          if callback then
+            vim.schedule(callback)
+          end
         end
       else
         -- Schedule notification to avoid error in the system callback thread
@@ -92,7 +157,9 @@ local pio_manager = (function()
   end
   return {
     refresh = refresh,
-    get = function(s, k) return find_in_data(cache, s, k) end,
+    get = function(s, k)
+      return find_in_data(cache, s, k)
+    end,
   }
 end)()
 
