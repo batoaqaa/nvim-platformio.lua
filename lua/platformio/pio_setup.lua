@@ -27,8 +27,10 @@ local pio_manager = (function()
   end
 
   local function refresh(callback)
+    print('refresh')
     -- Using vim.system to detect if the command exists
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
+      print('obj')
       if obj.code == 0 then
         local ok, decoded = pcall(vim.json.decode, obj.stdout)
         if ok and decoded then
