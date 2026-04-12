@@ -179,7 +179,7 @@ end
 return {
   init = function()
     if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
-      print('pio_setup initialize')
+      vim.notify('PIO setup initialize', vim.log.levels.INFO)
       pio_manager.refresh(function()
         pio_generate_db()
         start_pio_watcher()
