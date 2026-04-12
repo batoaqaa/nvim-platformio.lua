@@ -123,25 +123,17 @@ function _G.get_pio_toolchain_pattern()
 
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then active_env = active_env[1] end
-  if active_env then print('toolchain 2:active_env=' .. active_env) end
 
   local target_env = active_env and ('env:' .. active_env) or nil
-  if target_env then print('toolchain 2.0:target_env=' .. target_env) end
-
   local platform = pio_manager.get(target_env, 'platform')
-  if platform then print('toolchain 2.1:platformio=' .. platform) end
-
   local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio/packages')
-  if packages_dir then print('toolchain 2.2:packages_dir=' .. packages_dir) end
 
   if not platform then return '/**/bin/*' end
 
-  print('toolchain 3:')
   -- Sync call for toolchain name
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
   if not p_handle then return '/**/bin/*' end
 
-  print('toolchain 4:')
   local p_json = p_handle:read('*all')
   p_handle:close()
   local arch_glob = '/**/bin/*'
@@ -151,7 +143,6 @@ function _G.get_pio_toolchain_pattern()
       if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
         local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
         arch_glob = '/**/bin/*' .. arch .. '*'
-        print('toolchain 4: arch_glob=' .. arch_glob)
         break
       end
     end
