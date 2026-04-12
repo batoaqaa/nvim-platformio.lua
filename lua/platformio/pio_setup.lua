@@ -63,12 +63,15 @@ end)()
 --2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
 -- Gets the compiler glob for clangd --query-driver
 function _G.get_pio_toolchain_pattern()
+  print('toolchain 0:')
   local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
 
+  print('toolchain 1:')
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then
     active_env = active_env[1]
   end
+  print('toolchain 2:')
   local target_env = active_env and ('env:' .. active_env) or nil
   local platform = pio_manager.get(target_env, 'platform')
   local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio/packages')
@@ -76,12 +79,14 @@ function _G.get_pio_toolchain_pattern()
     return '/**/bin/*'
   end
 
+  print('toolchain 3:')
   -- Sync call for toolchain name
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
   if not p_handle then
     return '/**/bin/*'
   end
 
+  print('toolchain 4:')
   local p_json = p_handle:read('*all')
   p_handle:close()
   local arch_glob = '/**/bin/*'
@@ -95,6 +100,7 @@ function _G.get_pio_toolchain_pattern()
       end
     end
   end
+  print('toolchain 5:')
   -- local final = (packages_dir:gsub('\\', '/') .. arch_glob):gsub('//+', '/')
   local final = packages_dir .. arch_glob
   return (misc.normalize_path(final))
