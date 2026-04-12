@@ -9,16 +9,55 @@ local pio_manager = (function()
   -- Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
     if not data or type(data) ~= 'table' then return nil end
-    for _, section in ipairs(data) do
-      if type(section) == 'table' and #section >= 2 then
-        local section_id = section[1]
-        local section_body = section[2]
 
-        -- Match specific section or fallback to first "env:" found
-        local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
-        if match_section and type(section_body) == 'table' then
-          for _, kv in ipairs(section_body) do
-            if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
+    -- 1. SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
+    if section_name then
+      for _, section in ipairs(data) do
+        if type(section) == 'table' and #section >= 2 then
+          local section_id = section[1]
+          local section_body = section[2]
+
+          -- Match specific section or fallback to first "env:" found
+          local match_section = (not section_name and type(section_id) == 'string' and section_id:find('^env:')) or (section_id == section_name)
+          if match_section and type(section_body) == 'table' then
+            for _, kv in ipairs(section_body) do
+              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then return kv[2] end
+              if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+                local val = kv[2]
+                -- Nil Check: Only return if the value is not nil or an empty table
+                if val ~= nil and (type(val) ~= "table" or #val > 0) then
+                  return val
+                end
+              end
+            end
+          end
+        end
+      end
+    else
+    end
+    -- 2. FALLBACK: Search all 'env:' sections if specific search failed or was skipped
+    for _, section in ipairs(data) do
+      if type(section) == "table" and #section >= 2 then
+        local s_id = section[1]
+        local s_body = section[2]
+
+        -- Match only hardware environments, skipping global [env]
+        if type(s_id) == "string" and s_id:find("^env:") then
+          -- Return extracted environment name if looking for default_envs
+          if key_name == "default_envs" then
+            return s_id:match("^env:(.+)")
+          end
+
+          -- Otherwise, look for the requested key inside this first env
+          if type(s_body) == "table" then
+            for _, kv in ipairs(s_body) do
+              if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
+                local val = kv[2]
+                if val ~= nil and (type(val) ~= "table" or #val > 0) then
+                  return val
+                end
+              end
+            end
           end
         end
       end
@@ -61,7 +100,10 @@ end)()
 -- Gets the compiler glob for clangd --query-driver
 -- stylua: ignore
 function _G.get_pio_toolchain_pattern()
-  local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
+  -- local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
+    local active_env = vim.g.pio_active_env
+                    or pio_manager.get("platformio", "default_envs")
+                    or pio_manager.get(nil, "default_envs")
 
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then active_env = active_env[1] end
