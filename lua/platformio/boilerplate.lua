@@ -4,8 +4,10 @@ local uv = vim.loop
 
 local boilerplate = {}
 
+-- INFO: main.cpp
 --- stylua: ignore
 boilerplate['arduino'] = {
+  rewrite = false,
   content = [[
 #include <Arduino.h>
 
@@ -19,7 +21,9 @@ void loop() {
 ]],
 }
 
+-- INFO: platformio.ini
 boilerplate['platformio.ini'] = {
+  rewrite = true,
   template = [[
 [platformio]
 core_dir = %s
@@ -48,7 +52,9 @@ lib_ldf_mode = chain+   ;Library dependencies Finder ldf
   end,
 }
 
+-- INFO: enable_toolchain.py
 boilerplate['enable_toolchain.py'] = {
+  rewrite = false,
   content = [[
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
@@ -62,7 +68,9 @@ print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 ]],
 }
 
+-- INFO: .clangd_cmd
 boilerplate['.clangd_cmd'] = {
+  rewrite = true,
   template = [[
 clangd
 --all-scopes-completion
@@ -98,7 +106,9 @@ clangd
   --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
 }
 
+-- INFO: .clangd
 boilerplate['.clangd'] = {
+  rewrite = false,
   content = [[
 CompileFlags:
   Add:
@@ -139,7 +149,10 @@ Diagnostics:
       - "modernize-*"
 ]],
 }
+
+-- INFO: .stylua.toml
 boilerplate['.stylua.toml'] = {
+  rewrite = false,
   content = [[
 syntax = "All"
 column_width = 132
@@ -156,7 +169,9 @@ enabled = false
 ]],
 }
 
+-- INFO: .clang-format
 boilerplate['.clang-format'] = {
+  rewrite = false,
   content = [[
 ---
 Language:        Cpp
@@ -415,7 +430,9 @@ function M.boilerplate_gen(framework, src_path, filename)
   --
   local file_path = src_path .. '/' .. filename
   if vim.uv.fs_stat(file_path) then
-    return -- return if file exists
+    if not entry.rewrite then
+      return -- return if file exists and not rewritable
+    end
   end
 
   if vim.fn.isdirectory(src_path) == 0 then
@@ -430,27 +447,11 @@ function M.boilerplate_gen(framework, src_path, filename)
   end
 
   -- local closeOnexit = type(exit_callback) == 'function'
+  -- local text = type(entry.content) == 'function' and entry:content() or entry.content
   local text = type(entry.content) == 'function' and entry:content() or entry.content
-  uv.fs_write(fd, text, 0)
-  uv.fs_close(fd)
-
-  -- uv.fs_open(file_path, 'w', 420, function(_, fd) -- crtete file if directory of the path exists
-  --   if not fd then
-  --     print('failed to create file: ' .. file_path .. '/' .. entry.filename)
-  --     return
-  --   end
-  --   uv.fs_write(fd, entry.content, 0, function(werr, _)
-  --     if werr then
-  --       print('failed to write to file: ' .. file_path .. '/' .. entry.filename)
-  --       return
-  --     end
-  --     uv.fs_close(fd, function(cerr)
-  --       if cerr then
-  --         print('failed to close file: ' .. file_path .. '/' .. entry.filename)
-  --         return
-  --       end
-  --     end)
-  --   end)
-  -- end)
+  if text then
+    uv.fs_write(fd, text, 0)
+    uv.fs_close(fd)
+  end
 end
 return M

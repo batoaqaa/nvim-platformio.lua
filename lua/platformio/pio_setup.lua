@@ -235,6 +235,8 @@ end
 --   )
 -- end
 
+-- INFO: 5. Automation & File Watcher
+--This handles the background synchronization when you save your project platformio.ini
 local last_trigger = 0 -- Global variable to track time
 -- stylua: ignore
 local function start_pio_watcher()
@@ -247,7 +249,7 @@ local function start_pio_watcher()
   w:start(
     path,
     {},
-    vim.schedule_wrap(function(err, filename, events)
+    vim.schedule_wrap(function(err, _, events)
       if err then w:stop() return end
 
       -- 1. Check if we've triggered too recently (5-second cooldown)
@@ -268,8 +270,9 @@ local function start_pio_watcher()
     end)
   )
 end
+
 ------------------------------------------------------------------------------------------------------
--- INFO: 5.  Exported setup function
+-- INFO: 6.  Exported setup function
 return {
   init = function()
     local config = require('platformio').config
