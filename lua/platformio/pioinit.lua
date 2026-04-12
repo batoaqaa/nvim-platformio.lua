@@ -64,10 +64,10 @@ local function pick_framework(board_details)
             cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
             cb = pio.handlePioinit,
           },
-          {
-            cmd = 'pio run -t compiledb',
-            cb = pio.handleDb,
-          },
+          -- {
+          --   cmd = 'pio run -t compiledb',
+          --   cb = pio.handleDb,
+          -- },
         })
       end)
       return true

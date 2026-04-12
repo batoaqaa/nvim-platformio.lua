@@ -27,7 +27,6 @@ local pio_manager = (function()
   end
 
   local function refresh(callback)
-    print('refresh')
     -- Using vim.system to detect if the command exists
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
       if obj.code == 0 then
@@ -36,7 +35,8 @@ local pio_manager = (function()
           cache = decoded
           -- if type(cache) == 'table' then print(vim.inspect(cache))
           -- else print('no cahce')end
-          if not cache or type(cache) ~= 'table' then print('no cahce') end
+          if not cache or type(cache) ~= 'table' then print('no cahce')
+          else print('refreshed') end
           if callback then vim.schedule(callback) end
         end
       else
@@ -63,7 +63,6 @@ end)()
 function _G.get_pio_toolchain_pattern()
   local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
 
-  print('toolchain 1:')
   -- Handle default_envs being a list/table
   if type(active_env) == 'table' then active_env = active_env[1] end
   if active_env then print('toolchain 2:active_env=' .. active_env) end
@@ -98,9 +97,9 @@ function _G.get_pio_toolchain_pattern()
       end
     end
   end
-  print('toolchain 5:')
   -- local final = (packages_dir:gsub('\\', '/') .. arch_glob):gsub('//+', '/')
   local final = packages_dir .. arch_glob
+  print('toolchain 5: final=' .. final)
   return (misc.normalize_path(final))
   -- return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
 end
@@ -109,10 +108,10 @@ end
 -- Helper to generate the compilation database
 -- stylua: ignore
 local function pio_generate_db()
-  print('pio_generate_db 0')
   -- This runs in the background so it doesn't freeze Neovim
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     if obj.code ~= 0 then return end
+    print('pio_generate_db 0')
     local pattern = _G.get_pio_toolchain_pattern()
     local toolchain_root = pattern:match('(.*toolchain%-[^/\\]+)')
     if not toolchain_root or vim.fn.isdirectory(toolchain_root) == 0 then

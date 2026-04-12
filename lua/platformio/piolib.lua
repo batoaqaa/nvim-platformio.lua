@@ -67,10 +67,10 @@ local function pick_library(json_data)
             cmd = 'pio pkg install --library "' .. pkg_name .. '"',
             cb = pio.handlePiolib,
           },
-          {
-            cmd = 'pio run -t compiledb',
-            cb = pio.handleDb,
-          },
+          -- {
+          --   cmd = 'pio run -t compiledb',
+          --   cb = pio.handleDb,
+          -- },
         })
       end)
       return true
