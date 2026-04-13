@@ -110,6 +110,9 @@ local pio_manager = (function()
             end
           end
         end
+        vim.schedule(function()
+          vim.notify('PIO: Config Error. Check platformio.ini no env', vim.log.levels.WARN)
+        end)
       elseif k == 'default_envs' and res and type(res) == 'table' then
         return res[1]
       else
