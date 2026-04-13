@@ -1,6 +1,6 @@
 M = {}
 
-M.metadata = {}
+M.metadata = nil
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.utils.lsp')
 
