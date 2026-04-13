@@ -23,7 +23,7 @@ void loop() {
 
 -- INFO: platformio.ini
 boilerplate['platformio.ini'] = {
-  rewrite = true,
+  rewrite = false,
   template = [[
 [platformio]
 core_dir = %s
