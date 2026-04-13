@@ -125,7 +125,8 @@ vim.lsp.config('*', {
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
-local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
+-- local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
+local fname = string.format('%s/.clangd_cmd', vim.uv.cwd())
 -- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
   ok, result = pcall(vim.fn.readfile, fname)
@@ -156,7 +157,7 @@ local clangd = {
     completeUnimported = true,
     fallback_flags = { '-std=c++17' },
     clangdFileStatus = true,
-    compilationDatabasePath = vim.fn.getcwd(),
+    compilationDatabasePath = vim.uv.cwd(),
   },
 }
 vim.lsp.config('clangd', clangd)

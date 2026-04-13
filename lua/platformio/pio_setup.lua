@@ -149,7 +149,7 @@ function _G.get_pio_toolchain_pattern()
       if vim.fn.isdirectory(check_path) == 1 then
         toolchain_folder = pkg.name
         -- Verification: Match the toolchain name against the compiler used in compile_commands.json
-        local db_path = vim.fn.getcwd() .. '/compile_commands.json'
+        local db_path = vim.uv.cwd() .. '/compile_commands.json'
         local f = io.open(db_path, 'r')
         if f then
           local head = f:read(2048) -- Read enough to find the compiler path
@@ -203,7 +203,7 @@ local function pio_generate_db()
     end
 
     if sysroot_path then
-      local db_path = vim.fn.getcwd() .. '/compile_commands.json'
+      local db_path = vim.uv.cwd() .. '/compile_commands.json'
       local f = io.open(db_path, 'r')
       if not f then
         return
@@ -229,7 +229,7 @@ end
 
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 local function start_pio_watcher()
-  local path = vim.fn.getcwd() .. '/platformio.ini'
+  local path = vim.uv.cwd() .. '/platformio.ini'
   if vim.fn.filereadable(path) == 0 then
     return
   end
@@ -297,7 +297,7 @@ return {
       if config.lspClangd.attach.enabled then
         require('platformio.lspConfig.attach')
       end
-      if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
+      if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
         pio_manager.refresh(function()
           pio_generate_db()
           start_pio_watcher()
