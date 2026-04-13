@@ -168,7 +168,7 @@ function _G.get_pio_sdk_info()
   end
 
   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
-  print('toolchain 5: final=' .. final)
+  print('get_pio_sdk_info(): final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
   return (misc.normalize_path(final))
   -- return pio_info
@@ -233,7 +233,7 @@ function _G.get_pio_toolchain_pattern()
   end
 
   local final = packages_dir .. toolchain_folder
-  print('toolchain 5: final=' .. final)
+  print('get_pio_toolchain 5: final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
   return (misc.normalize_path(final))
   -- return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
