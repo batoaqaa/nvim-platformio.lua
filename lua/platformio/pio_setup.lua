@@ -44,6 +44,9 @@ local pio_manager = (function()
 
   -- ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
   local function refresh(callback)
+    vim.schedule(function()
+      vim.notify('PIO: Fetching Config...', vim.log.levels.INFO)
+    end)
     local function execute_pio(attempts)
       -- Use Neovim's async system call to prevent UI freezing
       vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
@@ -173,6 +176,9 @@ end
 
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 local function pio_generate_db()
+  vim.schedule(function()
+    vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO)
+  end)
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     if obj.code ~= 0 then
       return
@@ -212,6 +218,9 @@ local function pio_generate_db()
         if out then
           out:write(patched)
           out:close()
+          vim.schedule(function()
+            vim.notify('PIO: Sync Complete!', vim.log.levels.INFO)
+          end)
         end
       end
     end
