@@ -381,7 +381,7 @@ local function start_pio_watcher()
                       end
                     end
                     M.metadata = {
-                      driver_path = env.cc_path:match('(.*[/\\])') .. '/*',
+                      driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
                       cc_path = env.cc_path or '',
                       fallback_flags = fallback_flags,
                     }
