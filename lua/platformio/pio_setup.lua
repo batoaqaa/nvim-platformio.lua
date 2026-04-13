@@ -160,7 +160,7 @@ function _G.get_pio_sdk_info()
   handle:close()
 
   -- Construct the absolute path: <packages_dir>/<toolchain_pkg>/bin/<cc_name>
-  if packages_dir ~= '' and toolchain_pkg ~= '' and cc_name ~= '' then
+  if packages_dir and packages_dir ~= '' and toolchain_pkg and toolchain_pkg ~= '' and cc_name ~= '' then
     local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
     if vim.fn.executable(full_path) == 1 then
       pio_info.cc_path = full_path
@@ -240,9 +240,11 @@ function _G.get_pio_toolchain_pattern()
 end
 
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
+-- stylua: ignore
 local function pio_generate_db()
   -- Check if we actually have an active environment before running
   local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
+
   if not active_env then
     -- Silent return or a minor info message
     vim.schedule(function()
@@ -251,21 +253,19 @@ local function pio_generate_db()
     return
   end
 
-  vim.schedule(function()
-    vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO)
-  end)
+  vim.schedule(function() vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO) end)
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    if obj.code ~= 0 then
-      return
-    end
+    if obj.code ~= 0 then return end
 
     -- Isolate the toolchain root from the pattern (e.g. .../toolchain-riscv32-esp)
-    local pattern = _G.get_pio_toolchain_pattern()
-    local toolchain_root = pattern:match('(.-toolchain%-[^/\\]+)')
-    if not toolchain_root or vim.fn.isdirectory(toolchain_root) == 0 then
-      return
-    end
+    -- local pattern = _G.get_pio_toolchain_pattern()
+    local pattern = _G.get_pio_sdk_info()
+
+    local toolchain_root = nil
+    if pattern then toolchain_root = pattern:match('(.-toolchain%-[^/\\]+)') end
+
+    if not toolchain_root or vim.fn.isdirectory(toolchain_root) == 0 then return end
 
     -- FIND SYSROOT: Locate the internal folder that contains the /include directory
     -- This folder is necessary for clangd to find standard C++ headers like <algorithm>
@@ -281,9 +281,7 @@ local function pio_generate_db()
     if sysroot_path then
       local db_path = vim.uv.cwd() .. '/compile_commands.json'
       local f = io.open(db_path, 'r')
-      if not f then
-        return
-      end
+      if not f then return end
       local content = f:read('*all')
       f:close()
 
