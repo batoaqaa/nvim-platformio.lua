@@ -110,8 +110,11 @@ local pio_manager = (function()
             end
           end
         end
+      elseif k == 'default_envs' and res and type(res) == 'table' then
+        return res[1]
+      else
+        return res
       end
-      return res
     end,
   }
 end)()
