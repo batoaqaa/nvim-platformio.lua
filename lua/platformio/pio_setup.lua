@@ -176,9 +176,20 @@ end
 
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 local function pio_generate_db()
+  -- Check if we actually have an active environment before running
+  local active_env = vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
+  if not active_env then
+    -- Silent return or a minor info message
+    vim.schedule(function()
+      vim.notify('PIO: No board configured yet. Skipping DB generation.', vim.log.levels.INFO)
+    end)
+    return
+  end
+
   vim.schedule(function()
     vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO)
   end)
+
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     if obj.code ~= 0 then
       return
@@ -299,7 +310,13 @@ return {
       end
       if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
         pio_manager.refresh(function()
-          pio_generate_db()
+          -- We check if we have data inside the refresh callback
+          local env = pio_manager.get('platformio', 'default_envs')
+          if env then
+            pio_generate_db()
+            start_pio_watcher()
+          end
+          -- pio_generate_db()
           start_pio_watcher()
         end)
       end
