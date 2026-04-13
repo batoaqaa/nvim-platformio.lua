@@ -1,3 +1,6 @@
+local misc = require('platformio.utils.misc')
+local lsp = require('platformio.utils.lsp')
+
 -- lua/pio_setup.lua
 -- This module manages PlatformIO project integration, LSP toolchain detection,
 -- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
@@ -161,9 +164,11 @@ function _G.get_pio_toolchain_pattern()
     return '/**/bin/*'
   end
 
+  local final = packages_dir .. toolchain_folder
+  print('toolchain 5: final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
-  local final = (packages_dir:gsub('\\', '/') .. '/' .. toolchain_folder .. '/bin/*'):gsub('//+', '/')
-  return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
+  return (misc.normalize_path(final))
+  -- return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
 end
 
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -241,7 +246,7 @@ local function start_pio_watcher()
           vim.schedule_wrap(function()
             pio_manager.refresh(function()
               pio_generate_db()
-              vim.cmd('LspRestart clangd')
+              lsp.lsp_restart('clangd')
               vim.notify('PIO: Syncing Environment...')
             end)
           end)
