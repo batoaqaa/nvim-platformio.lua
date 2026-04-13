@@ -269,12 +269,31 @@ local function pio_generate_db()
 
     -- FIND SYSROOT: Locate the internal folder that contains the /include directory
     -- This folder is necessary for clangd to find standard C++ headers like <algorithm>
+    -- local sysroot_path = nil
+    -- local subdirs = vim.fn.getcompletion(toolchain_root .. '/*', 'dir')
+    -- for _, dir in ipairs(subdirs) do
+    --   if vim.fn.isdirectory(dir .. '/include') == 1 then
+    --     sysroot_path = dir:gsub('\\', '/')
+    --     break
+    --   end
+    -- end
+
     local sysroot_path = nil
-    local subdirs = vim.fn.getcompletion(toolchain_root .. '/*', 'dir')
-    for _, dir in ipairs(subdirs) do
-      if vim.fn.isdirectory(dir .. '/include') == 1 then
-        sysroot_path = dir:gsub('\\', '/')
-        break
+    local handle = vim.uv.fs_scandir(toolchain_root)
+    if handle then
+      while true do
+        local name, type = vim.uv.fs_scandir_next(handle)
+        if not name then break end
+        -- Check if the entry is a directory (or a symlink to one)
+        if type == "directory" or type == "link" then
+          local full_path = toolchain_root .. '/' .. name
+          -- Check if 'include' exists inside this directory
+          local stat = vim.uv.fs_stat(full_path .. '/include')
+          if stat and stat.type == "directory" then
+            sysroot_path = full_path:gsub('\\', '/')
+            break
+          end
+        end
       end
     end
 
@@ -328,6 +347,18 @@ local function start_pio_watcher()
           0,
           vim.schedule_wrap(function()
             pio_manager.refresh(function()
+              vim.system({ 'pio', 'project', 'metadata', '--json-output-path', 'pio_metadata.json' }, { text = true }, function(obj)
+                if obj.code == 0 then
+                  vim.schedule(function()
+                    print('PIO Metadata updated!')
+                    vim.cmd('LspRestart clangd')
+                  end)
+                else
+                  vim.schedule(function()
+                    print('PIO Metadata failed: ' .. obj.stderr)
+                  end)
+                end
+              end)
               pio_generate_db()
               lsp.lsp_restart('clangd')
               vim.notify('PIO: Syncing Environment...')
