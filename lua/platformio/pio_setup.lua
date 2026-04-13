@@ -55,6 +55,13 @@ local pio_manager = (function()
           local ok, decoded = pcall(vim.json.decode, obj.stdout)
           if ok and decoded then
             cache = decoded
+            vim.schedule(function()
+              if not cache or type(cache) ~= 'table' then
+                vim.notify('PIO: Fetching Config failed. Check platformio.ini syntax.', vim.log.levels.INFO)
+              else
+                vim.notify('PIO: Fetching Config successful', vim.log.levels.INFO)
+              end
+            end)
             if callback then
               vim.schedule(callback)
             end
@@ -108,6 +115,58 @@ local pio_manager = (function()
     end,
   }
 end)()
+
+function _G.get_pio_sdk_info()
+  local pio_info = { includes = {}, cc_path = '' }
+  if vim.fn.filereadable('platformio.ini') == 0 then
+    return nil
+  end
+
+  local handle = io.popen('pio run -t envdump')
+  if not handle then
+    return nil
+  end
+
+  local packages_dir, cc_name, toolchain_pkg = '', '', ''
+
+  for line in handle:lines() do
+    -- 1. Get the global packages directory
+    packages_dir = packages_dir ~= '' and packages_dir or line:match("'PROJECT_PACKAGES_DIR': '([^']+)'")
+
+    -- 2. Get the compiler executable name (e.g., riscv32-esp-elf-gcc)
+    cc_name = cc_name ~= '' and cc_name or line:match("'CC': '([^']+)'")
+
+    -- 3. Find the specific toolchain package name from the PACKAGES list
+    -- Matches lines like "- toolchain-riscv32-esp @ 14.2.0"
+    local pkg = line:match('%- (toolchain%-[^ ]+)')
+    if pkg then
+      toolchain_pkg = pkg
+    end
+
+    -- 4. Collect include paths
+    local path_list = line:match("'CPPPATH': %[(.+)%]")
+    if path_list then
+      for path in path_list:gmatch("'([^']+)'") do
+        table.insert(pio_info.includes, '-I' .. path)
+      end
+    end
+  end
+  handle:close()
+
+  -- Construct the absolute path: <packages_dir>/<toolchain_pkg>/bin/<cc_name>
+  if packages_dir ~= '' and toolchain_pkg ~= '' and cc_name ~= '' then
+    local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
+    if vim.fn.executable(full_path) == 1 then
+      pio_info.cc_path = full_path
+    end
+  end
+
+  local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
+  print('toolchain 5: final=' .. final)
+  -- Normalize paths for the OS and ensure backslashes for Windows if needed
+  return (misc.normalize_path(final))
+  -- return pio_info
+end
 
 -- LSP HELPER: Returns the glob pattern for clangd's --query-driver
 -- e.g., C:\Users\tom\.platformio\packages\toolchain-riscv32-esp\bin\*

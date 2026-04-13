@@ -92,9 +92,8 @@ clangd
 --query-driver=%s
 ]],
   content = function(self)
-    -- local pio = require('platformio.utils.pio')
-    -- return string.format(self.template, pio.get_pio_dir('packages') or '**')
-    return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
+    -- return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
+    return string.format(self.template, _G.get_pio_sdk_info() or '**')
   end,
   --header-insertion=iwyu
   --header-insertion-decorators
