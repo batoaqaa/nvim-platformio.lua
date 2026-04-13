@@ -173,9 +173,9 @@ function _G.get_pio_sdk_info()
   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
   print('get_pio_sdk_info(): final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
-  -- print(M.metadata.driver_path)
-  -- return (misc.normalize_path(final))
-  return M.metadata.driver_path
+  print(vim.inspect(M.metadata))
+  return (misc.normalize_path(final))
+  -- return M.metadata.driver_path
   -- return pio_info
 end
 
