@@ -1,3 +1,6 @@
+M = {}
+
+M.metadata = nil
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.utils.lsp')
 
@@ -170,7 +173,8 @@ function _G.get_pio_sdk_info()
   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
   print('get_pio_sdk_info(): final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
-  return (misc.normalize_path(final))
+  -- return (misc.normalize_path(final))
+  return M.metadata.driver_path
   -- return pio_info
 end
 
@@ -322,8 +326,8 @@ end
 
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 local function start_pio_watcher()
-  local path = vim.uv.cwd() .. '/platformio.ini'
-  if vim.fn.filereadable(path) == 0 then
+  local platformioini = vim.uv.cwd() .. '/platformio.ini'
+  if vim.fn.filereadable(platformioini) == 0 then
     return
   end
 
@@ -332,7 +336,7 @@ local function start_pio_watcher()
     return
   end
   w:start(
-    path,
+    platformioini,
     {},
     vim.schedule_wrap(function(err, _, events)
       if err or not events or not events.change then
@@ -347,21 +351,55 @@ local function start_pio_watcher()
           0,
           vim.schedule_wrap(function()
             pio_manager.refresh(function()
-              vim.system({ 'pio', 'project', 'metadata', '--json-output-path', 'pio_metadata.json' }, { text = true }, function(obj)
-                if obj.code == 0 then
-                  vim.schedule(function()
-                    print('PIO Metadata updated!')
-                    vim.cmd('LspRestart clangd')
-                  end)
-                else
-                  vim.schedule(function()
-                    print('PIO Metadata failed: ' .. obj.stderr)
-                  end)
+              vim.system({ 'pio', 'project', 'metadata', '--json-output' }, { text = true }, function(obj)
+                -- Error Checking: obj.code 0 means success
+                if obj.code == 0 and obj.stdout then
+                  local ok, raw_data = pcall(vim.json.decode, obj.stdout)
+                  if ok and raw_data then
+                    local _, env = next(raw_data)
+                    if not env then
+                      return
+                    end
+                    local fallback_flags = {}
+                    -- 1. Process Includes
+                    if env.includes then
+                      for category, paths in pairs(env.includes) do
+                        -- If it's a toolchain path, use -isystem to suppress warnings
+                        -- and tell clangd these are standard libraries
+                        local flag = (category == 'toolchain') and '-isystem' or '-I'
+
+                        for _, path in ipairs(paths) do
+                          table.insert(fallback_flags, flag .. path)
+                        end
+                      end
+                    end
+                    -- 2. Process Defines
+                    if env.defines then
+                      for _, define in ipairs(env.defines) do
+                        table.insert(fallback_flags, '-D' .. define)
+                      end
+                    end
+                    M.metadata = {
+                      driver_path = env.cc_path:match('(.*[/\\])') .. '/*',
+                      cc_path = env.cc_path or '',
+                      fallback_flags = fallback_flags,
+                    }
+                    -- M.metadata = decoded
+                    vim.schedule(function()
+                      pio_generate_db()
+                      lsp.lsp_restart('clangd')
+                      vim.notify('PIO: Syncing Environment successful')
+                    end)
+                  else
+                    vim.schedule(function()
+                      vim.notify('PIO: Syncing Environment failed')
+                    end)
+                  end
                 end
               end)
-              pio_generate_db()
-              lsp.lsp_restart('clangd')
-              vim.notify('PIO: Syncing Environment...')
+              -- pio_generate_db()
+              -- lsp.lsp_restart('clangd')
+              -- vim.notify('PIO: Syncing Environment...')
             end)
           end)
         )
@@ -372,48 +410,48 @@ end
 
 ------------------------------------------------------------------------------------------------------
 -- INFO: 6.  Exported setup function
-return {
-  init = function()
-    local config = require('platformio').config
-    if config.lspClangd.enabled == true then
-      vim.notify('PIO setup initialize', vim.log.levels.INFO)
-      ----------------------------------------------------------------------------------------
-      -- INFO: create clangd required files
-      -----------------------------------------------------------------------------------------
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+function M.init()
+  local config = require('platformio').config
+  if config.lspClangd.enabled == true then
+    vim.notify('PIO setup initialize', vim.log.levels.INFO)
+    ----------------------------------------------------------------------------------------
+    -- INFO: create clangd required files
+    -----------------------------------------------------------------------------------------
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
 
-      boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-      boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-      -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
-      -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+    boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+    -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
+    -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
 
-      -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 
-      boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
-      boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
-      -- boilerplate_gen([[enable_toolchain.py]], vim.g.platformioRootDir)
-      -- boilerplate_gen([[generate_compile_commands.py]], vim.g.platformioRootDir)
-      ---------------------------------------------------------------------------------
+    boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[enable_toolchain.py]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[generate_compile_commands.py]], vim.g.platformioRootDir)
+    ---------------------------------------------------------------------------------
 
-      -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
-      require('platformio.lspConfig.clangd')
-      if config.lspClangd.attach.enabled then
-        require('platformio.lspConfig.attach')
-      end
-      if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-        pio_manager.refresh(function()
-          -- We check if we have data inside the refresh callback
-          local env = pio_manager.get('platformio', 'default_envs')
-          if env then
-            pio_generate_db()
-            start_pio_watcher()
-          end
-          -- pio_generate_db()
-          start_pio_watcher()
-        end)
-      end
+    -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
+    require('platformio.lspConfig.clangd')
+    if config.lspClangd.attach.enabled then
+      require('platformio.lspConfig.attach')
     end
-  end,
-}
+    if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
+      pio_manager.refresh(function()
+        -- We check if we have data inside the refresh callback
+        local env = pio_manager.get('platformio', 'default_envs')
+        if env then
+          pio_generate_db()
+          start_pio_watcher()
+        end
+        -- pio_generate_db()
+        start_pio_watcher()
+      end)
+    end
+  end
+end
+
+return M
