@@ -1,173 +1,187 @@
-local misc = require('platformio.utils.misc')
-local lsp = require('platformio.utils.lsp')
+-- lua/pio_setup.lua
+-- This module manages PlatformIO project integration, LSP toolchain detection,
+-- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
 
--- INFO: 1. The Core PIO Manager & Generic Extractor
---This manages the data cache and navigates your specific nested-list JSON structure.
--- stylua: ignore
+local debounce_timer = vim.uv.new_timer()
+
 local pio_manager = (function()
-  local cache = nil
+  local cache = nil -- Stores the decoded platformio.ini JSON structure
 
-  --  INFO: 1 Generic extractor for nested structure: { { "name", { {"k","v"}, ... } }, ... }
+  -- HELPER: Navigates the specific nested list format used by 'pio project config --json-output'
+  -- The format is typically: { { "section_name", { {"key", "value"}, ... } }, ... }
   local function find_in_data(data, section_name, key_name)
-    if not data or type(data) ~= 'table' then return nil end
-
-    -- INFO:  1.0 SPECIFIC SEARCH: Look for a specific section (e.g., "platformio")
-    if section_name then
-      for _, section in ipairs(data) do
-        if type(section) == 'table' and #section >= 2 then
-          local s_id = section[1]
-          local s_body = section[2]
-          if s_id == section_name and type(s_body) == "table" then
-            for _, kv in ipairs(s_body) do
-             if type(kv) == "table" and #kv >= 2 and kv[1] == key_name then
-               local val = kv[2]
-               if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
-                 return val
-                end
-              end
-            end
-          end
-        end
-      end
+    -- Safety check: Ensure data is a valid table from a successful JSON decode
+    if type(data) ~= 'table' then
+      return nil
     end
 
-    -- INFO:  1.1 FALLBACK SEARCH (If we reach here, Step 1 failed or was skipped)
-    local fallback_env_found = nil
     for _, section in ipairs(data) do
+      -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
       if type(section) == 'table' and #section >= 2 then
-        local s_id = section[1]
-        local s_body = section[2]
-        -- Look for hardware envs like [env:seeed_xiao_esp32c3], skipping generic [env]
-        if type(s_id) == 'string' and s_id:find('^env:') then
-          fallback_env_found = s_id:match('^env:(.+)')
+        local s_id = section[1] -- Section header string
+        local s_body = section[2] -- Table of key-value pairs
 
-          -- If we were looking for default_envs, we just found our fallback
-          if key_name == 'default_envs' then
-            vim.schedule(function()
-              vim.notify("PIO: 'default_envs' empty. Falling back to: " .. fallback_env_found, vim.log.levels.INFO)
-            end)
-            return fallback_env_found
-          end
-
-          -- If looking for a key (like 'platform') inside this fallback env
-          if type(s_body) == 'table' then
-            for _, kv in ipairs(s_body) do
-              if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
-                local val = kv[2]
-                if val ~= nil and val ~= '' and (type(val) ~= 'table' or #val > 0) then
-                  vim.schedule(function()
-                    vim.notify("PIO: Using '" .. key_name .. "' from fallback env: " .. fallback_env_found, vim.log.levels.INFO)
-                  end)
-                  return val
-                end
+        if s_id == section_name and type(s_body) == 'table' then
+          for _, kv in ipairs(s_body) do
+            -- Each kv is a table: [1]=key, [2]=value
+            if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
+              local val = kv[2]
+              -- Treat empty strings or empty tables as nil to trigger fallback logic
+              if val == nil or val == '' or (type(val) == 'table' and #val == 0) then
+                return nil
               end
+              return val
             end
           end
         end
       end
-    end
-
-    -- INFO:  1.2 FINAL ERROR If even fallback fails
-    if key_name == 'platform' or key_name == 'packages_dir' then
-      vim.schedule(function()
-        vim.notify("PIO: Critical key '" .. key_name .. "' not found anywhere!", vim.log.levels.INFO)
-      end)
     end
     return nil
   end
-  ------------------------------------------------------------------------------------------
 
-  --  INFO: 2. Asynchronous Refresh
+  -- ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
   local function refresh(callback)
-    -- Using vim.system to detect if the command exists
-    vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
-      if obj.code ~= 0 then
-        -- Schedule notification to avoid error in the system callback thread
-        vim.schedule(function()
-          if obj.code == 127 then
-            vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
-          else
-            vim.notify('PIO Manager: Failed to fetch config (Error ' .. obj.code .. ')', vim.log.levels.WARN)
+    local function execute_pio(attempts)
+      -- Use Neovim's async system call to prevent UI freezing
+      vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
+        -- Error Checking: obj.code 0 means success
+        if obj.code == 0 and obj.stdout then
+          local ok, decoded = pcall(vim.json.decode, obj.stdout)
+          if ok and decoded then
+            cache = decoded
+            if callback then
+              vim.schedule(callback)
+            end
+            return
           end
-        end)
-        return
-      end
-      local ok, decoded = pcall(vim.json.decode, obj.stdout)
-      if ok and decoded then
-        cache = decoded
-        if not cache or type(cache) ~= 'table' then
-          print('no cahce')
-        else
-          print('cahced ok')
         end
-        if callback then vim.schedule(callback) end
-      end
-    end)
+
+        -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
+        if attempts > 0 then
+          vim.defer_fn(function()
+            execute_pio(attempts - 1)
+          end, 500)
+        else
+          vim.schedule(function()
+            if obj.code ~= 0 then
+              vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN)
+            end
+          end)
+        end
+      end)
+    end
+    execute_pio(1)
   end
+
   return {
     refresh = refresh,
     get = function(s, k)
-      return find_in_data(cache, s, k)
+      if not cache then
+        return nil
+      end
+      local res = find_in_data(cache, s, k)
+
+      -- FALLBACK: If default_envs is missing/empty, find the first hardware [env:xxx] block
+      if k == 'default_envs' and not res then
+        for _, section in ipairs(cache) do
+          if type(section) == 'table' and type(section[1]) == 'string' then
+            local name = section[1]
+            if name:find('^env:') then
+              local fallback = name:match('^env:(.+)')
+              if fallback then
+                vim.schedule(function()
+                  vim.notify('PIO: default_envs empty. Using: ' .. fallback, vim.log.levels.INFO)
+                end)
+                return fallback
+              end
+            end
+          end
+        end
+      end
+      return res
     end,
   }
 end)()
 
-------------------------------------------------------------------------------------------------------
--- INFO: 2. Generic Toolchain & Sysroot Logic. These functions identify where the compiler and its C++ headers live.
--- Gets the compiler glob for clangd --query-driver
--- stylua: ignore
+-- LSP HELPER: Returns the glob pattern for clangd's --query-driver
+-- e.g., C:\Users\tom\.platformio\packages\toolchain-riscv32-esp\bin\*
 function _G.get_pio_toolchain_pattern()
-  local active_env = vim.g.pio_active_env or pio_manager.get("platformio", "default_envs")
-                    -- or pio_manager.get(nil, "default_envs")
+  local ok_env, active_env = pcall(function()
+    return vim.g.pio_active_env or pio_manager.get('platformio', 'default_envs')
+  end)
+  if not ok_env or not active_env then
+    return '/**/bin/*'
+  end
 
-  -- Handle default_envs being a list/table
-  if type(active_env) == 'table' then active_env = active_env[1] end
-
-  local target_env = active_env and ('env:' .. active_env) or nil
+  local target_env = 'env:' .. active_env
   local platform = pio_manager.get(target_env, 'platform')
-  local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('HOME') or os.getenv('USERPROFILE') .. '/.platformio/packages')
+  -- Determine the packages directory (Windows vs Linux/Mac home folders)
+  local packages_dir = pio_manager.get('platformio', 'packages_dir') or (os.getenv('USERPROFILE') or os.getenv('HOME') .. '/.platformio/packages')
 
-  if not platform then return '/**/bin/*' end
+  if not platform then
+    return '/**/bin/*'
+  end
 
-  -- Sync call for toolchain name
+  -- Use pio platform show to find which toolchain packages are associated with the platform
   local p_handle = io.popen('pio platform show ' .. platform .. ' --json-output')
-  if not p_handle then return '/**/bin/*' end
-
-  local p_json = p_handle:read('*all')
+  if not p_handle then
+    return '/**/bin/*'
+  end
+  local raw_json = p_handle:read('*all')
   p_handle:close()
-  local arch_glob = '/**/bin/*'
-  local p_ok, p_data = pcall(vim.json.decode, p_json)
-  if p_ok and p_data and type(p_data.packages) == 'table' then
-    for pkg_name, _ in pairs(p_data.packages) do
-      if type(pkg_name) == 'string' and pkg_name:find('^toolchain%-') then
-        local arch = pkg_name:gsub('toolchain%-', ''):gsub('gcc%-?', '')
-        arch_glob = '/**/bin/*' .. arch .. '*'
-        break
+
+  local p_ok, p_data = pcall(vim.json.decode, raw_json)
+  if not p_ok or not p_data or not p_data.packages then
+    return '/**/bin/*'
+  end
+
+  local toolchain_folder = ''
+  for _, pkg in ipairs(p_data.packages) do
+    -- Skip ULP (low power) toolchains and find the primary one for the architecture
+    if pkg.name and pkg.name:find('^toolchain%-') and not pkg.name:find('ulp') then
+      local check_path = (packages_dir .. '/' .. pkg.name):gsub('\\', '/')
+      if vim.fn.isdirectory(check_path) == 1 then
+        toolchain_folder = pkg.name
+        -- Verification: Match the toolchain name against the compiler used in compile_commands.json
+        local db_path = vim.fn.getcwd() .. '/compile_commands.json'
+        local f = io.open(db_path, 'r')
+        if f then
+          local head = f:read(2048) -- Read enough to find the compiler path
+          f:close()
+          -- If the DB mentions "riscv32-esp", we ensure we picked the matching folder
+          if head and head:find(pkg.name:gsub('toolchain%-', '')) then
+            break
+          end
+        end
       end
     end
   end
-  -- local final = (packages_dir:gsub('\\', '/') .. arch_glob):gsub('//+', '/')
-  local final = packages_dir .. arch_glob
-  print('toolchain 5: final=' .. final)
-  return (misc.normalize_path(final))
-  -- return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
+
+  if toolchain_folder == '' then
+    return '/**/bin/*'
+  end
+
+  -- Normalize paths for the OS and ensure backslashes for Windows if needed
+  local final = (packages_dir:gsub('\\', '/') .. '/' .. toolchain_folder .. '/bin/*'):gsub('//+', '/')
+  return vim.fn.has('win32') == 1 and final:gsub('/', '\\') or final
 end
 
--- INFO: 3. Patches compile_commands.json with --sysroot to fix <algorithm>
--- Helper to generate the compilation database
--- stylua: ignore
+-- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 local function pio_generate_db()
-  -- This runs in the background so it doesn't freeze Neovim
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    if obj.code ~= 0 then return end
-    print('pio_generate_db 0')
+    if obj.code ~= 0 then
+      return
+    end
+
+    -- Isolate the toolchain root from the pattern (e.g. .../toolchain-riscv32-esp)
     local pattern = _G.get_pio_toolchain_pattern()
-    local toolchain_root = pattern:match('(.*toolchain%-[^/\\]+)')
+    local toolchain_root = pattern:match('(.-toolchain%-[^/\\]+)')
     if not toolchain_root or vim.fn.isdirectory(toolchain_root) == 0 then
       return
     end
 
-    -- Find subdirectory containing 'include' (the sysroot)
+    -- FIND SYSROOT: Locate the internal folder that contains the /include directory
+    -- This folder is necessary for clangd to find standard C++ headers like <algorithm>
     local sysroot_path = nil
     local subdirs = vim.fn.getcompletion(toolchain_root .. '/*', 'dir')
     for _, dir in ipairs(subdirs) do
@@ -176,55 +190,59 @@ local function pio_generate_db()
         break
       end
     end
+
     if sysroot_path then
       local db_path = vim.fn.getcwd() .. '/compile_commands.json'
       local f = io.open(db_path, 'r')
-      if not f then return end
+      if not f then
+        return
+      end
       local content = f:read('*all')
       f:close()
 
-      -- patch sysroot
-      local patched = content:gsub('("-i")', '"--sysroot=' .. sysroot_path .. '", %1')
-      local out = io.open(db_path, 'w')
-      if out then
-        out:write(patched)
-        out:close()
-        vim.schedule(function() vim.notify('PIO: DB & Sysroot Patched') end)
+      -- Inject the --sysroot flag into every command in the JSON file
+      if content and content ~= '' then
+        local patched = content:gsub('("-i")', '"--sysroot=' .. sysroot_path .. '", %1')
+        local out = io.open(db_path, 'w')
+        if out then
+          out:write(patched)
+          out:close()
+        end
       end
     end
   end)
 end
 
-------------------------------------------------------------------------------------------------------
--- INFO: 4. Automation & File Watcher
---This handles the background synchronization when you save your project.
-local debounce_timer = vim.uv.new_timer()
--- stylua: ignore
+-- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 local function start_pio_watcher()
   local path = vim.fn.getcwd() .. '/platformio.ini'
-  if vim.fn.filereadable(path) == 0 then return end
+  if vim.fn.filereadable(path) == 0 then
+    return
+  end
 
   local w = vim.uv.new_fs_event()
-  if not w then return end
-
+  if not w then
+    return
+  end
   w:start(
-    path, {},
+    path,
+    {},
     vim.schedule_wrap(function(err, _, events)
-      if err or not events.change then return end
+      if err or not events or not events.change then
+        return
+      end
 
-      -- 1. Stop any existing timer (cancel previous "half-finished" events)
       if debounce_timer then
+        -- DEBOUNCE: Stops and restarts the timer to ensure we only sync ONCE after typing stops
         debounce_timer:stop()
-
-        -- 2. Start a 500ms window. Logic only runs if NO more events happen in this time.
-        debounce_timer:start( 500, 0,
+        debounce_timer:start(
+          500,
+          0,
           vim.schedule_wrap(function()
-            vim.notify('PIO: Config change detected. Refreshing...', vim.log.levels.INFO)
-
             pio_manager.refresh(function()
               pio_generate_db()
-              -- 3. Only restart LSP if the pattern actually changed or DB was updated
-              lsp.lsp_restart('clangd')
+              vim.cmd('LspRestart clangd')
+              vim.notify('PIO: Syncing Environment...')
             end)
           end)
         )
