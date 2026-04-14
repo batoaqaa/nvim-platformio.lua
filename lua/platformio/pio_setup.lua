@@ -216,6 +216,7 @@ local pio_manager = (function()
       _G.metadata.core_dir = ''
       _G.metadata.packages_dir = ''
       _G.metadata.platforms_dir = ''
+      _G.metadata.active_env = ''
       _G.metadata.default_envs = {}
       _G.metadata.envs = {}
 
@@ -248,7 +249,7 @@ local pio_manager = (function()
       end
       -- Data is now in pio_config.core_dir, pio_config.envs.esp32c3_supermini, etc.
       vim.schedule(function()
-        print('Core Dir: ' .. _G.metadata.core_dir)
+        print('active_env: ' .. _G.metadata.active_env)
       end)
     end)
 
