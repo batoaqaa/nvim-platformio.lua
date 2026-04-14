@@ -103,81 +103,85 @@ local pio_manager = (function()
     end)
     -- INFO:
     local function execute_pio(attempts)
-      if M.metadata.active_env then
-        vim.system({ 'pio', 'project', 'metadata', '-e', M.metadata.active_env, '--json-output' }, { text = true }, function(obj)
-          if obj.code ~= 0 then
-            -- Schedule notification to avoid error in the system callback thread
-            vim.schedule(function()
-              if obj.code == 127 then
-                vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
-              else
-                vim.notify('PIO Manager: Failed to fetch config (Error ' .. obj.code .. ')', vim.log.levels.WARN)
-              end
-            end)
-            return
-          end
-          -- Error Checking: obj.code 0 means success
-          if obj.code == 0 and obj.stdout then
-            local ok, raw_data = pcall(vim.json.decode, obj.stdout)
-            if ok and raw_data then
-              local _, env = next(raw_data)
-              if not env then
-                return
-              end
-              local fallback_flags = {}
-              -- 1. Process Includes
-              if env.includes then
-                for category, paths in pairs(env.includes) do
-                  -- If it's a toolchain path, use -isystem to suppress warnings
-                  -- and tell clangd these are standard libraries
-                  local flag = (category == 'toolchain') and '-isystem' or '-I'
-
-                  for _, path in ipairs(paths) do
-                    table.insert(fallback_flags, flag .. path)
-                  end
-                end
-              end
-              -- 2. Process Defines
-              if env.defines then
-                for _, define in ipairs(env.defines) do
-                  table.insert(fallback_flags, '-D' .. define)
-                end
-              end
-              M.metadata = {
-                driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
-                cc_path = env.cc_path or '',
-                fallback_flags = fallback_flags,
-              }
-              -- M.metadata = decoded
-              if callback then
-                vim.schedule(callback)
-              end
-              -- vim.schedule(function()
-              --   boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-              --   pio_generate_db()
-              --   lsp.lsp_restart('clangd')
-              --   vim.notify('PIO: Syncing Environment successful')
-              -- end)
+      if not M.metadata.active_env or M.metadata.active_env == '' then
+        vim.schedule(function()
+          vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR)
+        end)
+        return
+      end
+      vim.system({ 'pio', 'project', 'metadata', '-e', M.metadata.active_env, '--json-output' }, { text = true }, function(obj)
+        if obj.code ~= 0 then
+          -- Schedule notification to avoid error in the system callback thread
+          vim.schedule(function()
+            if obj.code == 127 then
+              vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
             else
-              vim.schedule(function()
-                vim.notify('PIO: Syncing Environment failed')
-              end)
+              vim.notify('PIO Manager: Failed to fetch config (Error ' .. obj.code .. ')', vim.log.levels.WARN)
             end
-          end
-          -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
-          if attempts > 0 then
-            vim.defer_fn(function()
-              execute_pio(attempts - 1)
-            end, 500)
+          end)
+          return
+        end
+        -- Error Checking: obj.code 0 means success
+        if obj.code == 0 and obj.stdout then
+          local ok, raw_data = pcall(vim.json.decode, obj.stdout)
+          if ok and raw_data then
+            local _, env = next(raw_data)
+            if not env then
+              return
+            end
+            local fallback_flags = {}
+            -- 1. Process Includes
+            if env.includes then
+              for category, paths in pairs(env.includes) do
+                -- If it's a toolchain path, use -isystem to suppress warnings
+                -- and tell clangd these are standard libraries
+                local flag = (category == 'toolchain') and '-isystem' or '-I'
+
+                for _, path in ipairs(paths) do
+                  table.insert(fallback_flags, flag .. path)
+                end
+              end
+            end
+            -- 2. Process Defines
+            if env.defines then
+              for _, define in ipairs(env.defines) do
+                table.insert(fallback_flags, '-D' .. define)
+              end
+            end
+            M.metadata = {
+              driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
+              cc_path = env.cc_path or '',
+              fallback_flags = fallback_flags,
+            }
+            -- M.metadata = decoded
+            if callback then
+              vim.schedule(callback)
+            end
+            -- vim.schedule(function()
+            --   boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+            --   pio_generate_db()
+            --   lsp.lsp_restart('clangd')
+            --   vim.notify('PIO: Syncing Environment successful')
+            -- end)
           else
             vim.schedule(function()
-              if obj.code ~= 0 then
-                vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN)
-              end
+              vim.notify('PIO: Syncing Environment failed')
             end)
           end
-        end)
-      end
+        end
+        -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
+        if attempts > 0 then
+          vim.defer_fn(function()
+            execute_pio(attempts - 1)
+          end, 500)
+        else
+          vim.schedule(function()
+            if obj.code ~= 0 then
+              vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN)
+            end
+          end)
+        end
+      end)
       -- Use Neovim's async system call to prevent UI freezing
       -- vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
       --   -- Error Checking: obj.code 0 means success
