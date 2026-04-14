@@ -108,7 +108,7 @@ local pio_manager = (function()
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
       vim.schedule(function()
-        print(_G.metadata.active_env)
+        print('env: ' .. _G.metadata.active_env)
       end)
       vim.system({ 'pio', 'project', 'metadata', '-e', 'seeed_xiao_esp32c3', '--json-output' }, { text = true }, function(int_obj)
         if int_obj.code ~= 0 then
