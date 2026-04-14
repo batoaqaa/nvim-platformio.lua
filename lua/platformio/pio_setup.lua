@@ -35,6 +35,7 @@ end
 local function GetActivePioEnv()
   local file = io.open('platformio.ini', 'r')
   if not file then
+    M.metadata.active_env = ''
     return nil
   end
 
@@ -157,12 +158,6 @@ local pio_manager = (function()
             if callback then
               vim.schedule(callback)
             end
-            -- vim.schedule(function()
-            --   boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-            --   pio_generate_db()
-            --   lsp.lsp_restart('clangd')
-            --   vim.notify('PIO: Syncing Environment successful')
-            -- end)
           else
             vim.schedule(function()
               vim.notify('PIO: Syncing Environment failed')
@@ -485,46 +480,40 @@ function M.init()
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
-
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
     -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
     -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
-
-    -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[enable_toolchain.py]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[generate_compile_commands.py]], vim.g.platformioRootDir)
     ---------------------------------------------------------------------------------
 
     require('platformio.lspConfig.clangd')
     if config.lspClangd.attach.enabled then
       require('platformio.lspConfig.attach')
     end
-    if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-      M.metadata.active_env = GetActivePioEnv()
-      pio_manager.refresh(function()
-        vim.schedule(function()
-          boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-          pio_generate_db()
-          lsp.lsp_restart('clangd')
-          vim.notify('PIO: Syncing Environment successful')
-        end)
-        -- We check if we have data inside the refresh callback
-        -- local env = pio_manager.get('platformio', 'default_envs')
-        -- if M.metadata.active_env then
-        --   boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-        --   pio_generate_db()
-        --   lsp.lsp_restart('clangd')
-        --   start_pio_watcher()
-        -- end
-        -- pio_generate_db()
-        start_pio_watcher()
+
+    -- if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
+    -- M.metadata.active_env = GetActivePioEnv()
+    pio_manager.refresh(function()
+      vim.schedule(function()
+        boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+        pio_generate_db()
+        lsp.lsp_restart('clangd')
+        vim.notify('PIO: Syncing Environment successful')
       end)
-    end
+      -- We check if we have data inside the refresh callback
+      -- local env = pio_manager.get('platformio', 'default_envs')
+      -- if M.metadata.active_env then
+      --   boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+      --   pio_generate_db()
+      --   lsp.lsp_restart('clangd')
+      --   start_pio_watcher()
+      -- end
+      -- pio_generate_db()
+      start_pio_watcher()
+    end)
+    -- end
   end
 end
 
