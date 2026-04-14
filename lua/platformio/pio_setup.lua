@@ -117,7 +117,7 @@ local pio_manager = (function()
             if int_obj.code == 127 then
               vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
             else
-              vim.notify('PIO Manager: Failed to fetch metadata (Error ' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+              vim.notify('PIO Manager: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
             end
           end)
           return
@@ -208,7 +208,7 @@ local pio_manager = (function()
           if ext_obj.code == 127 then
             vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
           else
-            vim.notify('PIO Manager: Failed to fetch config (Error ' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+            vim.notify('PIO Manager: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
           end
         end)
         return
