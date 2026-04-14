@@ -92,8 +92,8 @@ clangd
 --query-driver=%s
 ]],
   content = function(self)
-    -- return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
-    return string.format(self.template, _G.get_pio_sdk_info() or '**')
+    return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
+    -- return string.format(self.template, _G.get_pio_sdk_info() or '**')
   end,
   --header-insertion=iwyu
   --header-insertion-decorators

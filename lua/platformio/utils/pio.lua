@@ -220,7 +220,7 @@ end
 function M.handlePioinit()
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-  boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+  -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
 end
 -- Handle after poioinit execution

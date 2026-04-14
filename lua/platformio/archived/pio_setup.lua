@@ -2,8 +2,10 @@
 -- local lsp = require('platformio.utils.lsp')
 --
 -- local debounce_timer = vim.uv.new_timer()
+--
 -- -- INFO: 1. The Core PIO Manager & Generic Extractor
 -- --This manages the data cache and navigates your specific nested-list JSON structure.
+--
 -- -- stylua: ignore
 -- local pio_manager = (function()
 --   local cache = nil
