@@ -98,16 +98,13 @@ local pio_manager = (function()
 
   -- INFO:
   -- ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
+  -- stylua: ignore
   local function refresh(callback)
-    vim.schedule(function()
-      vim.notify('PIO: Fetching Config...', vim.log.levels.INFO)
-    end)
+    vim.schedule(function() vim.notify('PIO: Fetching Config...', vim.log.levels.INFO) end)
     -- INFO:
     local function execute_pio(attempts)
       if not M.metadata.active_env or M.metadata.active_env == '' then
-        vim.schedule(function()
-          vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR)
-        end)
+        vim.schedule(function() vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR) end)
         return
       end
       vim.system({ 'pio', 'project', 'metadata', '-e', M.metadata.active_env, '--json-output' }, { text = true }, function(obj)
@@ -127,9 +124,7 @@ local pio_manager = (function()
           local ok, raw_data = pcall(vim.json.decode, obj.stdout)
           if ok and raw_data then
             local _, env = next(raw_data)
-            if not env then
-              return
-            end
+            if not env then return end
             local fallback_flags = {}
             -- 1. Process Includes
             if env.includes then
@@ -137,17 +132,12 @@ local pio_manager = (function()
                 -- If it's a toolchain path, use -isystem to suppress warnings
                 -- and tell clangd these are standard libraries
                 local flag = (category == 'toolchain') and '-isystem' or '-I'
-
-                for _, path in ipairs(paths) do
-                  table.insert(fallback_flags, flag .. path)
-                end
+                for _, path in ipairs(paths) do table.insert(fallback_flags, flag .. path) end
               end
             end
             -- 2. Process Defines
             if env.defines then
-              for _, define in ipairs(env.defines) do
-                table.insert(fallback_flags, '-D' .. define)
-              end
+              for _, define in ipairs(env.defines) do table.insert(fallback_flags, '-D' .. define) end
             end
             M.metadata = {
               driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
@@ -155,25 +145,17 @@ local pio_manager = (function()
               fallback_flags = fallback_flags,
             }
             -- M.metadata = decoded
-            if callback then
-              vim.schedule(callback)
-            end
+            if callback then vim.schedule(callback) end
           else
-            vim.schedule(function()
-              vim.notify('PIO: Syncing Environment failed')
-            end)
+            vim.schedule(function() vim.notify('PIO: Syncing Environment failed') end)
           end
         end
         -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
         if attempts > 0 then
-          vim.defer_fn(function()
-            execute_pio(attempts - 1)
-          end, 500)
+          vim.defer_fn(function() execute_pio(attempts - 1) end, 500)
         else
           vim.schedule(function()
-            if obj.code ~= 0 then
-              vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN)
-            end
+            if obj.code ~= 0 then vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN) end
           end)
         end
       end)
@@ -378,31 +360,72 @@ end
 -- INFO:
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 -- stylua: ignore
-local function start_pio_watcher()
-  local platformioini = vim.uv.cwd() .. '/platformio.ini'
-  -- if vim.fn.filereadable(platformioini) == 0 then return end
+-- local function start_pio_watcher()
+--   local platformioini = vim.uv.cwd() .. '/platformio.ini'
+--   -- if vim.fn.filereadable(platformioini) == 0 then return end
+--
+--   local w = vim.uv.new_fs_event()
+--   if not w then return end
+--   w:start( platformioini, {},
+--     vim.schedule_wrap(function(err, _, events)
+--       if err or not events or not events.change then
+--         return
+--       end
+--
+--       if debounce_timer then
+--         -- 1. Stop any existing timer (cancel previous "half-finished" events)
+--         debounce_timer:stop()
+--
+--         -- 2. Start a 500ms window. Logic only runs if NO more events happen in this time.
+--         debounce_timer:start(
+--           500,
+--           0,
+--           vim.schedule_wrap(function()
+--             M.metadata.active_env = GetActivePioEnv()
+--             pio_manager.refresh(function()
+--
+--               vim.schedule(function()
+--                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+--                 pio_generate_db()
+--                 lsp.lsp_restart('clangd')
+--                 vim.notify('PIO: Syncing Environment successful')
+--               end)
+--             end)
+--           end)
+--         )
+--       end
+--     end)
+--   )
+-- end
 
+local function start_pio_watcher()
+  local dir_path = vim.uv.cwd()
+  if not dir_path then return end
+
+  -- Create a directory watcher
   local w = vim.uv.new_fs_event()
-  if not w then return end
+  if not w then
+    return
+  end
+
+  -- Watch the directory for file creation or the file itself for changes
   w:start(
-    platformioini, {},
-    vim.schedule_wrap(function(err, _, events)
+    dir_path,
+    {},
+    vim.schedule_wrap(function(err, filename, events)
       if err or not events or not events.change then
         return
       end
-
+      -- Trigger only if the changed file is platformio.ini
+      if filename == 'platformio.ini' then
       if debounce_timer then
-        -- 1. Stop any existing timer (cancel previous "half-finished" events)
         debounce_timer:stop()
-
-        -- 2. Start a 500ms window. Logic only runs if NO more events happen in this time.
         debounce_timer:start(
           500,
           0,
           vim.schedule_wrap(function()
             M.metadata.active_env = GetActivePioEnv()
             pio_manager.refresh(function()
-
               vim.schedule(function()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
                 pio_generate_db()
@@ -413,10 +436,10 @@ local function start_pio_watcher()
           end)
         )
       end
+    end
     end)
   )
 end
-
 ------------------------------------------------------------------------------------------------------
 -- INFO: 6.  Exported setup function
 function M.init()
