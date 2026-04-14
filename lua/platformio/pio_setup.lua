@@ -107,6 +107,9 @@ local pio_manager = (function()
     local function get_metadata(attempts)
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
+      vim.schedule(function()
+        print(_G.metadata.active_env)
+      end)
       vim.system({ 'pio', 'project', 'metadata', '-e', 'seeed_xiao_esp32c3', '--json-output' }, { text = true }, function(int_obj)
         if int_obj.code ~= 0 then
           -- Schedule notification to avoid error in the system callback thread
@@ -159,12 +162,14 @@ local pio_manager = (function()
 
             print(vim.inspect(_G.metadata))
             if callback then
-              vim.notify('PIO: Syncing Environment successful')
-              vim.schedule(callback)
+              vim.schedule(function()
+                vim.notify('PIO: Syncing Environment successful', vim.log.levels.INFO)
+                callback()
+              end)
             end
           else
             vim.schedule(function()
-              vim.notify('PIO: Syncing Environment failed')
+              vim.notify('PIO: Syncing Environment failed', vim.log.levels.WARN)
             end)
           end
         end
