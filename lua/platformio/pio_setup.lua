@@ -386,7 +386,7 @@ local function start_pio_watcher()
         return
       end
       -- Trigger only if the changed file is platformio.ini
-      if filename == 'platformio.ini' then
+      if filename == 'platformio.ini' and (events.change or events.rename) then
       if debounce_timer then
         debounce_timer:stop()
         debounce_timer:start(
