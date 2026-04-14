@@ -242,13 +242,15 @@ local pio_manager = (function()
         end
       end
       if #_G.metadata.default_envs > 0 then
-        _G.metadata.active_env = _G.metadata.default_envs[1]
+        _G.metadata.active_env = _G.metadata.default_envs[1] or ''
       else
-        _G.metadata.active_env = next(_G.metadata.envs)
+        _G.metadata.active_env = next(_G.metadata.envs) or ''
       end
       -- Data is now in pio_config.core_dir, pio_config.envs.esp32c3_supermini, etc.
       vim.schedule(function()
-        print('active_env1: ' .. _G.metadata.active_env)
+        if _G.metadata.active_env then
+          print('active_env1: ' .. _G.metadata.active_env)
+        end
       end)
     end)
 
