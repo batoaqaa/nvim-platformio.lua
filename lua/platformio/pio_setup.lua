@@ -352,55 +352,58 @@ local function start_pio_watcher()
           0,
           vim.schedule_wrap(function()
             pio_manager.refresh(function()
-              vim.system({ 'pio', 'project', 'metadata', '--json-output' }, { text = true }, function(obj)
-                -- Error Checking: obj.code 0 means success
-                if obj.code == 0 and obj.stdout then
-                  local ok, raw_data = pcall(vim.json.decode, obj.stdout)
-                  if ok and raw_data then
-                    local _, env = next(raw_data)
-                    if not env then
-                      return
-                    end
-                    local fallback_flags = {}
-                    -- 1. Process Includes
-                    if env.includes then
-                      for category, paths in pairs(env.includes) do
-                        -- If it's a toolchain path, use -isystem to suppress warnings
-                        -- and tell clangd these are standard libraries
-                        local flag = (category == 'toolchain') and '-isystem' or '-I'
+              local board_env = pio_manager.get('platformio', 'default_envs')
+              if board_env then
+                vim.system({ 'pio', 'project', 'metadata', '-e', board_env, '--json-output' }, { text = true }, function(obj)
+                  -- Error Checking: obj.code 0 means success
+                  if obj.code == 0 and obj.stdout then
+                    local ok, raw_data = pcall(vim.json.decode, obj.stdout)
+                    if ok and raw_data then
+                      local _, env = next(raw_data)
+                      if not env then
+                        return
+                      end
+                      local fallback_flags = {}
+                      -- 1. Process Includes
+                      if env.includes then
+                        for category, paths in pairs(env.includes) do
+                          -- If it's a toolchain path, use -isystem to suppress warnings
+                          -- and tell clangd these are standard libraries
+                          local flag = (category == 'toolchain') and '-isystem' or '-I'
 
-                        for _, path in ipairs(paths) do
-                          table.insert(fallback_flags, flag .. path)
+                          for _, path in ipairs(paths) do
+                            table.insert(fallback_flags, flag .. path)
+                          end
                         end
                       end
-                    end
-                    -- 2. Process Defines
-                    if env.defines then
-                      for _, define in ipairs(env.defines) do
-                        table.insert(fallback_flags, '-D' .. define)
+                      -- 2. Process Defines
+                      if env.defines then
+                        for _, define in ipairs(env.defines) do
+                          table.insert(fallback_flags, '-D' .. define)
+                        end
                       end
+                      M.metadata = {
+                        driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
+                        cc_path = env.cc_path or '',
+                        fallback_flags = fallback_flags,
+                      }
+                      -- M.metadata = decoded
+                      vim.schedule(function()
+                        pio_generate_db()
+                        lsp.lsp_restart('clangd')
+                        vim.notify('PIO: Syncing Environment successful')
+                      end)
+                    else
+                      vim.schedule(function()
+                        vim.notify('PIO: Syncing Environment failed')
+                      end)
                     end
-                    M.metadata = {
-                      driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
-                      cc_path = env.cc_path or '',
-                      fallback_flags = fallback_flags,
-                    }
-                    -- M.metadata = decoded
-                    vim.schedule(function()
-                      pio_generate_db()
-                      lsp.lsp_restart('clangd')
-                      vim.notify('PIO: Syncing Environment successful')
-                    end)
-                  else
-                    vim.schedule(function()
-                      vim.notify('PIO: Syncing Environment failed')
-                    end)
                   end
-                end
-              end)
-              -- pio_generate_db()
-              -- lsp.lsp_restart('clangd')
-              -- vim.notify('PIO: Syncing Environment...')
+                end)
+                -- pio_generate_db()
+                -- lsp.lsp_restart('clangd')
+                -- vim.notify('PIO: Syncing Environment...')
+              end
             end)
           end)
         )
@@ -435,7 +438,6 @@ function M.init()
     -- boilerplate_gen([[generate_compile_commands.py]], vim.g.platformioRootDir)
     ---------------------------------------------------------------------------------
 
-    -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
     require('platformio.lspConfig.clangd')
     if config.lspClangd.attach.enabled then
       require('platformio.lspConfig.attach')
@@ -455,4 +457,14 @@ function M.init()
   end
 end
 
+-- local pio = require('pio_utils')
+--
+-- require('lspconfig').clangd.setup({
+--     on_new_config = function(new_config, _)
+--         if pio.data then
+--             new_config.cmd = { "clangd", "--query-driver=" .. pio.data.cc_path }
+--             new_config.init_options = { fallbackFlags = pio.data.fallback_flags }
+--         end
+--     end
+-- })
 return M

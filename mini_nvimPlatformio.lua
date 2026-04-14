@@ -337,7 +337,10 @@ vim.uv.os_setenv('PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN', 'true')
 vim.uv.os_setenv('PLATFORMIO_CORE_DIR', platformio_core_dir)
 vim.g.python_host_prog = pynvim_python
 vim.g.python3_host_prog = pynvim_python
-vim.env.PATH = pynvim_bin .. (isWindows and ';' or ':') .. vim.env.PATH
+
+vim.env.PATH = pynvim_bin
+  .. (isWindows and '; C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/bin/ ;' or ': C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/bin/ :')
+  .. vim.env.PATH
 vim.env.VIRTUAL_ENV = pynvim_env
 
 if vim.fn.isdirectory(platformio_core_dir) == 0 then
