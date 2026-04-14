@@ -39,24 +39,21 @@ local function GetActivePioEnv()
     return nil
   end
 
-  local first_env = nil
+  local result_env = nil
   for line in file:lines() do
     -- 1. Try to find the explicit default_envs first
     local default = line:match('^default_envs%s*=%s*(%S+)')
     if default then
-      file:close()
-      return default
-    end
-
+      result_env= default
     -- 2. Capture the first [env:NAME] we see as a fallback
-    if not first_env then
-      first_env = line:match('^%[env:(%S+)%]')
+    elseif not result_env then
+      result_env = line:match('^%[env:(%S+)%]')
     end
   end
-
   file:close()
+  print(result_env)
   -- Return the first env found if no default was explicitly set
-  return first_env
+  return result_env
 end
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
@@ -139,8 +136,9 @@ local pio_manager = (function()
             if env.defines then
               for _, define in ipairs(env.defines) do table.insert(fallback_flags, '-D' .. define) end
             end
+
             M.metadata = {
-              driver_path = env.cc_path:match('(.*[/\\])') .. '/*' or '**',
+              driver_path = misc.normalize_path(env.cc_path:match('(.*[/\\])') .. '*')  or '**',
               cc_path = env.cc_path or '',
               fallback_flags = fallback_flags,
             }
@@ -465,6 +463,7 @@ function M.init()
 
     start_pio_watcher()
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
+      M.metadata.active_env = GetActivePioEnv()
       pio_manager.refresh(function()
         vim.schedule(function()
           boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
