@@ -108,8 +108,14 @@ local pio_manager = (function()
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
       vim.schedule(function()
-        print('env: ' .. _G.metadata.active_env)
+        print('active_env0: ' .. _G.metadata.active_env)
       end)
+      if not _G.metadata.active_env or _G.metadata.active_env == '' then
+        vim.schedule(function()
+          vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR)
+        end)
+        return
+      end
       vim.system({ 'pio', 'project', 'metadata', '-e', 'seeed_xiao_esp32c3', '--json-output' }, { text = true }, function(int_obj)
         if int_obj.code ~= 0 then
           -- Schedule notification to avoid error in the system callback thread
@@ -119,13 +125,6 @@ local pio_manager = (function()
             else
               vim.notify('PIO Manager: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
             end
-          end)
-          return
-        end
-        _G.metadata.active_env = GetActivePioEnv()
-        if not _G.metadata.active_env or _G.metadata.active_env == '' then
-          vim.schedule(function()
-            vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR)
           end)
           return
         end
@@ -249,7 +248,7 @@ local pio_manager = (function()
       end
       -- Data is now in pio_config.core_dir, pio_config.envs.esp32c3_supermini, etc.
       vim.schedule(function()
-        print('active_env: ' .. _G.metadata.active_env)
+        print('active_env1: ' .. _G.metadata.active_env)
       end)
     end)
 
