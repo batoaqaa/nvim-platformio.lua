@@ -373,13 +373,13 @@ local function start_pio_watcher()
   if not dir_path then return end
 
   -- Create a directory watcher
-  local w = vim.uv.new_fs_event()
-  if not w then
+  local handle = vim.uv.new_fs_event()
+  if not handle then
     return
   end
 
   -- Watch the directory for platformio.ini creation or changes
-  w:start(
+  handle:start(
     dir_path,
     {},
     vim.schedule_wrap(function(err, filename, events)
@@ -387,20 +387,19 @@ local function start_pio_watcher()
         return
       end
       -- Trigger only if the changed file is platformio.ini
-      if filename == 'platformio.ini' and (events.change or events.rename) then
+      -- if filename == 'platformio.ini' and (events.change or events.rename) then
+      if filename == 'platformio.ini' and (events.change) then
       if debounce_timer then
         debounce_timer:stop()
         debounce_timer:start(
           500,
           0,
           vim.schedule_wrap(function()
-            -- _G.metadata.active_env = GetActivePioEnv()
             pio_manager.refresh(function()
               vim.schedule(function()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
                 pio_generate_db()
                 lsp.lsp_restart('clangd')
-                -- vim.notify('PIO: Syncing Environment successful')
               end)
             end)
           end)
@@ -433,15 +432,16 @@ function M.init()
       require('platformio.lspConfig.attach')
     end
 
+    -- Always start the watcher so it can catch a future 'pio init'
     start_pio_watcher()
+
+    -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-      -- _G.metadata.active_env = GetActivePioEnv()
       pio_manager.refresh(function()
         vim.schedule(function()
           boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
           pio_generate_db()
           lsp.lsp_restart('clangd')
-          -- vim.notify('PIO: Syncing Environment successful')
         end)
       end)
     end
