@@ -29,37 +29,17 @@ local function pio_generate_db()
   vim.schedule(function() vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO) end)
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     if obj.code ~= 0 then
-      vim.schedule(function() vim.notify('PIO: Generating Compile Database failed', vim.log.levels.INFO) end)
+      vim.schedule(function()
+        if obj.code == 127 then
+          vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+        else
+          vim.notify('PIO Manager: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+        end
+      end)
       return
     end
     vim.schedule(function() vim.notify('PIO: Generating Compile Database successful', vim.log.levels.INFO) end)
   end)
-end
-
--- INFO:
--- stylua: ignore
-local function GetActivePioEnv()
-  local file = io.open('platformio.ini', 'r')
-  if not file then
-    _G.metadata.active_env = ''
-    return nil
-  end
-
-  local result_env = nil
-  for line in file:lines() do
-    -- 1. Try to find the explicit default_envs first
-    local default = line:match('^default_envs%s*=%s*(%S+)')
-    if default then
-      result_env= default
-    -- 2. Capture the first [env:NAME] we see as a fallback
-    elseif not result_env then
-      result_env = line:match('^%[env:(%S+)%]')
-    end
-  end
-  file:close()
-  print(result_env)
-  -- Return the first env found if no default was explicitly set
-  return result_env
 end
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
@@ -372,6 +352,7 @@ local function start_pio_watcher()
   local dir_path = vim.uv.cwd()
   if not dir_path then return end
 
+  local last_trigger = 0
   -- Create a directory watcher
   local handle = vim.uv.new_fs_event()
   if not handle then
@@ -383,29 +364,33 @@ local function start_pio_watcher()
     dir_path,
     {},
     vim.schedule_wrap(function(err, filename, events)
-      if err or not events or not events.change then
-        return
-      end
+      if err or not events or not events.change then return end
       -- Trigger only if the changed file is platformio.ini
-      -- if filename == 'platformio.ini' and (events.change or events.rename) then
-      if filename == 'platformio.ini' and (events.change) then
-      if debounce_timer then
-        debounce_timer:stop()
-        debounce_timer:start(
-          500,
-          0,
-          vim.schedule_wrap(function()
-            pio_manager.refresh(function()
-              vim.schedule(function()
-                boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-                pio_generate_db()
-                lsp.lsp_restart('clangd')
+      if filename == 'platformio.ini' and (events.change or events.rename) then
+        local current_time = vim.uv.now()
+        -- IGNORE events if they happen within 100ms of the last one
+        if current_time - last_trigger < 100 then
+            return
+        end
+        last_trigger = current_time
+
+        if debounce_timer then
+          debounce_timer:stop()
+          debounce_timer:start(
+            500,
+            0,
+            vim.schedule_wrap(function()
+              pio_manager.refresh(function()
+                vim.schedule(function()
+                  boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+                  pio_generate_db()
+                  lsp.lsp_restart('clangd')
+                end)
               end)
             end)
-          end)
-        )
+          )
+        end
       end
-    end
     end)
   )
 end
