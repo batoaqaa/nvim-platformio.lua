@@ -81,7 +81,7 @@ compilationDatabasePath=%s,
   content = function(self)
     return string.format(
       self.template,
-      ("{'-std=c++17','target=" .. _G.metadata.triplet .. "','sysroot=" .. _G.metadata.sysroot .. "'}") or "{ '-std=c++17' }",
+      ("{'-std=c++17','target=" .. _G.metadata.triplet or '' .. "','sysroot=" .. _G.metadata.sysroot or '' .. "'}") or "{ '-std=c++17' }",
       vim.uv.cwd()
     )
   end,
