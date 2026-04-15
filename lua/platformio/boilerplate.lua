@@ -109,11 +109,11 @@ clangd
 --pch-storage=memory
 --pretty
 --ranking-model=decision_forest
---query-driver=%q
+--query-driver=%s
 ]],
   content = function(self)
-    return string.format(self.template, (_G.metadata.toolchain .. '/**/' .. _G.metadata.triplet) or '**')
-    -- return string.format(self.template, _G.metadata.driver_path or '**')
+    -- return string.format(self.template, (_G.metadata.toolchain .. '/**/' .. _G.metadata.triplet) or '**')
+    return string.format(self.template, _G.metadata.driver_path or '**')
     -- return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
     -- return string.format(self.template, _G.get_pio_sdk_info() or '**')
   end,

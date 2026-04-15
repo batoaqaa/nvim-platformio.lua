@@ -150,7 +150,7 @@ if vim.uv.fs_stat(fname) then
   end
 end
 
-local clangd = {
+_G.clangd = {
   cmd = cmd,
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
   root_markers = {
@@ -168,7 +168,7 @@ local clangd = {
   single_file_support = true,
   init_options = init_options,
 }
-vim.lsp.config('clangd', clangd)
+vim.lsp.config('clangd', _G.clangd)
 
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
