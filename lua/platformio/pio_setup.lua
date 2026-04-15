@@ -31,16 +31,21 @@ local debounce_timer = vim.uv.new_timer()
 local function get_sysroot_triplet(bin_path)
   -- Normalize to forward slashes for cross-platform compatibility
   local normalized_bin = misc.normalize_path(bin_path) --bin_path:gsub("\\", "/")
+
+  vim.notify('cc_path= ' .. bin_path, vim.log.levels.INFO)
+  vim.notify('normalized_bin= ' .. normalized_bin, vim.log.levels.INFO)
+
   local files = vim.fn.readdir(normalized_bin)
   local triplet = nil
 
+  vim.notify('cc_path= ' .. bin_path, vim.log.levels.INFO)
   for _, name in ipairs(files) do
     -- Pattern: ^(.*) matches the triplet
     -- %- matches the hyphen
     -- g[c%+][c%+] matches 'gcc' or 'g++'
     local match = name:match('^(.*)%-g[c%+][c%+]')
     if match then
-      triplet = match
+      triplet = misc.normalize_path(match)
       break
     end
   end
