@@ -82,7 +82,7 @@ compilationDatabasePath=%s,
   content = function(self)
     return string.format(
       self.template,
-      ("'-std=c++17','--target=" .. _G.metadata.triplet .. "','--sysroot=" .. _G.metadata.sysroot) .. "'" or "'-std=c++17'",
+      ('"-std=c++17","--target=' .. _G.metadata.triplet .. '","--sysroot=' .. _G.metadata.sysroot) .. '"' or '"-std=c++17"',
       misc.normalize_path(vim.uv.cwd())
     )
   end,
