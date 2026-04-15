@@ -351,28 +351,30 @@ local function start_pio_watcher()
   local dir_path = vim.uv.cwd()
   if not dir_path then return end
 
-  local last_trigger = 0
   -- Create a directory watcher
   local handle = vim.uv.new_fs_event()
-  if not handle then
-    return
-  end
+  if not handle then return end
 
+  -- local last_trigger = 0
   -- Watch the directory for platformio.ini creation or changes
   handle:start(
     dir_path,
-    {},
+    {
+      watch_entry = false, -- watch the file/dir itself
+      stat = false,        -- use stat to detect changes (slower but more reliable on some FS)
+      recursive = false,   -- watch subdirectories (if path is a directory)
+    },
     vim.schedule_wrap(function(err, filename, events)
       if err or not events or not events.change then return end
       -- Trigger only if the changed file is platformio.ini
       if filename == 'platformio.ini' and (events.change or events.rename) then
-        -- ignore events within time
-        local current_time = vim.uv.now()
-        -- IGNORE events if they happen within 100ms of the last one
-        if current_time - last_trigger < 100 then
-            return
-        end
-        last_trigger = current_time
+        -- -- ignore events within time
+        -- local current_time = vim.uv.now()
+        -- -- IGNORE events if they happen within 100ms of the last one
+        -- if current_time - last_trigger < 100 then
+        --     return
+        -- end
+        -- last_trigger = current_time
 
         if debounce_timer then
           debounce_timer:stop()
