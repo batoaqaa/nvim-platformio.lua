@@ -24,53 +24,47 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local debounce_timer = vim.uv.new_timer()
 
--- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
--- stylua: ignore
+--- stylua: ignore
 local function get_sysroot_triplet(bin_path)
   local sep = package.config:sub(1, 1)
-  local handle = vim.loop.fs_scandir(bin_path)
-  if not handle then
-    return nil, 'Invalid path'
-  end
 
+  -- 1. Get a list of all files in the bin directory
+  local files = vim.fn.readdir(bin_path)
   local triplet = nil
-  while true do
-    local name = vim.loop.fs_scandir_next(handle)
-    if not name then
-      break
-    end
 
-    -- This pattern looks for the dash followed by 'gcc' OR 'g++'
-    -- it captures everything before that dash.
-    -- %- is a literal dash
-    -- g[cc%+%+]+ matches 'gcc' or 'g++'
-    local match = name:match('^(.*)%-g[cc%+%+]+.*$')
-
-    if match then
-      triplet = match
+  -- 2. Find the first file that looks like a compiler
+  for _, name in ipairs(files) do
+    -- This pattern looks for the suffix "-gcc"
+    -- It captures everything before the "-"
+    triplet = name:match('^(.*)%-gcc')
+    if triplet then
       break
     end
   end
 
   if not triplet then
-    return nil, 'No compiler found'
+    return nil, 'No compiler binary found'
   end
 
+  -- 3. Construct Sysroot: The folder with the same name as the triplet
+  -- in the parent directory of 'bin'
   local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
   local sysroot = toolchain_root .. sep .. triplet
 
+  -- 4. Verify the folder exists
   if vim.fn.isdirectory(sysroot) == 1 then
+    vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
     return {
       triplet = triplet,
       sysroot = sysroot,
       query_driver = bin_path .. sep .. triplet .. '-*',
     }
   end
-  return nil, 'Sysroot folder missing'
-end
 
+  return nil, 'Found triplet ' .. triplet .. ' but no matching folder.'
+end
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -443,11 +437,11 @@ local function start_pio_watcher()
                 -- vim.schedule(function()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 
-                local triplet, sysroot, query_driver = get_sysroot_triplet(_G.metadata.cc_path)
-                if triplet then
-                  _G.metadata.triplet = triplet
-                  _G.metadata.sysroot = sysroot
-                  _G.metadata.driver_path = query_driver
+                local data = get_sysroot_triplet(_G.metadata.cc_path)
+                if data then
+                  _G.metadata.triplet = data.triplet
+                  _G.metadata.sysroot = data.sysroot
+                  _G.metadata.driver_path = data.query_driver
                 end
                 boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
 
