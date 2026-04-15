@@ -133,11 +133,11 @@ boilerplate['.clangd'] = {
 CompileFlags:
   Add:
     - "--target=riscv32-esp-elf"
-    - "--sysroot=%s"
+    - %q
   Remove:
     - "-fno-fat-lto-objects"
-    - "-fno%-fat%-lto%-objects"
-    - "-fno%-canonical%-system%-headers"
+    - "-fno%%-fat%%-lto%%-objects"
+    - "-fno%%-canonical%%-system%%-headers"
     - "-misc-definitions-in-headers"
     - "-fno-tree-switch-conversion"
     - "-mtext-section-literals"
@@ -170,7 +170,7 @@ Diagnostics:
       - "modernize-*"
 ]],
   content = function(self)
-    return string.format(self.template, '"--sysroot=' .. _G.metadata.sysroot .. '"')
+    return string.format(self.template, '--sysroot=' .. _G.metadata.sysroot)
   end,
 }
 
