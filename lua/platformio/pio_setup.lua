@@ -51,9 +51,10 @@ local function get_sysroot_triplet(bin_path)
 
   local toolchain_root = vim.fn.fnamemodify(normalized_bin, ':h')
   local sysroot = toolchain_root .. '/' .. triplet
+  vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+  vim.notify('toolchain_root= ' .. toolchain_root, vim.log.levels.INFO)
 
   if vim.fn.isdirectory(sysroot) == 1 then
-    vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
     return {
       triplet = triplet,
       sysroot = sysroot,
