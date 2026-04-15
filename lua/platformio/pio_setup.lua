@@ -112,16 +112,22 @@ local pio_manager = (function()
             end
             local fallback_flags = {}
             -- 1. Process Includes
-            -- if env.includes then
-            --   for category, paths in pairs(env.includes) do
-            --     -- If it's a toolchain path, use -isystem to suppress warnings
-            --     -- and tell clangd these are standard libraries
-            --     local flag = (category == 'toolchain') and '-isystem' or '-I'
-            --     for _, path in ipairs(paths) do
-            --       table.insert(fallback_flags, flag .. path)
-            --     end
-            --   end
-            -- end
+            if env.includes then
+              for category, paths in pairs(env.includes) do
+                -- If it's a toolchain path, use -isystem to suppress warnings
+                -- and tell clangd these are standard libraries
+                if category == 'toolchain' then
+                  local flag = '-isystem'
+                  for _, path in ipairs(paths) do
+                    table.insert(fallback_flags, flag .. path)
+                  end
+                end
+                -- local flag = (category == 'toolchain') and '-isystem' or '-I'
+                -- for _, path in ipairs(paths) do
+                --   table.insert(fallback_flags, flag .. path)
+                -- end
+              end
+            end
             -- 2. Process Defines
             -- if env.defines then
             --   for _, define in ipairs(env.defines) do
