@@ -9,6 +9,8 @@ _G.metadata = {
   active_env = '',
   driver_path = '',
   cc_path = '',
+  triplet = '',
+  sysroot = '',
   fallback_flags = {},
 }
 
@@ -21,6 +23,36 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 -- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
 
 local debounce_timer = vim.uv.new_timer()
+
+-- INFO:
+-- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
+-- stylua: ignore
+local function get_sysroot_triplet(bin_path)
+  -- Use Neovim's loop (uv) for file system scanning
+  local luv = vim.loop or vim.uv
+  local handle = luv.fs_scandir(bin_path)
+  if not handle then return nil, 'Invalid path' end
+
+  while true do
+    local name = luv.fs_scandir_next(handle)
+    if not name then break end
+
+    -- Search for the G++ compiler binary
+    -- Matches triplet prefix from names like 'riscv32-esp-elf-g++' or 'xtensa-esp32-elf-g++.exe'
+    local triplet = name:match('^(.*)%-g%+%+.*$')
+
+    if triplet then
+      -- Get the toolchain root (parent of /bin)
+      local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+      local sysroot_path = toolchain_root .. '/' .. triplet
+
+      -- Verify if the folder actually exists
+      if vim.fn.isdirectory(sysroot_path) == 1 then return triplet, sysroot_path end
+    end
+  end
+  return nil, 'No valid triplet folder found'
+end
+
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -139,6 +171,10 @@ local pio_manager = (function()
             _G.metadata.driver_path = misc.normalize_path(env.cc_path:match('(.*[/\\])') .. '*') or '**'
             _G.metadata.cc_path = misc.normalize_path(env.cc_path) or ''
             _G.metadata.fallback_flags = fallback_flags
+
+            local triplet, sysroot = get_sysroot_triplet(_G.metadata.cc_path)
+            _G.metadata.triplet = triplet
+            _G.metadata.sysroot = sysroot
 
             print(vim.inspect(_G.metadata))
             if callback then
