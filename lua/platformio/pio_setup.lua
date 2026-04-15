@@ -28,47 +28,47 @@ local debounce_timer = vim.uv.new_timer()
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 --- stylua: ignore
-local function get_sysroot_triplet(bin_path)
-  -- Normalize to forward slashes for cross-platform compatibility
-  local normalized_bin = misc.normalize_path(bin_path) --bin_path:gsub("\\", "/")
+local function get_sysroot_triplet(compiler_full_path)
+  -- 1. Normalize and extract the directory portion (Head)
+  local normalized_path = compiler_full_path:gsub('\\', '/')
+  local bin_dir = vim.fn.fnamemodify(normalized_path, ':h')
 
-  vim.notify('cc_path= ' .. bin_path, vim.log.levels.INFO)
-  vim.notify('normalized_bin= ' .. normalized_bin, vim.log.levels.INFO)
+  -- 2. Check if the directory exists before opening
+  if vim.fn.isdirectory(bin_dir) == 0 then
+    return nil, 'Directory not found: ' .. bin_dir
+  end
 
-  local files = vim.fn.readdir(normalized_bin)
+  -- 3. Read the directory safely
+  local files = vim.fn.readdir(bin_dir)
   local triplet = nil
 
-  vim.notify('cc_path= ' .. bin_path, vim.log.levels.INFO)
+  -- 4. Find the triplet (e.g., riscv32-esp-elf) from a file name
   for _, name in ipairs(files) do
-    -- Pattern: ^(.*) matches the triplet
-    -- %- matches the hyphen
-    -- g[c%+][c%+] matches 'gcc' or 'g++'
     local match = name:match('^(.*)%-g[c%+][c%+]')
     if match then
-      triplet = misc.normalize_path(match)
+      triplet = match
       break
     end
   end
 
   if not triplet then
-    return nil, 'No compiler found'
+    return nil, 'No triplet detected in ' .. bin_dir
   end
 
-  local toolchain_root = vim.fn.fnamemodify(normalized_bin, ':h')
-  local sysroot = toolchain_root .. '/' .. triplet
   vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
-  vim.notify('toolchain_root= ' .. toolchain_root, vim.log.levels.INFO)
+  -- 5. Construct sysroot from the toolchain root (parent of bin)
+  local toolchain_root = vim.fn.fnamemodify(bin_dir, ':h')
+  local sysroot = toolchain_root .. '/' .. triplet
 
-  if vim.fn.isdirectory(sysroot) == 1 then
-    return {
-      triplet = triplet,
-      sysroot = sysroot,
-      -- The wildcard allows clangd to use both gcc and g++
-      query_driver = normalized_bin .. '/' .. triplet .. '-*',
-    }
-  end
-  return nil, 'Sysroot folder missing'
+  return {
+    triplet = triplet,
+    sysroot = sysroot,
+    query_driver = normalized_path,
+  }
 end
+
+-- USAGE: Pass the FULL path once. The function will extract the dir itself.
+local result = get_sysroot_triplet('C:/Users/tom/.platformio/packages/toolchain-riscv32-esp/bin/riscv32-esp-elf-gcc.exe')
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
