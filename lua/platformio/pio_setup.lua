@@ -30,6 +30,8 @@ local debounce_timer = vim.uv.new_timer()
 local function get_sysroot_triplet(bin_path)
   -- Use Neovim's loop (uv) for file system scanning
   local luv = vim.loop or vim.uv
+
+  vim.notify("ccpath= " .. bin_path, vim.log.levels.INFO)
   local handle = luv.fs_scandir(bin_path)
   if not handle then return nil, 'Invalid path' end
 
@@ -42,6 +44,7 @@ local function get_sysroot_triplet(bin_path)
     local triplet = name:match('^(.*)%-g%+%+.*$')
 
     if triplet then
+      vim.notify("triplet= " .. triplet, vim.log.levels.INFO)
       -- Get the toolchain root (parent of /bin)
       local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
       local sysroot_path = toolchain_root .. '/' .. triplet
