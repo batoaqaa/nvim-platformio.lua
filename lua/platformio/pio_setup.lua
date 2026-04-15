@@ -109,7 +109,7 @@ local pio_manager = (function()
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
       vim.schedule(function()
-        print('active_env inner: ' .. _G.metadata.active_env)
+        print('active_env metadata: ' .. _G.metadata.active_env)
       end)
       if not _G.metadata.active_env or _G.metadata.active_env == '' then
         vim.schedule(function()
@@ -150,14 +150,14 @@ local pio_manager = (function()
             --   end
             -- end
             -- 2. Process Defines
-            if env.defines then
-              for _, define in ipairs(env.defines) do
-                table.insert(fallback_flags, '-D' .. define)
-              end
-            end
+            -- if env.defines then
+            --   for _, define in ipairs(env.defines) do
+            --     table.insert(fallback_flags, '-D' .. define)
+            --   end
+            -- end
 
             _G.metadata.driver_path = misc.normalize_path(env.cc_path:match('(.*[/\\])') .. '*') or '**'
-            _G.metadata.cc_path = env.cc_path or ''
+            _G.metadata.cc_path = misc.normalize_path(env.cc_path) or ''
             _G.metadata.fallback_flags = fallback_flags
 
             print(vim.inspect(_G.metadata))
@@ -193,8 +193,8 @@ local pio_manager = (function()
     -- INFO: -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
     local map = {
       core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
-      packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
-      platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
+      packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
+      platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
     }
 
     -- INFO: 3. Try to get explicit value from platformio.ini
@@ -258,14 +258,15 @@ local pio_manager = (function()
           end
         end
         -- 6. Normalize Slashes for Windows
-        _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
+        -- _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
+        _G.metadata[kv.ini] = result:gsub('\\', '/'):gsub('//+', '/')
       end
       -- return _G.metadata[map[type].ini]
       -- end
 
       if _G.metadata.active_env ~= '' then
         vim.schedule(function()
-          print('active_env outer: ' .. _G.metadata.active_env)
+          print('active_env config: ' .. _G.metadata.active_env)
         end)
         get_metadata(1)
       end
@@ -407,7 +408,7 @@ local function start_pio_watcher()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
                 pio_generate_db()
                 lsp.lsp_restart('clangd')
-                vim.notify('PIO: Syncing Environment successful')
+                -- vim.notify('PIO: Syncing Environment successful')
               end)
             end)
           end)
@@ -448,7 +449,7 @@ function M.init()
           boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
           pio_generate_db()
           lsp.lsp_restart('clangd')
-          vim.notify('PIO: Syncing Environment successful')
+          -- vim.notify('PIO: Syncing Environment successful')
         end)
       end)
     end
