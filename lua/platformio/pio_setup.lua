@@ -10,6 +10,7 @@ _G.metadata = {
   driver_path = '',
   cc_path = '',
   triplet = '',
+  toolchain = '',
   sysroot = '',
   fallback_flags = {},
 }
@@ -63,12 +64,11 @@ local function get_sysroot_triplet(compiler_full_path)
   return {
     triplet = triplet,
     sysroot = sysroot,
+    toolchain_root = toolchain_root,
     query_driver = normalized_path,
   }
 end
 
--- USAGE: Pass the FULL path once. The function will extract the dir itself.
-local result = get_sysroot_triplet('C:/Users/tom/.platformio/packages/toolchain-riscv32-esp/bin/riscv32-esp-elf-gcc.exe')
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -446,6 +446,7 @@ local function start_pio_watcher()
                   _G.metadata.triplet = data.triplet
                   _G.metadata.sysroot = data.sysroot
                   _G.metadata.driver_path = data.query_driver
+                  _G.metadata.toolchain = data.toolchain_root
                 end
                 boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
