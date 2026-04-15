@@ -85,8 +85,9 @@ local pio_manager = (function()
     end)
 
     -- INFO: get project metadata
-    local function get_metadata(attempts)
-      vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
+    local function get_metadata(attempts, env)
+      local active_env = env or _G.metadata.active_env
+      vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(int_obj)
         vim.schedule(function()
           vim.notify('PIO: Fetching metadata ...', vim.log.levels.INFO)
         end)
@@ -241,7 +242,7 @@ local pio_manager = (function()
         vim.schedule(function()
           vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
         end)
-        get_metadata(1)
+        get_metadata(1, _G.metadata.active_env)
       else
         vim.schedule(function()
           vim.notify('PIO: no [env:] found, add board first', vim.log.levels.ERROR)
