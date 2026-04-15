@@ -30,30 +30,28 @@ local debounce_timer = vim.uv.new_timer()
 local function get_sysroot_triplet(bin_path)
   local sep = package.config:sub(1, 1)
 
-  -- 1. Get a list of all files in the bin directory
+  -- 1. Read all files in the bin directory
   local files = vim.fn.readdir(bin_path)
   local triplet = nil
 
-  -- 2. Find the first file that looks like a compiler
+  -- 2. Extract triplet from any file containing '-gcc'
   for _, name in ipairs(files) do
-    -- This pattern looks for the suffix "-gcc"
-    -- It captures everything before the "-"
-    triplet = name:match('^(.*)%-gcc')
-    if triplet then
+    local match = name:match('^(.*)%-gcc')
+    if match then
+      triplet = match
       break
     end
   end
 
   if not triplet then
-    return nil, 'No compiler binary found'
+    return nil, 'No compiler found'
   end
 
-  -- 3. Construct Sysroot: The folder with the same name as the triplet
-  -- in the parent directory of 'bin'
+  -- 3. Get the toolchain root and sysroot folder
   local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
   local sysroot = toolchain_root .. sep .. triplet
 
-  -- 4. Verify the folder exists
+  -- 4. Final verification
   if vim.fn.isdirectory(sysroot) == 1 then
     vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
     return {
@@ -62,8 +60,7 @@ local function get_sysroot_triplet(bin_path)
       query_driver = bin_path .. sep .. triplet .. '-*',
     }
   end
-
-  return nil, 'Found triplet ' .. triplet .. ' but no matching folder.'
+  return nil, 'Sysroot folder missing: ' .. sysroot
 end
 
 -- INFO:
