@@ -84,14 +84,13 @@ local pio_manager = (function()
       vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO)
     end)
 
-    -- INFO: get metadata
+    -- INFO: get project metadata
     local function get_metadata(attempts)
-      -- INFO: internal: pio project metadata
-      -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
-      vim.schedule(function()
-        vim.notify('PIO: Fetching metadata ...', vim.log.levels.INFO)
-      end)
       vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
+        vim.schedule(function()
+          vim.notify('PIO: Fetching metadata ...', vim.log.levels.INFO)
+        end)
+
         if int_obj.code ~= 0 then
           -- Schedule notification to avoid error in the system callback thread
           vim.schedule(function()
@@ -103,7 +102,7 @@ local pio_manager = (function()
           end)
           return
         end
-        -- Error Checking: int_obj.code 0 means success
+
         if int_obj.code == 0 and int_obj.stdout then
           local ok, raw_data = pcall(vim.json.decode, int_obj.stdout)
           if ok and raw_data then
@@ -352,7 +351,7 @@ local function start_pio_watcher()
   local dir_path = vim.uv.cwd()
   if not dir_path then return end
 
-  local last_trigger = 0
+  -- local last_trigger = 0
   -- Create a directory watcher
   local handle = vim.uv.new_fs_event()
   if not handle then
@@ -366,13 +365,14 @@ local function start_pio_watcher()
     vim.schedule_wrap(function(err, filename, events)
       if err or not events or not events.change then return end
       -- Trigger only if the changed file is platformio.ini
-      if filename == 'platformio.ini' and (events.change or events.rename) then
-        local current_time = vim.uv.now()
-        -- IGNORE events if they happen within 100ms of the last one
-        if current_time - last_trigger < 100 then
-            return
-        end
-        last_trigger = current_time
+      -- if filename == 'platformio.ini' and (events.change or events.rename) then
+      if filename == 'platformio.ini' and (events.change) then
+        -- local current_time = vim.uv.now()
+        -- -- IGNORE events if they happen within 100ms of the last one
+        -- if current_time - last_trigger < 100 then
+        --     return
+        -- end
+        -- last_trigger = current_time
 
         if debounce_timer then
           debounce_timer:stop()
@@ -381,11 +381,11 @@ local function start_pio_watcher()
             0,
             vim.schedule_wrap(function()
               pio_manager.refresh(function()
-                vim.schedule(function()
-                  boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-                  pio_generate_db()
-                  lsp.lsp_restart('clangd')
-                end)
+                -- vim.schedule(function()
+                boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+                pio_generate_db()
+                lsp.lsp_restart('clangd')
+                -- end)
               end)
             end)
           )
@@ -423,11 +423,11 @@ function M.init()
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
       pio_manager.refresh(function()
-        vim.schedule(function()
-          boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-          pio_generate_db()
-          lsp.lsp_restart('clangd')
-        end)
+        -- vim.schedule(function()
+        boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+        pio_generate_db()
+        lsp.lsp_restart('clangd')
+        -- end)
       end)
     end
   end
