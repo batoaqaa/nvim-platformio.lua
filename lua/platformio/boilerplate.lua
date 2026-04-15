@@ -1,5 +1,6 @@
 local M = {}
 
+local misc = require('platformio.utils.misc')
 local uv = vim.loop
 
 local boilerplate = {}
@@ -79,7 +80,11 @@ clangdFileStatus=true,
 compilationDatabasePath=%s,
 ]],
   content = function(self)
-    return string.format(self.template, ('-std=c++17,--target=' .. _G.metadata.triplet .. ',--sysroot=' .. _G.metadata.sysroot) or '-std=c++17', vim.uv.cwd())
+    return string.format(
+      self.template,
+      ('-std=c++17,--target=' .. _G.metadata.triplet .. ',--sysroot=' .. _G.metadata.sysroot) or '-std=c++17',
+      misc.normalize_path(vim.uv.cwd())
+    )
   end,
 }
 

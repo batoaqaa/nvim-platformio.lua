@@ -24,19 +24,21 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local debounce_timer = vim.uv.new_timer()
 
+-- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 --- stylua: ignore
 local function get_sysroot_triplet(bin_path)
-  local sep = package.config:sub(1, 1)
-
-  -- 1. Read all files in the bin directory
-  local files = vim.fn.readdir(bin_path)
+  -- Normalize to forward slashes for cross-platform compatibility
+  local normalized_bin = misc.normalize_path(bin_path) --bin_path:gsub("\\", "/")
+  local files = vim.fn.readdir(normalized_bin)
   local triplet = nil
 
-  -- 2. Extract triplet from any file containing '-gcc'
   for _, name in ipairs(files) do
-    local match = name:match('^(.*)%-gcc')
+    -- Pattern: ^(.*) matches the triplet
+    -- %- matches the hyphen
+    -- g[c%+][c%+] matches 'gcc' or 'g++'
+    local match = name:match('^(.*)%-g[c%+][c%+]')
     if match then
       triplet = match
       break
@@ -47,20 +49,19 @@ local function get_sysroot_triplet(bin_path)
     return nil, 'No compiler found'
   end
 
-  -- 3. Get the toolchain root and sysroot folder
-  local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
-  local sysroot = toolchain_root .. sep .. triplet
+  local toolchain_root = vim.fn.fnamemodify(normalized_bin, ':h')
+  local sysroot = toolchain_root .. '/' .. triplet
 
-  -- 4. Final verification
   if vim.fn.isdirectory(sysroot) == 1 then
     vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
     return {
       triplet = triplet,
       sysroot = sysroot,
-      query_driver = bin_path .. sep .. triplet .. '-*',
+      -- The wildcard allows clangd to use both gcc and g++
+      query_driver = normalized_bin .. '/' .. triplet .. '-*',
     }
   end
-  return nil, 'Sysroot folder missing: ' .. sysroot
+  return nil, 'Sysroot folder missing'
 end
 
 -- INFO:
