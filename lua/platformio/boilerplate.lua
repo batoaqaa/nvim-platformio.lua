@@ -129,10 +129,11 @@ clangd
 -- INFO: .clangd
 boilerplate['.clangd'] = {
   rewrite = false,
-  content = [[
+  template = [[
 CompileFlags:
   Add:
     - "--target=riscv32-esp-elf"
+    - "--sysroot=%s"
   Remove:
     - "-fno-fat-lto-objects"
     - "-fno%-fat%-lto%-objects"
@@ -168,6 +169,9 @@ Diagnostics:
       - "hicpp-vararg"
       - "modernize-*"
 ]],
+  content = function(self)
+    return string.format(self.template, '"--sysroot=' .. _G.metadata.sysroot .. '"')
+  end,
 }
 
 -- INFO: .stylua.toml
