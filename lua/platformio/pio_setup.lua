@@ -24,37 +24,51 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local debounce_timer = vim.uv.new_timer()
 
+-- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 -- stylua: ignore
 local function get_sysroot_triplet(bin_path)
-  -- Use Neovim's loop (uv) for file system scanning
-  local luv = vim.loop or vim.uv
+  local sep = package.config:sub(1, 1)
+  local handle = vim.loop.fs_scandir(bin_path)
+  if not handle then
+    return nil, 'Invalid path'
+  end
 
-  vim.notify("ccpath= " .. bin_path, vim.log.levels.INFO)
-  local handle = luv.fs_scandir(bin_path)
-  if not handle then return nil, 'Invalid path' end
-
+  local triplet = nil
   while true do
-    local name = luv.fs_scandir_next(handle)
-    if not name then break end
+    local name = vim.loop.fs_scandir_next(handle)
+    if not name then
+      break
+    end
 
-    -- Search for the G++ compiler binary
-    -- Matches triplet prefix from names like 'riscv32-esp-elf-g++' or 'xtensa-esp32-elf-g++.exe'
-    -- local triplet = name:match('^(.*)%-g%+%+.*$')
-    local triplet = name:match('^(.*)%-gcc.*$')
+    -- This pattern looks for the dash followed by 'gcc' OR 'g++'
+    -- it captures everything before that dash.
+    -- %- is a literal dash
+    -- g[cc%+%+]+ matches 'gcc' or 'g++'
+    local match = name:match('^(.*)%-g[cc%+%+]+.*$')
 
-    if triplet then
-      vim.notify("triplet= " .. triplet, vim.log.levels.INFO)
-      -- Get the toolchain root (parent of /bin)
-      local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
-      local sysroot_path = toolchain_root .. '/' .. triplet
-
-      -- Verify if the folder actually exists
-      if vim.fn.isdirectory(sysroot_path) == 1 then return triplet, sysroot_path end
+    if match then
+      triplet = match
+      break
     end
   end
-  return nil, 'No valid triplet folder found'
+
+  if not triplet then
+    return nil, 'No compiler found'
+  end
+
+  local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+  local sysroot = toolchain_root .. sep .. triplet
+
+  if vim.fn.isdirectory(sysroot) == 1 then
+    return {
+      triplet = triplet,
+      sysroot = sysroot,
+      query_driver = bin_path .. sep .. triplet .. '-*',
+    }
+  end
+  return nil, 'Sysroot folder missing'
 end
 
 
@@ -429,10 +443,11 @@ local function start_pio_watcher()
                 -- vim.schedule(function()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 
-                local triplet, sysroot = get_sysroot_triplet(_G.metadata.cc_path)
+                local triplet, sysroot, query_driver = get_sysroot_triplet(_G.metadata.cc_path)
                 if triplet then
                   _G.metadata.triplet = triplet
                   _G.metadata.sysroot = sysroot
+                  _G.metadata.driver_path = query_driver
                 end
                 boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
 
