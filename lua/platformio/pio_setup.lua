@@ -103,12 +103,13 @@ local pio_manager = (function()
     vim.schedule(function()
       vim.notify('PIO: Fetching Config...', vim.log.levels.INFO)
     end)
-    -- INFO:
+
+    -- INFO: get metadata
     local function get_metadata(attempts)
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
       vim.schedule(function()
-        print('active_env0: ' .. _G.metadata.active_env)
+        print('active_env inner: ' .. _G.metadata.active_env)
       end)
       if not _G.metadata.active_env or _G.metadata.active_env == '' then
         vim.schedule(function()
@@ -187,10 +188,9 @@ local pio_manager = (function()
       end)
     end
 
-    -- local function get_pio_env(type)
-    -- 1. Setup Base Paths
+    -- INFO: -- 1. Setup Base Paths
     local home = os.getenv('HOME') or os.getenv('USERPROFILE')
-    -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
+    -- INFO: -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
     local map = {
       core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
       packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
@@ -227,7 +227,8 @@ local pio_manager = (function()
           if name == 'platformio' then
             for _, kv in ipairs(data) do
               local key, val = kv[1], kv[2]
-              if _G.metadata[key] ~= nil then
+              if key ~= nil then
+                -- if _G.metadata[key] ~= nil then
                 _G.metadata[key] = val
               end
             end
@@ -246,29 +247,29 @@ local pio_manager = (function()
       else
         _G.metadata.active_env = next(_G.metadata.envs) or ''
       end
-      -- Data is now in pio_config.core_dir, pio_config.envs.esp32c3_supermini, etc.
-      vim.schedule(function()
-        if _G.metadata.active_env then
-          print('active_env1: ' .. _G.metadata.active_env)
-        end
-      end)
-    end)
 
-    for _, kv in ipairs(map) do
-      -- 4.0 Fallback Logic: INI -> Env Var -> Default
-      local result = _G.metadata[kv.ini] or os.getenv(kv.env or (home .. kv.sub)):gsub('[\\/]+$', '')
-      -- 5. Expand ${platformio.core_dir}
-      if type(result) == 'string' then
-        if result:find('${platformio.core_dir}', 1, true) then
-          result = result:gsub('%${platformio.core_dir}', _G.metadata.core_dir)
+      for _, kv in ipairs(map) do
+        -- 4.0 Fallback Logic: INI -> Env Var -> Default
+        local result = _G.metadata[kv.ini] or os.getenv(kv.env or (home .. kv.sub)):gsub('[\\/]+$', '')
+        -- 5. Expand ${platformio.core_dir}
+        if type(result) == 'string' then
+          if result:find('${platformio.core_dir}', 1, true) then
+            result = result:gsub('%${platformio.core_dir}', _G.metadata.core_dir)
+          end
         end
+        -- 6. Normalize Slashes for Windows
+        _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
       end
-      -- 6. Normalize Slashes for Windows
-      _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
-    end
-    -- return _G.metadata[map[type].ini]
-    -- end
-    get_metadata(1)
+      -- return _G.metadata[map[type].ini]
+      -- end
+
+      if _G.metadata.active_env ~= '' then
+        vim.schedule(function()
+          print('active_env outer: ' .. _G.metadata.active_env)
+        end)
+        get_metadata(1)
+      end
+    end)
   end
 
   -- INFO:
