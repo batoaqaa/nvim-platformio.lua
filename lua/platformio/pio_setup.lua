@@ -41,7 +41,8 @@ local function get_sysroot_triplet(bin_path)
 
     -- Search for the G++ compiler binary
     -- Matches triplet prefix from names like 'riscv32-esp-elf-g++' or 'xtensa-esp32-elf-g++.exe'
-    local triplet = name:match('^(.*)%-g%+%+.*$')
+    -- local triplet = name:match('^(.*)%-g%+%+.*$')
+    local triplet = name:match('^(.*)%-gcc.*$')
 
     if triplet then
       vim.notify("triplet= " .. triplet, vim.log.levels.INFO)
