@@ -173,8 +173,10 @@ local pio_manager = (function()
             _G.metadata.fallback_flags = fallback_flags
 
             local triplet, sysroot = get_sysroot_triplet(_G.metadata.cc_path)
-            _G.metadata.triplet = triplet
-            _G.metadata.sysroot = sysroot
+            if triplet then
+              _G.metadata.triplet = triplet
+              _G.metadata.sysroot = sysroot
+            end
 
             print(vim.inspect(_G.metadata))
             if callback then
