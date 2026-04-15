@@ -101,7 +101,7 @@ local pio_manager = (function()
   --- stylua: ignore
   local function refresh(callback)
     vim.schedule(function()
-      vim.notify('PIO: Fetching Config...', vim.log.levels.INFO)
+      vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO)
     end)
 
     -- INFO: get metadata
@@ -109,15 +109,9 @@ local pio_manager = (function()
       -- INFO: internal: pio project metadata
       -- vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
       vim.schedule(function()
-        print('active_env metadata: ' .. _G.metadata.active_env)
+        vim.notify('PIO: Fetching metadata ...', vim.log.levels.INFO)
       end)
-      if not _G.metadata.active_env or _G.metadata.active_env == '' then
-        vim.schedule(function()
-          vim.notify('PIO: no env: found, add board first', vim.log.levels.ERROR)
-        end)
-        return
-      end
-      vim.system({ 'pio', 'project', 'metadata', '-e', 'seeed_xiao_esp32c3', '--json-output' }, { text = true }, function(int_obj)
+      vim.system({ 'pio', 'project', 'metadata', '-e', _G.metadata.active_env, '--json-output' }, { text = true }, function(int_obj)
         if int_obj.code ~= 0 then
           -- Schedule notification to avoid error in the system callback thread
           vim.schedule(function()
@@ -163,7 +157,7 @@ local pio_manager = (function()
             print(vim.inspect(_G.metadata))
             if callback then
               vim.schedule(function()
-                vim.notify('PIO: Syncing Environment successful', vim.log.levels.INFO)
+                vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
                 callback()
               end)
             end
@@ -178,12 +172,6 @@ local pio_manager = (function()
           vim.defer_fn(function()
             get_metadata(attempts - 1)
           end, 500)
-        else
-          vim.schedule(function()
-            if int_obj.code ~= 0 then
-              vim.notify('PIO: Config Error. Check platformio.ini syntax.', vim.log.levels.WARN)
-            end
-          end)
         end
       end)
     end
@@ -266,9 +254,13 @@ local pio_manager = (function()
 
       if _G.metadata.active_env ~= '' then
         vim.schedule(function()
-          print('active_env config: ' .. _G.metadata.active_env)
+          vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
         end)
         get_metadata(1)
+      else
+        vim.schedule(function()
+          vim.notify('PIO: no [env:] found, add board first', vim.log.levels.ERROR)
+        end)
       end
     end)
   end
