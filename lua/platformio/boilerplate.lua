@@ -68,6 +68,23 @@ print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
 ]],
 }
 
+-- INFO: .clangd_init_options
+boilerplate['.clangd_init_options'] = {
+  rewrite = true,
+  template = [[
+usePlaceholders = true,
+completeUnimported = true,
+fallbackFlags =%s,
+clangdFileStatus = true,
+compilationDatabasePath = %s,
+]],
+  content = function(self)
+    return string.format(self.template, "{ '-std=c++17' }" or '{}', vim.uv.cwd())
+    -- return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
+    -- return string.format(self.template, _G.get_pio_sdk_info() or '**')
+  end,
+}
+
 -- INFO: .clangd_cmd
 boilerplate['.clangd_cmd'] = {
   rewrite = true,

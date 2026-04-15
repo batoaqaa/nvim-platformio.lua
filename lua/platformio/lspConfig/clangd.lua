@@ -125,13 +125,27 @@ vim.lsp.config('*', {
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
 local cmd = { 'clangd' }
--- local fname = string.format('%s/.clangd_cmd', vim.fn.getcwd())
 local fname = string.format('%s/.clangd_cmd', vim.uv.cwd())
--- if vim.fn.filereadable(fname) == 1 then
 if vim.uv.fs_stat(fname) then
   ok, result = pcall(vim.fn.readfile, fname)
   if ok then
     cmd = result
+    -- print(vim.inspect(cmd))
+  end
+end
+
+local init_options = {
+  usePlaceholders = true,
+  completeUnimported = true,
+  fallbackFlags = { '-std=c++17' },
+  clangdFileStatus = true,
+  compilationDatabasePath = vim.uv.cwd(),
+}
+fname = string.format('%s/.clangd_init_options', vim.uv.cwd())
+if vim.uv.fs_stat(fname) then
+  ok, result = pcall(vim.fn.readfile, fname)
+  if ok then
+    init_options = result
     -- print(vim.inspect(cmd))
   end
 end
@@ -152,13 +166,7 @@ local clangd = {
   },
   workspace_required = true,
   single_file_support = true,
-  init_options = {
-    usePlaceholders = true,
-    completeUnimported = true,
-    fallback_flags = { '-std=c++17' },
-    clangdFileStatus = true,
-    compilationDatabasePath = vim.uv.cwd(),
-  },
+  init_options = init_options,
 }
 vim.lsp.config('clangd', clangd)
 
