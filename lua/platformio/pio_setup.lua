@@ -183,7 +183,7 @@ local pio_manager = (function()
             _G.metadata.cc_path = misc.normalize_path(env.cc_path) or ''
             _G.metadata.fallback_flags = fallback_flags
 
-            print(vim.inspect(_G.metadata))
+            -- print(vim.inspect(_G.metadata))
             if callback then
               vim.schedule(function()
                 vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
@@ -381,7 +381,7 @@ function _G.get_pio_sdk_info()
   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
   print('get_pio_sdk_info(): final=' .. final)
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
-  print(vim.inspect(_G.metadata))
+  -- print(vim.inspect(_G.metadata))
   return (misc.normalize_path(final))
   -- return _G.metadata.driver_path
   -- return pio_info
