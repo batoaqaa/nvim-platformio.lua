@@ -1,6 +1,6 @@
 local M = {}
 
--- stylua: ignore
+--- stylua: ignore
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') == 1 then
     -- local clients = vim.lsp.get_clients({ name = name })
@@ -18,12 +18,14 @@ function M.lsp_restart(name)
     for _, c in ipairs(clients) do
       local configc = c.config
       c:stop(true)
-      vim.defer_fn(function()
-        -- vim.lsp.config(name, configc)
+      vim.schedule_wrap(function()
+        -- vim.defer_fn(function()
+        --   -- vim.lsp.config(name, configc)
         vim.lsp.config(name, _G.clangd)
         vim.lsp.enable(name)
         vim.cmd('checktime')
-      end, 600)
+        -- end, 600)
+      end)
     end
     -- -- 1. Stop the specific client
     -- for _, client in ipairs(clients) do client:stop() end
