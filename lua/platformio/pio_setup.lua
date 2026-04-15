@@ -172,12 +172,6 @@ local pio_manager = (function()
             _G.metadata.cc_path = misc.normalize_path(env.cc_path) or ''
             _G.metadata.fallback_flags = fallback_flags
 
-            local triplet, sysroot = get_sysroot_triplet(_G.metadata.cc_path)
-            if triplet then
-              _G.metadata.triplet = triplet
-              _G.metadata.sysroot = sysroot
-            end
-
             print(vim.inspect(_G.metadata))
             if callback then
               vim.schedule(function()
@@ -430,7 +424,14 @@ local function start_pio_watcher()
               pio_manager.refresh(function()
                 -- vim.schedule(function()
                 boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+
+                local triplet, sysroot = get_sysroot_triplet(_G.metadata.cc_path)
+                if triplet then
+                  _G.metadata.triplet = triplet
+                  _G.metadata.sysroot = sysroot
+                end
                 boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
+
                 pio_generate_db()
                 lsp.lsp_restart('clangd')
                 -- end)
