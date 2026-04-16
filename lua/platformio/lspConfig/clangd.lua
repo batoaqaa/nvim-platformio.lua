@@ -215,13 +215,13 @@ local clangd_config = {
     local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
     local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
 
-    print(formatted_str)
 
     -- 4. Load the config table
     local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
 
     -- 5. Extract the final command list
     local final_cmd = (ok and table_config) and table_config.cmd or { "clangd" }
+    print(vim.inspect(final_cmd))
     -- 6. Launch the RPC client
     return vim.lsp.rpc.start(final_cmd, dispatchers)
     -- if cok and table_config then

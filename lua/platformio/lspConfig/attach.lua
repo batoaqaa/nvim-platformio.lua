@@ -11,18 +11,25 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
       ------------------------------------------------------------------
       if client.name == 'clangd' then
-        vim.api.nvim_buf_create_user_command(0, 'LspClangdSwitchSourceHeader', function()
-          local method_name = 'textDocument/switchSourceHeader'
+        local uri = vim.uri_from_bufnr(bufnr)
+        if not uri:match('^file://') then
+          return -- Stop here for non-file buffers (like git:// or nvim://)
+        end
+        vim.api.nvim_buf_create_user_command(bufnr, 'LspClangdSwitchSourceHeader', function()
           local params = vim.lsp.util.make_text_document_params(bufnr)
-          client.request(method_name, params, function(err, result)
+          client.request('textDocument/switchSourceHeader', params, function(err, result)
             if err then
-              error(tostring(err))
-            end
-            if not result then
-              vim.notify('corresponding file cannot be determined')
+              vim.notify('Clangd Error: ' .. tostring(err), vim.log.levels.ERROR)
               return
             end
-            vim.cmd.edit(vim.uri_to_fname(result))
+            if not result or result == '' then
+              vim.notify('Corresponding file cannot be determined', vim.log.levels.WARN)
+              return
+            end
+            -- Use vim.schedule to ensure we aren't editing while the LSP is in a callback
+            vim.schedule(function()
+              vim.cmd.edit(vim.uri_to_fname(result))
+            end)
           end, bufnr)
         end, { desc = 'Switch between source/header' })
         -- piolsp.fix_pio_compile_commands()
