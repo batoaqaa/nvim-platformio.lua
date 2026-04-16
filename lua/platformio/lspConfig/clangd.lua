@@ -207,14 +207,16 @@ local clangd_config = {
     local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
     local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
 
+    print(formatted_str)
     -- Load the string as a Lua table safely
-    local ok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
+    local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
 
-    if ok and table_config then
+    if cok and table_config then
       -- This merges table_config INTO new_config, overwriting existing values
       local merged = vim.tbl_deep_extend('force', new_config, table_config)
       -- Since we can't reassign the reference, we have to copy the keys back
       for k, v in pairs(merged) do new_config[k] = v end
+      print(vim.inspect(new_config))
     else
       -- If template loading fails, alert the user but keep default cmd
       vim.notify('LSP Config Table Generation Failed', vim.log.levels.ERROR)

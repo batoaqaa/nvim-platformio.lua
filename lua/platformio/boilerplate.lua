@@ -82,7 +82,7 @@ boilerplate['.clangd_config'] = {
     "--ranking-model=decision_forest",
     "--sync",
     "--offset-encoding=utf-16",
-    "--query-driver=%s",  -- will be assigned based op project
+    "--query-driver=%s",
   },
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
   root_markers = {
@@ -101,9 +101,9 @@ boilerplate['.clangd_config'] = {
   init_options = {
        usePlaceholders = true,
        completeUnimported = true,
-       fallbackFlags = {%s},  -- will be assigned based op project
+       fallbackFlags = {%s},
        clangdFileStatus = true,
-       compilationDatabasePath = %q,  -- will be assigned based op project
+       compilationDatabasePath = %q,
   }
 }
 ]],
