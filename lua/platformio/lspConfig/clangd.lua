@@ -255,7 +255,7 @@ function _G.get_clangd_config()
   -- 2. Run your toolchain detection
   if _G.metadata.cc_compiler ~= '' then
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
-      q_driver = '--query-driver=' .. (_G.metadata.query_driver or '**')
+      q_driver = _G.metadata.query_driver or '**'
       f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
     end
   end
@@ -269,6 +269,7 @@ function _G.get_clangd_config()
   local cok, table_config = pcall(function()
     return load('return ' .. formatted_str)()
   end)
+
   if cok and table_config then
     return table_config
   end
