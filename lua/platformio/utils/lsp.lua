@@ -60,28 +60,31 @@ function M.lsp_restart(name)
     end
   else
     local clangConfig = _G.get_clangd_config()
+    vim.lsp.config('clangd', clangConfig)
+    vim.lsp.enable('clangd', false)
+    vim.lsp.enable('clangd', true)
     print(vim.inspect(clangConfig))
-    local clients = vim.lsp.get_clients({ name = name })
-    for _, client in ipairs(clients) do
-      local clangd_config = client.config
-      client:stop(true)
-      -- -- Apply the config using the new 0.11+ API
-      vim.lsp.config('clangd', clangConfig)
-      vim.lsp.enable('clangd', false)
-      vim.lsp.enable('clangd', true)
-      -- vim.lsp.config('clangd', clangd_config)
-      -- vim.lsp.enable('clangd')
-      vim.cmd('checktime')
-      vim.cmd('edit')
-      -- vim.schedule_wrap(function()
-      --   -- vim.defer_fn(function()
-      --   --   -- vim.lsp.config(name, configc)
-      --   vim.lsp.config(name, _G.clangd)
-      --   vim.lsp.enable(name)
-      --   vim.cmd('checktime')
-      --   -- end, 600)
-      -- end)
-    end
+    -- local clients = vim.lsp.get_clients({ name = name })
+    -- for _, client in ipairs(clients) do
+    --   local clangd_config = client.config
+    --   client:stop(true)
+    --   -- -- Apply the config using the new 0.11+ API
+    --   vim.lsp.config('clangd', clangConfig)
+    --   vim.lsp.enable('clangd', false)
+    --   vim.lsp.enable('clangd', true)
+    --   -- vim.lsp.config('clangd', clangd_config)
+    --   -- vim.lsp.enable('clangd')
+    --   vim.cmd('checktime')
+    --   vim.cmd('edit')
+    --   -- vim.schedule_wrap(function()
+    --   --   -- vim.defer_fn(function()
+    --   --   --   -- vim.lsp.config(name, configc)
+    --   --   vim.lsp.config(name, _G.clangd)
+    --   --   vim.lsp.enable(name)
+    --   --   vim.cmd('checktime')
+    --   --   -- end, 600)
+    --   -- end)
+    -- end
     -- -- 1. Stop the specific client
     -- for _, client in ipairs(clients) do client:stop() end
     --
