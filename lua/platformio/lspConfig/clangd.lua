@@ -125,7 +125,8 @@ function _G.get_clangd_config()
   if _G.metadata.cc_compiler ~= '' then
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
       q_driver = _G.metadata.query_driver or '**'
-      f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
+      -- f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
+      f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
     end
   end
 
