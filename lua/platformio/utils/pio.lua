@@ -83,7 +83,7 @@ function M.fix_pio_compile_commands()
     return
   end
 
-  -- print('PioFix0')
+  print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   local pio_home = _G.metadata.core_dir --os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
@@ -96,7 +96,7 @@ function M.fix_pio_compile_commands()
       -- Extract filename (e.g., riscv32-esp-elf-gcc)
       local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
       path_map[name] = full_path
-      -- print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
+      print('PioFix1: driver_path=' .. full_path .. ' name=' .. name)
     end
   end
 
@@ -111,11 +111,11 @@ function M.fix_pio_compile_commands()
         local is_abs = first_token:sub(1, 1) == '/' or first_token:match('^%a:[/\\]')
         if not is_abs then
           local short_name = first_token:gsub('%.exe$', '')
-          -- print('PioFix2: short_name=' .. short_name)
+          print('PioFix2: short_name=' .. short_name)
           -- Direct Query: Does this name exist in our discovered list?
           if path_map[short_name] then
             cmd_parts[1] = path_map[short_name]
-            -- print('PioFix3: full_name=' .. cmd_parts[1])
+            print('PioFix3: full_name=' .. cmd_parts[1])
             entry.command = table.concat(cmd_parts, ' ')
             modified = modified + 1
           end
