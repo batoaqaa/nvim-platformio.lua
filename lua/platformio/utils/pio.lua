@@ -86,10 +86,10 @@ function M.fix_pio_compile_commands()
   -- print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
-  local pio_home = os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
+  local pio_home = _G.metadata.core_dir --os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
   if pio_home then
     -- Recursively find all binaries in PIO packages
-    local pio_packages = M.get_pio_dir('packages') .. '/*/bin/*'
+    local pio_packages = _G.metadata.toolchain .. '/bin' --M.get_pio_dir('packages') .. '/*/bin/*'
     local found_binaries = vim.fn.glob(pio_packages, false, true)
 
     for _, full_path in ipairs(found_binaries) do
@@ -139,7 +139,7 @@ function M.fix_pio_compile_commands()
         out_file:write(formatted_json)
         out_file:close()
         vim.notify('compiledb: fixed', vim.log.levels.INFO)
-        lsp.lsp_restart('clangd')
+        -- lsp.lsp_restart('clangd')
       end
     end
   end
