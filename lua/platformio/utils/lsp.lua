@@ -64,7 +64,9 @@ function M.lsp_restart(name)
       local clangd_config = client.config
       client:stop(true)
       -- -- Apply the config using the new 0.11+ API
-      vim.lsp.config('clangd', _G.get_clangd_config())
+      local clangConfig = _G.get_clangd_config()
+      print(vim.inspect(clangConfig))
+      vim.lsp.config('clangd', clangConfig)
       vim.lsp.enable('clangd', false)
       vim.lsp.enable('clangd', true)
       -- vim.lsp.config('clangd', clangd_config)
