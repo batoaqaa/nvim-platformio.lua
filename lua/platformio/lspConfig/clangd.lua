@@ -187,6 +187,8 @@ vim.lsp.config('*', {
 -- }
 -- vim.lsp.config('clangd', _G.clangd)
 local clangd_config = {
+  -- 1. ADD THIS: Provide a default cmd so validation passes
+  cmd = { 'clangd' },
   -- on_new_config runs every time client started 
   -- stylua: ignore
   on_new_config = function(new_config, new_root_dir)
