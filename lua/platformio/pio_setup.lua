@@ -175,7 +175,7 @@ local pio_manager = (function()
               -- end
 
               -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
-              _G.metadata.cc_compiler = misc.normalize_path(data.cc_compiler) or ''
+              _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
               _G.metadata.fallback_flags = fallback_flags
 
               -- print(vim.inspect(_G.metadata))
