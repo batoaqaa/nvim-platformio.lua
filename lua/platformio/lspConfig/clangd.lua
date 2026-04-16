@@ -188,17 +188,21 @@ vim.lsp.config('*', {
 -- vim.lsp.config('clangd', _G.clangd)
 local clangd_config = {
   -- 1. ADD THIS: Provide a default cmd so validation passes
-  cmd = { 'clangd' },
+  -- cmd = { 'clangd' },
   -- on_new_config runs every time client started 
   -- stylua: ignore
-  on_new_config = function(new_config, new_root_dir)
-    -- Safety check for root_dir
+  -- on_new_config = function(new_config, new_root_dir)
+  cmd = function(dispatchers)
+    -- 1. Use the current working directory or buffer's directory
+    local new_root_dir = vim.uv.cwd()
     vim.notify("LSP Starting in: " .. (new_root_dir or "nil"))
+
     if not new_root_dir then return end
 
     -- Safe defaults (Standard clangd behavior)
     local f_flags, q_driver = '', '--query-driver=**'
 
+    -- 2. Run your toolchain detection
     if _G.metadata.cc_compiler ~= '' then
       if _G.metadata.triplet and _G.metadata.triplet ~= '' then
         q_driver = '--query-driver=' .. (_G.metadata.query_driver or '**')
@@ -206,24 +210,30 @@ local clangd_config = {
       end
     end
 
+    -- 3. Format your template string
     -- Format the clangd_config string
     local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
     local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
 
     print(formatted_str)
-    -- Load the string as a Lua table safely
+
+    -- 4. Load the config table
     local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
 
-    if cok and table_config then
-      -- This merges table_config INTO new_config, overwriting existing values
-      local merged = vim.tbl_deep_extend('force', new_config, table_config)
-      -- Since we can't reassign the reference, we have to copy the keys back
-      for k, v in pairs(merged) do new_config[k] = v end
-      print(vim.inspect(new_config))
-    else
+    -- 5. Extract the final command list
+    local final_cmd = (ok and table_config) and table_config.cmd or { "clangd" }
+    -- 6. Launch the RPC client
+    return vim.lsp.rpc.start(final_cmd, dispatchers)
+    -- if cok and table_config then
+    --   -- This merges table_config INTO new_config, overwriting existing values
+    --   local merged = vim.tbl_deep_extend('force', new_config, table_config)
+    --   -- Since we can't reassign the reference, we have to copy the keys back
+    --   for k, v in pairs(merged) do new_config[k] = v end
+    --   print(vim.inspect(new_config))
+    -- else
       -- If template loading fails, alert the user but keep default cmd
-      vim.notify('LSP Config Table Generation Failed', vim.log.levels.ERROR)
-    end
+      -- vim.notify('LSP Config Table Generation Failed', vim.log.levels.ERROR)
+    -- end
   end,
 }
 
