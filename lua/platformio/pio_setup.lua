@@ -384,13 +384,6 @@ function _G.get_pio_sdk_info()
 end
 
 -- INFO:
--- LSP HELPER: Returns the glob pattern for clangd's --query-driver
--- e.g., C:\Users\tom\.platformio\packages\toolchain-riscv32-esp\bin\*
-function _G.get_pio_toolchain_pattern()
-  return _G.metadata.query_driver
-end
-
--- INFO:
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 -- stylua: ignore
 local function start_pio_watcher()
@@ -430,8 +423,6 @@ local function start_pio_watcher()
             vim.schedule_wrap(function()
               pio_manager.refresh(function()
                 -- vim.schedule(function()
-                -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-
                 local status, data = pcall(get_sysroot_triplet, _G.metadata.cc_compiler)
                 if status and data and data.triplet and data.triplet ~= '' then
                   _G.metadata.triplet = data.triplet
@@ -439,20 +430,14 @@ local function start_pio_watcher()
                   _G.metadata.query_driver = data.query_driver
                   _G.metadata.toolchain = data.toolchain_root
                 end
-                boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
+                -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-                boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+                boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
 
                 pio_generate_db()
                 lsp.lsp_restart('clangd')
                 -- end)
-              end)
-            end)
-          )
-        end
-      end
-    end)
-  )
+  end) end)) end end end))
 end
 ------------------------------------------------------------------------------------------------------
 -- INFO: 6.  Exported setup function

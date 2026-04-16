@@ -84,8 +84,6 @@ end)
 local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
-    -- ensure_installed = { 'clangd', 'pyrefly' },
-    -- ensure_installed = { 'ccls', 'lua_ls', 'pyrefly', 'yamlls' },
     ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
@@ -102,7 +100,6 @@ local capabilities = vim.lsp.protocol.make_client_capabilities({
 })
 local bok, blink = pcall(require, 'blink.cmp')
 if bok then
-  -- capabilities = vim.tbl_deep_extend('force', capabilities, blink.get_lsp_capabilities({}, false))
   capabilities = blink.get_lsp_capabilities(capabilities)
 end
 
@@ -114,142 +111,14 @@ vim.lsp.config('*', {
 })
 
 ----------------------------------------------------------------------------------------
--- INFO: configure ccls lsp server
------------------------------------------------------------------------------------------
--- vim.lsp.config('ccls', {
---   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
---   root_markers = {
---     'CMakeLists.txt',
---     '.clangd',
---     '.clang-tidy',
---     '.clang-format',
---     'compile_commands.json',
---     'compile_flags.txt',
---     'configure.ac',
---     '.git',
---     vim.uv.cwd(),
---   },
---   init_options = {
---     diagnostics = {
---       onChange = 100,
---     },
---   },
--- })
--- vim.lsp.enable('ccls')
-
-----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
-
--- local cmd = { 'clangd' }
--- local fname = string.format('%s/.clangd_cmd', vim.uv.cwd())
--- if vim.uv.fs_stat(fname) then
---   ok, result = pcall(vim.fn.readfile, fname)
---   if ok then
---     cmd = result
---     -- print(vim.inspect(cmd))
---   end
--- end
---
--- local init_options = {
---   usePlaceholders = true,
---   completeUnimported = true,
---   fallbackFlags = { '-std=c++17' },
---   clangdFileStatus = true,
---   compilationDatabasePath = vim.uv.cwd(),
--- }
--- fname = string.format('%s/.clangd_init_options', vim.uv.cwd())
--- if vim.uv.fs_stat(fname) then
---   ok, result = pcall(vim.fn.readfile, fname)
---   if ok then
---     init_options = result
---     -- print(vim.inspect(cmd))
---   end
--- end
---
--- _G.clangd = {
---   cmd = cmd,
---   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
---   root_markers = {
---     'CMakeLists.txt',
---     '.clangd',
---     '.clang-tidy',
---     '.clang-format',
---     'compile_commands.json',
---     'compile_flags.txt',
---     'configure.ac',
---     '.git',
---     vim.uv.cwd(),
---   },
---   workspace_required = true,
---   single_file_support = true,
---   init_options = init_options,
--- }
--- vim.lsp.config('clangd', _G.clangd)
--- local clangd_config = {
---   -- 1. ADD THIS: Provide a default cmd so validation passes
---   -- cmd = { 'clangd' },
---   -- on_new_config runs every time client started
---   -- stylua: ignore
---   -- on_new_config = function(new_config, new_root_dir)
---   cmd = function(dispatchers)
---     -- 1. Use the current working directory or buffer's directory
---     local new_root_dir = vim.uv.cwd() or '.'
---     vim.notify("LSP Starting in: " .. (new_root_dir or "nil"))
---
---     if not new_root_dir then return end
---
---     -- Safe defaults (Standard clangd behavior)
---     local f_flags, q_driver = '', '--query-driver=**'
---
---     -- 2. Run your toolchain detection
---     if _G.metadata.cc_compiler ~= '' then
---       if _G.metadata.triplet and _G.metadata.triplet ~= '' then
---         q_driver = '--query-driver=' .. (_G.metadata.query_driver or '**')
---         f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
---       end
---     end
---
---     -- 3. Format your template string
---     -- Format the clangd_config string
---     local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
---     local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
---
---
---     -- 4. Load the config table
---     local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
---
---     -- 5. Extract the final command list
---     --
---     --
---     --
---     --
---     local final_cmd = (cok and table_config) and table_config.cmd or { "clangd" }
---     print(vim.inspect(final_cmd))
---     -- 6. Launch the RPC client
---     return vim.lsp.rpc.start(final_cmd, dispatchers)
---     -- if cok and table_config then
---     --   -- This merges table_config INTO new_config, overwriting existing values
---     --   local merged = vim.tbl_deep_extend('force', new_config, table_config)
---     --   -- Since we can't reassign the reference, we have to copy the keys back
---     --   for k, v in pairs(merged) do new_config[k] = v end
---     --   print(vim.inspect(new_config))
---     -- else
---       -- If template loading fails, alert the user but keep default cmd
---       -- vim.notify('LSP Config Table Generation Failed', vim.log.levels.ERROR)
---     -- end
---   end,
--- }
-
+--stylua: ignore
 function _G.get_clangd_config()
   local new_root_dir = vim.uv.cwd() or '.'
-  vim.notify('LSP Starting in: ' .. (new_root_dir or 'nil'))
+  if not new_root_dir then return end
 
-  if not new_root_dir then
-    return
-  end
-
-  -- Safe defaults (Standard clangd behavior)
+  -- 1. Safe defaults (Standard clangd behavior)
   local f_flags, q_driver = '', '**'
 
   -- 2. Run your toolchain detection
@@ -261,22 +130,17 @@ function _G.get_clangd_config()
   end
 
   -- 3. Format your template string
-  -- Format the clangd_config string
   local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
   local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
 
-  -- print(formatted_str)
   -- 4. Load the config table
-  local cok, table_config = pcall(function()
-    return load('return ' .. formatted_str)()
-  end)
+  local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
 
   if cok and table_config then
     return table_config
   end
 end
 -- Apply and Enable
--- vim.lsp.config('clangd', clangd_config)
 vim.lsp.config('clangd', _G.get_clangd_config())
 vim.lsp.enable('clangd')
 

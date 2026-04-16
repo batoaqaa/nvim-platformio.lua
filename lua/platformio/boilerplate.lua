@@ -68,15 +68,14 @@ boilerplate['.clangd_config'] = {
     "--all-scopes-completion",
     "--background-index",
     "--clang-tidy",
-    "--compile_args_from=filesystem",
+    "--compile_args_from=lsp",
     "--enable-config",
     "--completion-parse=always",
     "--completion-style=detailed",
     "--header-insertion=iwyu",
     "--fallback-style=llvm",
     "-j=12",
-    "--log=verbose",
-    "--offset-encoding=utf-8",
+    "--log=error",
     "--pch-storage=memory",
     "--pretty",
     "--ranking-model=decision_forest",
@@ -495,42 +494,3 @@ function M.boilerplate_gen(framework, src_path, filename)
 end
 
 return M
-
--- -- INFO: .clangd_init_options
--- boilerplate['.clangd_init_options'] = {
---   rewrite = true,
---   read = false,
---   template = [[
--- usePlaceholders=true,
--- completeUnimported=true,
--- fallbackFlags={%s},
--- clangdFileStatus=true,
--- compilationDatabasePath="%s",
--- ]],
---   content = function(self)
---     local f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
---     return string.format(
---       self.template,
---       ('"-std=c++17","--target=' .. _G.metadata.triplet .. '","--sysroot=' .. _G.metadata.sysroot) .. '"' or '"-std=c++17"',
---       misc.normalize_path(vim.uv.cwd())
---     )
---   end,
--- }
---
--- -- INFO: enable_toolchain.py
--- boilerplate['enable_toolchain.py'] = {
---   rewrite = false,
---   read = false,
---   content = [[
--- from SCons.Script import DefaultEnvironment
--- env = DefaultEnvironment()
--- env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
---
--- #Import("env")
---
--- # Safe retrieval with a default message
--- print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
--- print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
--- ]],
--- }
---
