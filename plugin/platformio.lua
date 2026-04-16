@@ -101,12 +101,13 @@ end, {})
 -- INFO: fix paths in compile_commands.json
 -- vim.api.nvim_create_user_command('PioFixPaths', require('platformio.piolsp').fix_pio_compile_commands, {})
 vim.api.nvim_create_user_command('PioFixPaths', function()
-  pio.run_sequence({
-    {
-      cmd = 'pio run -t compiledb',
-      cb = pio.handleDb,
-    },
-  })
+  pio.fix_pio_compile_commands()
+  -- pio.run_sequence({
+  --   {
+  --     cmd = 'pio run -t compiledb',
+  --     cb = pio.handleDb,
+  --   },
+  -- })
 end, {})
 ------------------------------------------------------
 
