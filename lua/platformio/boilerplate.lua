@@ -182,7 +182,7 @@ Diagnostics:
 ]],
   content = function(self)
     local sysroot = '--sysroot=' .. _G.metadata.sysroot
-    local triplet = '--sysroot=' .. _G.metadata.triplet
+    local triplet = '--target=' .. _G.metadata.triplet
     return string.format(self.template, triplet, sysroot)
   end,
 }
