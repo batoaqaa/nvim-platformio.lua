@@ -191,6 +191,7 @@ local clangd_config = {
   -- stylua: ignore
   on_new_config = function(new_config, new_root_dir)
     -- Safety check for root_dir
+    vim.notify("LSP Starting in: " .. (new_root_dir or "nil"))
     if not new_root_dir then return end
 
     -- Safe defaults (Standard clangd behavior)
