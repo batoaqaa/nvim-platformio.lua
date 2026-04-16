@@ -147,45 +147,44 @@ local pio_manager = (function()
         if int_obj.code == 0 and int_obj.stdout then
           local ok, raw_data = pcall(vim.json.decode, int_obj.stdout)
           if ok and raw_data then
-            local _, env = next(raw_data)
-            if not env then
-              return
-            end
-            local fallback_flags = {}
-            -- 1. Process Includes
-            if env.includes then
-              for category, paths in pairs(env.includes) do
-                -- If it's a toolchain path, use -isystem to suppress warnings
-                -- and tell clangd these are standard libraries
-                if category == 'toolchain' then
-                  local flag = '-isystem'
-                  for _, path in ipairs(paths) do
-                    table.insert(fallback_flags, flag .. path)
+            local _, data = next(raw_data)
+            if data then
+              local fallback_flags = {}
+              -- 1. Process Includes
+              if data.includes then
+                for category, paths in pairs(data.includes) do
+                  -- If it's a toolchain path, use -isystem to suppress warnings
+                  -- and tell clangd these are standard libraries
+                  if category == 'toolchain' then
+                    local flag = '-isystem'
+                    for _, path in ipairs(paths) do
+                      table.insert(fallback_flags, flag .. path)
+                    end
                   end
+                  -- local flag = (category == 'toolchain') and '-isystem' or '-I'
+                  -- for _, path in ipairs(paths) do
+                  --   table.insert(fallback_flags, flag .. path)
+                  -- end
                 end
-                -- local flag = (category == 'toolchain') and '-isystem' or '-I'
-                -- for _, path in ipairs(paths) do
-                --   table.insert(fallback_flags, flag .. path)
-                -- end
               end
-            end
-            -- 2. Process Defines
-            -- if env.defines then
-            --   for _, define in ipairs(env.defines) do
-            --     table.insert(fallback_flags, '-D' .. define)
-            --   end
-            -- end
+              -- 2. Process Defines
+              -- if env.defines then
+              --   for _, define in ipairs(env.defines) do
+              --     table.insert(fallback_flags, '-D' .. define)
+              --   end
+              -- end
 
-            -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
-            _G.metadata.cc_compiler = misc.normalize_path(env.cc_compiler) or ''
-            _G.metadata.fallback_flags = fallback_flags
+              -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
+              _G.metadata.cc_compiler = misc.normalize_path(data.cc_compiler) or ''
+              _G.metadata.fallback_flags = fallback_flags
 
-            -- print(vim.inspect(_G.metadata))
-            if callback then
-              vim.schedule(function()
-                vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
-                callback()
-              end)
+              -- print(vim.inspect(_G.metadata))
+              if callback then
+                vim.schedule(function()
+                  vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
+                  callback()
+                end)
+              end
             end
           else
             vim.schedule(function()
