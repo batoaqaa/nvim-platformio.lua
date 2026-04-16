@@ -59,13 +59,13 @@ function M.lsp_restart(name)
       end
     end
   else
+    local clangConfig = _G.get_clangd_config()
+    print(vim.inspect(clangConfig))
     local clients = vim.lsp.get_clients({ name = name })
     for _, client in ipairs(clients) do
       local clangd_config = client.config
       client:stop(true)
       -- -- Apply the config using the new 0.11+ API
-      local clangConfig = _G.get_clangd_config()
-      print(vim.inspect(clangConfig))
       vim.lsp.config('clangd', clangConfig)
       vim.lsp.enable('clangd', false)
       vim.lsp.enable('clangd', true)
