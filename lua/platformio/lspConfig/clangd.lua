@@ -250,7 +250,7 @@ function _G.get_clangd_config()
   end
 
   -- Safe defaults (Standard clangd behavior)
-  local f_flags, q_driver = '', '--query-driver=**'
+  local f_flags, q_driver = '', '**'
 
   -- 2. Run your toolchain detection
   if _G.metadata.cc_compiler ~= '' then

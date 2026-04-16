@@ -64,8 +64,10 @@ function M.lsp_restart(name)
       local clangd_config = client.config
       client:stop(true)
       -- -- Apply the config using the new 0.11+ API
-      vim.lsp.config('clangd', clangd_config)
+      vim.lsp.config('clangd', _G.get_clangd_config())
       vim.lsp.enable('clangd')
+      -- vim.lsp.config('clangd', clangd_config)
+      -- vim.lsp.enable('clangd')
       vim.cmd('checktime')
       vim.cmd('edit')
       -- vim.schedule_wrap(function()
