@@ -1,6 +1,4 @@
-local M = {}
-
-local misc = require('platformio.utils.misc')
+-- local misc = require('platformio.utils.misc')
 local uv = vim.loop
 
 local boilerplate = {}
@@ -9,6 +7,7 @@ local boilerplate = {}
 --- stylua: ignore
 boilerplate['arduino'] = {
   rewrite = false,
+  read = false,
   content = [[
 #include <Arduino.h>
 
@@ -25,6 +24,7 @@ void loop() {
 -- INFO: platformio.ini
 boilerplate['platformio.ini'] = {
   rewrite = false,
+  read = false,
   template = [[
 [platformio]
 core_dir = %s
@@ -53,44 +53,65 @@ lib_ldf_mode = chain   ;Library dependencies Finder ldf
   end,
 }
 
--- INFO: enable_toolchain.py
-boilerplate['enable_toolchain.py'] = {
+-- =============================================================================
+-- DYNAMIC CLANGD CONFIGURATION TEMPLATE
+-- =============================================================================
+-- Note: %q is used for paths to handle escaping and spaces automatically.
+-- INFO: .clangd_config
+boilerplate['.clangd_config'] = {
   rewrite = false,
+  read = true,
   content = [[
-from SCons.Script import DefaultEnvironment
-env = DefaultEnvironment()
-env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
-
-#Import("env")
-
-# Safe retrieval with a default message
-print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
-print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
+{
+  cmd = {
+    "clangd",
+    "--all-scopes-completion",
+    "--background-index",
+    "--clang-tidy",
+    "--compile_args_from=filesystem",
+    "--enable-config",
+    "--completion-parse=always",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
+    "--fallback-style=llvm",
+    "-j=12",
+    "--log=verbose",
+    "--offset-encoding=utf-8",
+    "--pch-storage=memory",
+    "--pretty",
+    "--ranking-model=decision_forest",
+    "--sync",
+    "--offset-encoding=utf-16",
+    "--query-driver=%s",  -- will be assigned based op project
+  },
+  filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+  root_markers = {
+    'platformio.ini',
+    'CMakeLists.txt',
+    '.clangd',
+    '.clang-tidy',
+    '.clang-format',
+    'compile_commands.json',
+    'compile_flags.txt',
+    'configure.ac',
+    '.git',
+  },
+  workspace_required = true,
+  single_file_support = true,
+  init_options = {
+       usePlaceholders = true,
+       completeUnimported = true,
+       fallbackFlags = {%s},  -- will be assigned based op project
+       clangdFileStatus = true,
+       compilationDatabasePath = %q,  -- will be assigned based op project
+  }
+}
 ]],
 }
-
--- INFO: .clangd_init_options
-boilerplate['.clangd_init_options'] = {
-  rewrite = true,
-  template = [[
-usePlaceholders=true,
-completeUnimported=true,
-fallbackFlags={%s},
-clangdFileStatus=true,
-compilationDatabasePath=%s,
-]],
-  content = function(self)
-    return string.format(
-      self.template,
-      ('"-std=c++17","--target=' .. _G.metadata.triplet .. '","--sysroot=' .. _G.metadata.sysroot) .. '"' or '"-std=c++17"',
-      misc.normalize_path(vim.uv.cwd())
-    )
-  end,
-}
-
 -- INFO: .clangd_cmd
 boilerplate['.clangd_cmd'] = {
   rewrite = true,
+  read = false,
   template = [[
 clangd
 --all-scopes-completion
@@ -112,28 +133,18 @@ clangd
 --query-driver=%s
 ]],
   content = function(self)
-    -- return string.format(self.template, (_G.metadata.toolchain .. '/**/' .. _G.metadata.triplet) or '**')
-    return string.format(self.template, _G.metadata.driver_path or '**')
-    -- return string.format(self.template, _G.get_pio_toolchain_pattern() or '**')
-    -- return string.format(self.template, _G.get_pio_sdk_info() or '**')
+    return string.format(self.template, _G.metadata.query_driver or '**')
   end,
-  --header-insertion=iwyu
-  --header-insertion-decorators
-  --query-driver=%s/toolchain-*/**/bin/*
-  --query-driver=%s/.platformio/packages/*/bin/riscv32-esp-elf-*
-  --query-driver=%s/.platformio/**/packages/toolchain-*/**/bin/*
-  --query-driver = [[clangd --query-driver=]] .. vim.env.HOME .. [[/.platformio/packages/*]]
-  --query-driver=**/*riscv32-esp-elf-*,**/*gcc*,**/*g++*
-  --query-driver=**/.platformio/packages/toolchain*/**/bin/*gcc*
 }
 
 -- INFO: .clangd
 boilerplate['.clangd'] = {
   rewrite = false,
+  read = false,
   template = [[
 CompileFlags:
   Add:
-    - "--target=riscv32-esp-elf"
+    - %q
     - %q
   Remove:
     - "-fno-fat-lto-objects"
@@ -171,13 +182,16 @@ Diagnostics:
       - "modernize-*"
 ]],
   content = function(self)
-    return string.format(self.template, '--sysroot=' .. _G.metadata.sysroot)
+    local sysroot = '--sysroot=' .. _G.metadata.sysroot
+    local triplet = '--sysroot=' .. _G.metadata.triplet
+    return string.format(self.template, triplet, sysroot)
   end,
 }
 
 -- INFO: .stylua.toml
 boilerplate['.stylua.toml'] = {
   rewrite = false,
+  read = false,
   content = [[
 syntax = "All"
 column_width = 132
@@ -197,6 +211,7 @@ enabled = false
 -- INFO: .clang-format
 boilerplate['.clang-format'] = {
   rewrite = false,
+  read = false,
   content = [[
 ---
 Language:        Cpp
@@ -445,38 +460,77 @@ WhitespaceSensitiveMacros:
 ...
 ]],
 }
-
+-- stylua: ignore
 function M.boilerplate_gen(framework, src_path, filename)
   filename = filename or framework
   local entry = boilerplate[framework]
-  if not entry then
-    return
-  end
+  if not entry then return '' end
   --
   local file_path = src_path .. '/' .. filename
   if vim.uv.fs_stat(file_path) then
     if not entry.rewrite then
-      return -- return if file exists and not rewritable
+      if entry.read then
+        local fr = io.open(file_path, 'r')
+        if fr then return (fr:read('*a')) end
+      end
+      return ''
     end
   end
 
-  if vim.fn.isdirectory(src_path) == 0 then
-    vim.fn.mkdir(src_path, 'p')
-  end
+  if vim.fn.isdirectory(src_path) == 0 then vim.fn.mkdir(src_path, 'p') end
 
-  -------------------------------------------------------------------------------------
   local fd = assert(uv.fs_open(file_path, 'w', 420))
   if not fd then
     print('failed to create file: ' .. file_path)
-    return
+    return ''
   end
 
-  -- local closeOnexit = type(exit_callback) == 'function'
-  -- local text = type(entry.content) == 'function' and entry:content() or entry.content
-  local text = type(entry.content) == 'function' and entry:content() or entry.content
-  if text then
-    uv.fs_write(fd, text, 0)
-    uv.fs_close(fd)
-  end
+  local template = type(entry.content) == 'function' and entry:content() or entry.content
+  uv.fs_write(fd, template, 0)
+  uv.fs_close(fd)
+
+  if entry.read then
+    return template
+  else return '' end
 end
+
 return M
+
+-- -- INFO: .clangd_init_options
+-- boilerplate['.clangd_init_options'] = {
+--   rewrite = true,
+--   read = false,
+--   template = [[
+-- usePlaceholders=true,
+-- completeUnimported=true,
+-- fallbackFlags={%s},
+-- clangdFileStatus=true,
+-- compilationDatabasePath="%s",
+-- ]],
+--   content = function(self)
+--     local f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
+--     return string.format(
+--       self.template,
+--       ('"-std=c++17","--target=' .. _G.metadata.triplet .. '","--sysroot=' .. _G.metadata.sysroot) .. '"' or '"-std=c++17"',
+--       misc.normalize_path(vim.uv.cwd())
+--     )
+--   end,
+-- }
+--
+-- -- INFO: enable_toolchain.py
+-- boilerplate['enable_toolchain.py'] = {
+--   rewrite = false,
+--   read = false,
+--   content = [[
+-- from SCons.Script import DefaultEnvironment
+-- env = DefaultEnvironment()
+-- env.Replace(COMPILATIONDB_INCLUDE_TOOLCHAIN=True)
+--
+-- #Import("env")
+--
+-- # Safe retrieval with a default message
+-- print(f"Toolchain Inclusion Status: {env.get('COMPILATIONDB_INCLUDE_TOOLCHAIN', 'Not Set')}")
+-- print(">>> SUCCESS: Toolchain inclusion forced in Global Environment")
+-- ]],
+-- }
+--

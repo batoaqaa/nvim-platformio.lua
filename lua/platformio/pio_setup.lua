@@ -1,20 +1,5 @@
 M = {}
 
-_G.metadata = {
-  envs = {},
-  default_envs = {},
-  core_dir = '',
-  packages_dir = '',
-  platforms_dir = '',
-  active_env = '',
-  driver_path = '',
-  cc_path = '',
-  triplet = '',
-  toolchain = '',
-  sysroot = '',
-  fallback_flags = {},
-}
-
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.utils.lsp')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
@@ -27,24 +12,25 @@ local debounce_timer = vim.uv.new_timer()
 
 -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
 -- INFO:
--- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
+-- =============================================================================
+-- UNIVERSAL TOOLCHAIN DETECTION
+-- =============================================================================
 --- stylua: ignore
-local function get_sysroot_triplet(compiler_full_path)
-  -- 1. Normalize and extract the directory portion (Head)
-  local normalized_path = compiler_full_path:gsub('\\', '/')
-  local bin_dir = vim.fn.fnamemodify(normalized_path, ':h')
-
-  -- 2. Check if the directory exists before opening
-  if vim.fn.isdirectory(bin_dir) == 0 then
-    return nil, 'Directory not found: ' .. bin_dir
+local function get_sysroot_triplet(cc_compiler)
+  local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
+  -- Early exit if path is nil or not a directory
+  if not bin_path or vim.fn.isdirectory(bin_path) == 0 then
+    return nil
   end
 
-  -- 3. Read the directory safely
-  local files = vim.fn.readdir(bin_dir)
+  -- Normalize backslashes to forward slashes for cross-platform consistency
+  bin_path = bin_path:gsub('\\', '/')
+  local files = vim.fn.readdir(bin_path)
   local triplet = nil
 
-  -- 4. Find the triplet (e.g., riscv32-esp-elf) from a file name
+  -- Loop through files to find the compiler and extract the triplet
   for _, name in ipairs(files) do
+    -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
     local match = name:match('^(.*)%-g[c%+][c%+]')
     if match then
       triplet = match
@@ -52,21 +38,27 @@ local function get_sysroot_triplet(compiler_full_path)
     end
   end
 
+  -- Return nil if no compiler was found in the bin directory
   if not triplet then
-    return nil, 'No triplet detected in ' .. bin_dir
+    return nil
   end
 
-  vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
-  -- 5. Construct sysroot from the toolchain root (parent of bin)
-  local toolchain_root = vim.fn.fnamemodify(bin_dir, ':h')
+  -- toolchain_root is the parent of the 'bin' folder
+  local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+  -- sysroot folder is expected to have the same name as the triplet
   local sysroot = toolchain_root .. '/' .. triplet
 
-  return {
-    triplet = triplet,
-    sysroot = sysroot,
-    toolchain_root = toolchain_root,
-    query_driver = normalized_path,
-  }
+  vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+  -- Only return data if the sysroot folder actually exists on disk
+  if vim.fn.isdirectory(sysroot) == 1 then
+    return {
+      triplet = triplet,
+      sysroot = sysroot,
+      toolchain_root = toolchain_root,
+      query_driver = bin_path .. '/' .. triplet .. '-*',
+    }
+  end
+  return nil
 end
 
 
@@ -184,8 +176,8 @@ local pio_manager = (function()
             --   end
             -- end
 
-            _G.metadata.driver_path = misc.normalize_path(env.cc_path:match('(.*[/\\])') .. '*') or '**'
-            _G.metadata.cc_path = misc.normalize_path(env.cc_path) or ''
+            -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
+            _G.metadata.cc_compiler = misc.normalize_path(env.cc_compiler) or ''
             _G.metadata.fallback_flags = fallback_flags
 
             -- print(vim.inspect(_G.metadata))
@@ -339,7 +331,7 @@ end)()
 
 -- INFO:
 function _G.get_pio_sdk_info()
-  local pio_info = { includes = {}, cc_path = '' }
+  local pio_info = { includes = {}, cc_compiler = '' }
   if vim.fn.filereadable('platformio.ini') == 0 then
     return nil
   end
@@ -379,7 +371,7 @@ function _G.get_pio_sdk_info()
   if packages_dir and packages_dir ~= '' and toolchain_pkg and toolchain_pkg ~= '' and cc_name ~= '' then
     local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
     if vim.fn.executable(full_path) == 1 then
-      pio_info.cc_path = full_path
+      pio_info.cc_compiler = full_path
     end
   end
 
@@ -388,7 +380,7 @@ function _G.get_pio_sdk_info()
   -- Normalize paths for the OS and ensure backslashes for Windows if needed
   -- print(vim.inspect(_G.metadata))
   return (misc.normalize_path(final))
-  -- return _G.metadata.driver_path
+  -- return _G.metadata.query_driver
   -- return pio_info
 end
 
@@ -396,7 +388,7 @@ end
 -- LSP HELPER: Returns the glob pattern for clangd's --query-driver
 -- e.g., C:\Users\tom\.platformio\packages\toolchain-riscv32-esp\bin\*
 function _G.get_pio_toolchain_pattern()
-  return _G.metadata.driver_path
+  return _G.metadata.query_driver
 end
 
 -- INFO:
@@ -439,13 +431,13 @@ local function start_pio_watcher()
             vim.schedule_wrap(function()
               pio_manager.refresh(function()
                 -- vim.schedule(function()
-                boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+                -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
 
-                local data = get_sysroot_triplet(_G.metadata.cc_path)
-                if data then
+                local status, data = pcall(get_sysroot_triplet, _G.metadata.cc_compiler)
+                if status and data and data.triplet and data.triplet ~= '' then
                   _G.metadata.triplet = data.triplet
                   _G.metadata.sysroot = data.sysroot
-                  _G.metadata.driver_path = data.query_driver
+                  _G.metadata.query_driver = data.query_driver
                   _G.metadata.toolchain = data.toolchain_root
                 end
                 boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
@@ -493,7 +485,7 @@ function M.init()
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
       pio_manager.refresh(function()
         -- vim.schedule(function()
-        boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+        -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
         boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
         pio_generate_db()
         lsp.lsp_restart('clangd')

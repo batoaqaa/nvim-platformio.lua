@@ -1,3 +1,19 @@
+local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+_G.metadata = {
+  envs = {},
+  default_envs = {},
+  core_dir = '',
+  packages_dir = '',
+  platforms_dir = '',
+  active_env = '',
+  query_driver = '',
+  cc_compiler = '',
+  triplet = '',
+  toolchain = '',
+  sysroot = '',
+  fallback_flags = {},
+}
+
 local ok, result
 ok, result = pcall(require, 'fidget')
 if ok then
@@ -124,51 +140,91 @@ vim.lsp.config('*', {
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server
 -----------------------------------------------------------------------------------------
-local cmd = { 'clangd' }
-local fname = string.format('%s/.clangd_cmd', vim.uv.cwd())
-if vim.uv.fs_stat(fname) then
-  ok, result = pcall(vim.fn.readfile, fname)
-  if ok then
-    cmd = result
-    -- print(vim.inspect(cmd))
-  end
-end
 
-local init_options = {
-  usePlaceholders = true,
-  completeUnimported = true,
-  fallbackFlags = { '-std=c++17' },
-  clangdFileStatus = true,
-  compilationDatabasePath = vim.uv.cwd(),
-}
-fname = string.format('%s/.clangd_init_options', vim.uv.cwd())
-if vim.uv.fs_stat(fname) then
-  ok, result = pcall(vim.fn.readfile, fname)
-  if ok then
-    init_options = result
-    -- print(vim.inspect(cmd))
-  end
-end
+-- local cmd = { 'clangd' }
+-- local fname = string.format('%s/.clangd_cmd', vim.uv.cwd())
+-- if vim.uv.fs_stat(fname) then
+--   ok, result = pcall(vim.fn.readfile, fname)
+--   if ok then
+--     cmd = result
+--     -- print(vim.inspect(cmd))
+--   end
+-- end
+--
+-- local init_options = {
+--   usePlaceholders = true,
+--   completeUnimported = true,
+--   fallbackFlags = { '-std=c++17' },
+--   clangdFileStatus = true,
+--   compilationDatabasePath = vim.uv.cwd(),
+-- }
+-- fname = string.format('%s/.clangd_init_options', vim.uv.cwd())
+-- if vim.uv.fs_stat(fname) then
+--   ok, result = pcall(vim.fn.readfile, fname)
+--   if ok then
+--     init_options = result
+--     -- print(vim.inspect(cmd))
+--   end
+-- end
+--
+-- _G.clangd = {
+--   cmd = cmd,
+--   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+--   root_markers = {
+--     'CMakeLists.txt',
+--     '.clangd',
+--     '.clang-tidy',
+--     '.clang-format',
+--     'compile_commands.json',
+--     'compile_flags.txt',
+--     'configure.ac',
+--     '.git',
+--     vim.uv.cwd(),
+--   },
+--   workspace_required = true,
+--   single_file_support = true,
+--   init_options = init_options,
+-- }
+-- vim.lsp.config('clangd', _G.clangd)
+local clangd_config = {
+  -- on_new_config runs every time client started 
+  -- stylua: ignore
+  on_new_config = function(new_config, new_root_dir)
+    -- Safety check for root_dir
+    if not new_root_dir then return end
 
-_G.clangd = {
-  cmd = cmd,
-  filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
-  root_markers = {
-    'CMakeLists.txt',
-    '.clangd',
-    '.clang-tidy',
-    '.clang-format',
-    'compile_commands.json',
-    'compile_flags.txt',
-    'configure.ac',
-    '.git',
-    vim.uv.cwd(),
-  },
-  workspace_required = true,
-  single_file_support = true,
-  init_options = init_options,
+    -- Safe defaults (Standard clangd behavior)
+    local f_flags, q_driver = '', '--query-driver=**'
+
+    if _G.metadata.cc_compiler ~= '' then
+      if _G.metadata.triplet and _G.metadata.triplet ~= '' then
+        q_driver = '--query-driver=' .. (_G.metadata.query_driver or '**')
+        f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
+      end
+    end
+
+    -- Format the clangd_config string
+    local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
+    local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
+
+    -- Load the string as a Lua table safely
+    local ok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
+
+    if ok and table_config then
+      -- This merges table_config INTO new_config, overwriting existing values
+      local merged = vim.tbl_deep_extend('force', new_config, table_config)
+      -- Since we can't reassign the reference, we have to copy the keys back
+      for k, v in pairs(merged) do new_config[k] = v end
+    else
+      -- If template loading fails, alert the user but keep default cmd
+      vim.notify('LSP Config Table Generation Failed', vim.log.levels.ERROR)
+    end
+  end,
 }
-vim.lsp.config('clangd', _G.clangd)
+
+-- Apply and Enable
+vim.lsp.config('clangd', clangd_config)
+vim.lsp.enable('clangd')
 
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server

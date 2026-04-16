@@ -1,5 +1,50 @@
 local M = {}
+-- -- Define your dynamic config
+-- local clangd_config = {
+--   cmd = {
+--     'clangd',
+--     '--background-index',
+--     '--clang-tidy',
+--     '--query-driver=**', -- Placeholder index (#cmd)
+--   },
+-- Important Detail: on_new_config behavior
+--
+--     If you open a new project in a separate Neovim instance (or a separate tab with a different root), on_new_config runs automatically for that new project.
+--     If you edit your config while staying in the same project, you must restart.
+--   on_new_config = function(new_config, _)
+--     -- 1. Safely run your detection function
+--     local status, data = pcall(get_sysroot_triplet, 'C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/bin')
+--
+--     if status and data then
+--       -- 2. Modify the last item (#) of the cmd table
+--       new_config.cmd[#new_config.cmd] = '--query-driver=' .. data.query_driver
+--
+--       -- 3. Merge fallback flags into init_options
+--       new_config.init_options = vim.tbl_deep_extend('force', new_config.init_options or {}, {
+--         fallbackFlags = {
+--           '--target=' .. data.triplet,
+--           '--sysroot=' .. data.sysroot,
+--         },
+--       })
+--     end
+--   end,
+-- }
 
+-- vim.lsp.config("clangd", {
+--   on_new_config = function(config, new_root_dir)
+--     -- This is the only place you can safely change this:
+--     config.cmd[#config.cmd] = "--query-driver=" .. my_detected_path
+--   end,
+-- })
+-- local function restart_clangd()
+--   local clients = vim.lsp.get_clients({ name = "clangd" })
+--   for _, client in ipairs(clients) do
+--     client.stop() -- Stops the process
+--   end
+--   -- Neovim 0.11+ will automatically try to restart enabled servers
+--   -- if a valid buffer is open, or you can trigger a reload.
+--   vim.cmd("edit")
+-- end
 --- stylua: ignore
 function M.lsp_restart(name)
   if vim.fn.has('nvim-0.12') == 1 then
@@ -15,17 +60,22 @@ function M.lsp_restart(name)
     end
   else
     local clients = vim.lsp.get_clients({ name = name })
-    for _, c in ipairs(clients) do
-      local configc = c.config
-      c:stop(true)
-      vim.schedule_wrap(function()
-        -- vim.defer_fn(function()
-        --   -- vim.lsp.config(name, configc)
-        vim.lsp.config(name, _G.clangd)
-        vim.lsp.enable(name)
-        vim.cmd('checktime')
-        -- end, 600)
-      end)
+    for _, client in ipairs(clients) do
+      local clangd_config = client.config
+      client:stop(true)
+      -- -- Apply the config using the new 0.11+ API
+      vim.lsp.config('clangd', clangd_config)
+      vim.lsp.enable('clangd')
+      vim.cmd('checktime')
+      vim.cmd('edit')
+      -- vim.schedule_wrap(function()
+      --   -- vim.defer_fn(function()
+      --   --   -- vim.lsp.config(name, configc)
+      --   vim.lsp.config(name, _G.clangd)
+      --   vim.lsp.enable(name)
+      --   vim.cmd('checktime')
+      --   -- end, 600)
+      -- end)
     end
     -- -- 1. Stop the specific client
     -- for _, client in ipairs(clients) do client:stop() end
