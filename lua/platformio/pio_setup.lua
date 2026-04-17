@@ -158,7 +158,7 @@ local pio_manager = (function()
                   if category == 'toolchain' then
                     local flag = '-isystem'
                     for _, path in ipairs(paths) do
-                      table.insert(fallback_flags, flag .. path)
+                      table.insert(fallback_flags, flag .. string.format('%s', path:gsub('\\', '/')))
                     end
                   end
                   -- local flag = (category == 'toolchain') and '-isystem' or '-I'
