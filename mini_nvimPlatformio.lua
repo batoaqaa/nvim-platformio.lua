@@ -226,7 +226,19 @@ local plugins = {
       'nvim-tree/nvim-web-devicons',
     },
     config = function()
-      require('nvim-tree').setup({})
+      require('nvim-tree').setup({
+        filesystem_watchers = {
+          ignore_dirs = {
+            '/.cache', -- Ignores clangd's heavy index folder
+            '/node_modules', -- Good practice for performance
+            '/.git',
+          },
+        },
+        -- Optional: If you also want to hide it from the tree view entirely
+        filters = {
+          custom = { '^\\.cache$' },
+        },
+      })
     end,
   },
 

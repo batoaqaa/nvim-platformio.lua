@@ -74,7 +74,6 @@ boilerplate['.clangd_config'] = {
     "--completion-style=detailed",
     "--header-insertion=iwyu",
     "--fallback-style=llvm",
-    "-j=12",
     "--log=error",
     "--pch-storage=memory",
     "--pretty",
