@@ -135,15 +135,17 @@ clangd
   end,
 }
 
+-- -- Add:
+--   - %q
+--   - %q
 -- INFO: .clangd
+-- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
   rewrite = false,
   read = false,
-  template = [[
+  -- template = [[
+  content = [[
 CompileFlags:
-  Add:
-    - %q
-    - %q
   Remove:
     - "-target"
     - "riscv32-esp-elf"
@@ -181,11 +183,11 @@ Diagnostics:
       - "hicpp-vararg"
       - "modernize-*"
 ]],
-  content = function(self)
-    local sysroot = '--sysroot=' .. _G.metadata.sysroot
-    local triplet = '--target=' .. _G.metadata.triplet
-    return string.format(self.template, triplet, sysroot)
-  end,
+  -- content = function(self)
+  --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
+  --   local triplet = '--target=' .. _G.metadata.triplet
+  --   return string.format(self.template, triplet, sysroot)
+  -- end,
 }
 
 -- INFO: .stylua.toml

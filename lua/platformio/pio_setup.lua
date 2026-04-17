@@ -169,11 +169,11 @@ local pio_manager = (function()
                 end
               end
               -- 2. Process Defines
-              -- if env.defines then
-              --   for _, define in ipairs(env.defines) do
-              --     table.insert(fallback_flags, '-D' .. define)
-              --   end
-              -- end
+              if env.defines then
+                for _, define in ipairs(env.defines) do
+                  table.insert(fallback_flags, string.format('%q', '-D' .. define))
+                end
+              end
 
               -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
               _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
