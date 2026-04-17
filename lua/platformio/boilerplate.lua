@@ -80,7 +80,7 @@ boilerplate['.clangd_config'] = {
     "--ranking-model=decision_forest",
     "--sync",
     "--offset-encoding=utf-16",
-    %s
+    "--query-driver=%s"
   },
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
   root_markers = {
@@ -147,17 +147,7 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
-  Add:
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/picolibc/include"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
-    - "--gcc-toolchain=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp"
   Remove:
-    - "-target"
-    - "--target=*"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
