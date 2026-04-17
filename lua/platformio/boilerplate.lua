@@ -148,6 +148,12 @@ boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
   Add:
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include"
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/picolibc/include"
+    - "-IC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
     - "--gcc-toolchain=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp"
   Remove:
     - "-target"
