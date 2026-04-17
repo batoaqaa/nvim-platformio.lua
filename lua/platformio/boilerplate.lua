@@ -138,6 +138,7 @@ clangd
 -- -- Add:
 --   - %q
 --   - %q
+-- - "riscv32-esp-elf"
 -- INFO: .clangd
 -- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
@@ -146,9 +147,11 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
+  Add:
+    - "--gcc-toolchain=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp"
   Remove:
     - "-target"
-    - "riscv32-esp-elf"
+    - "--target=*"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
