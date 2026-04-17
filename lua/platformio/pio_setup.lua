@@ -48,7 +48,7 @@ local function get_sysroot_triplet(cc_compiler)
   -- sysroot folder is expected to have the same name as the triplet
   local sysroot = toolchain_root .. '/' .. triplet
 
-  vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+  -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
   -- Only return data if the sysroot folder actually exists on disk
   if vim.fn.isdirectory(sysroot) == 1 then
     return {
@@ -182,6 +182,7 @@ local pio_manager = (function()
               if callback then
                 vim.schedule(function()
                   vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
+                  print(vim.inspect(_G.metadata.fallback_flags))
                   callback()
                 end)
               end
