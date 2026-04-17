@@ -426,21 +426,21 @@ local function start_pio_watcher()
             0,
             vim.schedule_wrap(function()
               pio_manager.refresh(function()
-                -- vim.schedule(function()
-                local status, data = pcall(get_sysroot_triplet, _G.metadata.cc_compiler)
-                if status and data and data.triplet and data.triplet ~= '' then
-                  _G.metadata.triplet = data.triplet
-                  _G.metadata.sysroot = data.sysroot
-                  _G.metadata.query_driver = data.query_driver
-                  _G.metadata.toolchain = data.toolchain_root
-                end
-                -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
-                boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-                boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+                vim.schedule(function()
+                  local status, data = pcall(get_sysroot_triplet, _G.metadata.cc_compiler)
+                  if status and data and data.triplet and data.triplet ~= '' then
+                    _G.metadata.triplet = data.triplet
+                    _G.metadata.sysroot = data.sysroot
+                    _G.metadata.query_driver = data.query_driver
+                    _G.metadata.toolchain = data.toolchain_root
+                  end
+                  -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
+                  boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+                  boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
 
-                pio_generate_db()
-                lsp.lsp_restart('clangd')
-                -- end)
+                  pio_generate_db()
+                  lsp.lsp_restart('clangd')
+                end)
   end) end)) end end end))
 end
 ------------------------------------------------------------------------------------------------------
