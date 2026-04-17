@@ -138,7 +138,7 @@ function _G.get_clangd_config()
       -- f_flags = string.format([["--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
       f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
-      print(include_flags)
+      -- print(include_flags)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
 
       -- 2.1 Add it to the PATH for this Neovim session
@@ -155,7 +155,8 @@ function _G.get_clangd_config()
 
   -- 3. Format your template string
   local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
+  -- local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
+  local formatted_str = string.format(clangd_config, "", f_flags, new_root_dir)
 
   -- 4. Load the config table
   local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
