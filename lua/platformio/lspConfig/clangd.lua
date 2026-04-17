@@ -1,17 +1,17 @@
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 _G.metadata = {
   envs = {},
+  active_env = '',
   default_envs = {},
   core_dir = '',
   packages_dir = '',
   platforms_dir = '',
-  active_env = '',
   query_driver = '',
   cc_compiler = '',
   triplet = '',
   toolchain = '',
   sysroot = '',
-  fallback_flags = {},
+  fallbackFlags = {},
 }
 
 local ok, result
@@ -124,7 +124,7 @@ function _G.get_clangd_config()
   -- 2. Run your toolchain detection
   if _G.metadata.cc_compiler ~= '' then
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
-      local include_flags = table.concat(_G.metadata.fallback_flags, ", ")
+      local include_flags = table.concat(_G.metadata.fallbackFlags, ", ")
       f_flags = string.format([["-std=c++17", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
@@ -155,6 +155,7 @@ function _G.get_clangd_config()
     return table_config
   end
 end
+
 -- Apply and Enable
 vim.lsp.config('clangd', _G.get_clangd_config())
 vim.lsp.enable('clangd')

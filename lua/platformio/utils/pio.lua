@@ -72,11 +72,12 @@ function M.fix_pio_compile_commands()
   local file = io.open(filename, 'r')
   if not file then return end
 
+  -- read compile_commands.json file to content
   local content = file:read('*a')
   file:close()
   if not content or content == '' then return end
 
-  -- Safe JSON decoding
+  -- JSON decoding content to data
   local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= 'table' then
     vim.notify('PIO Fix: Invalid JSON in ' .. filename, vim.log.levels.ERROR)

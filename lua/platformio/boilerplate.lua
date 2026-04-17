@@ -46,6 +46,8 @@ monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dt
 ;    pre:enable_toolchain.py ; enabled global env 'PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN'
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
+build_flags = 
+    -D COMPILATIONDB_INCLUDE_TOOLCHAIN
 ]],
   content = function(self)
     -- local pio = require('platformio.utils.pio')
