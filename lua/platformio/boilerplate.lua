@@ -79,8 +79,8 @@ boilerplate['.clangd_config'] = {
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
-    %q,
     "--offset-encoding=utf-16",
+    %s
   },
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
   root_markers = {

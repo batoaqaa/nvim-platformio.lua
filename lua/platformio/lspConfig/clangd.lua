@@ -133,7 +133,9 @@ function _G.get_clangd_config()
       -- local include_flags = table.concat(formatted_paths, ", ")
       local include_flags = table.concat(_G.metadata.fallback_flags, ", ")
 
-      q_driver = '--query-driver=' .. _G.metadata.query_driver
+      -- q_driver = '--query-driver=' .. _G.metadata.query_driver
+      -- q_driver = string.format([['--query-driver=%s']],  _G.metadata.query_driver)
+      q_driver = ''
 
       -- f_flags = string.format([["--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
       f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
@@ -156,7 +158,7 @@ function _G.get_clangd_config()
   -- 3. Format your template string
   local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
   -- local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
-  local formatted_str = string.format(clangd_config, "", f_flags, new_root_dir)
+  local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
 
   -- 4. Load the config table
   local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
