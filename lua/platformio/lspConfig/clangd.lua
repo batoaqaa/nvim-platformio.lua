@@ -133,7 +133,7 @@ function _G.get_clangd_config()
       -- local include_flags = table.concat(formatted_paths, ", ")
       local include_flags = table.concat(_G.metadata.fallback_flags, ", ")
 
-      q_driver = '--query-driver=' .. _G.metadata.query_driver
+      q_driver = '--query-driver=' .. _G.metadata.query_driver .. 
 
       f_flags = string.format([["--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
 
