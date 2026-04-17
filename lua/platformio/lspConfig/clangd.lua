@@ -135,7 +135,8 @@ function _G.get_clangd_config()
 
       q_driver = '--query-driver=' .. _G.metadata.query_driver
 
-      f_flags = string.format([["--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
+      -- f_flags = string.format([["--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
+      f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
       print(include_flags)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
