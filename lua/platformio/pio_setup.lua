@@ -71,9 +71,9 @@ local function pio_generate_db()
     if obj.code ~= 0 then
       vim.schedule(function()
         if obj.code == 127 then
-          vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+          vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
         else
-          vim.notify('PIO Manager: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+          vim.notify('PIO Manager db: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
         end
       end)
       return
@@ -136,9 +136,9 @@ local pio_manager = (function()
           -- Schedule notification to avoid error in the system callback thread
           vim.schedule(function()
             if int_obj.code == 127 then
-              vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+              vim.notify("PIO Manager metadata: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
             else
-              vim.notify('PIO Manager: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+              vim.notify('PIO Manager metadata: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
             end
           end)
           return
@@ -215,9 +215,9 @@ local pio_manager = (function()
         -- Schedule notification to avoid error in the system callback thread
         vim.schedule(function()
           if ext_obj.code == 127 then
-            vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+            vim.notify("PIO Manager config: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
           else
-            vim.notify('PIO Manager: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+            vim.notify('PIO Manager config: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
           end
         end)
         return
