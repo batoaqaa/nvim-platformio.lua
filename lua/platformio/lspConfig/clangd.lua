@@ -128,6 +128,7 @@ function _G.get_clangd_config()
       -- f_flags = string.format('"--target=%s", "--sysroot=%s"', _G.metadata.triplet, _G.metadata.sysroot)
       f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
     end
+
     -- 2.1 Add it to the PATH for this Neovim session
     local current_path = vim.trim(vim.env.PATH)
     local sep = (vim.fn.has("win32") == 1 and ";" or ":")
