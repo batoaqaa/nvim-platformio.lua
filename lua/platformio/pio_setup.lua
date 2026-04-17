@@ -169,8 +169,8 @@ local pio_manager = (function()
                 end
               end
               -- 2. Process Defines
-              if env.defines then
-                for _, define in ipairs(env.defines) do
+              if data.defines then
+                for _, define in ipairs(data.defines) do
                   table.insert(fallback_flags, string.format('%q', '-D' .. define))
                 end
               end
