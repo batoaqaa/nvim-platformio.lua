@@ -182,7 +182,6 @@ local pio_manager = (function()
               if callback then
                 vim.schedule(function()
                   vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
-                  print(vim.inspect(_G.metadata.fallback_flags))
                   callback()
                 end)
               end
