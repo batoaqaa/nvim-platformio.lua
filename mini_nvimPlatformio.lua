@@ -113,22 +113,27 @@ keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' 
 
 -- keymap('n', '<leader>bd', '<Cmd>bdelete<CR>', { desc = '[D]elete Buffer' })
 keymap('n', '<leader>bd', function()
-  -- local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
   local bufs = vim.fn.getbufinfo({ buflisted = 1 })
+
   if #bufs <= 1 then
-    -- If it's the last buffer, create a new empty one first
-    -- This prevents focus from jumping to NvimTree
-    vim.cmd('enew | bd #')
+    -- Create a new empty buffer
+    vim.cmd('enew')
   else
-    -- Otherwise, go to the previous buffer and delete the old one
-    vim.cmd('bp | bd #')
+    -- Switch to the previous buffer
+    vim.cmd('bp')
   end
-  -- for _, cli in ipairs(vim.lsp.get_clients()) do
-  --   if cli.attached_buffers and vim.tbl_isempty(cli.attached_buffers) then
-  --     -- if vim.iter(cli.attached_buffers):count() == 0 then
-  --     print('bd: client stop')
-  --     cli:stop(true)
-  --   end
+
+  -- Delete the buffer we started with (using pcall to ignore "No buffers deleted" errors)
+  pcall(vim.api.nvim_buf_delete, bufnr, { force = false })
+
+  -- if #bufs <= 1 then
+  --   -- If it's the last buffer, create a new empty one first
+  --   -- This prevents focus from jumping to NvimTree
+  --   vim.cmd('enew | bd #')
+  -- else
+  --   -- Otherwise, go to the previous buffer and delete the old one
+  --   vim.cmd('bp | bd #')
   -- end
 end, { desc = '[D]elete Buffer' })
 
