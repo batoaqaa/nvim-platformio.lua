@@ -138,15 +138,14 @@ function M.switch_env()
       -- 6. RESTART LSP (Crucial for refreshing includes/defines)
       -- We wrap in pcall in case clangd isn't actually running yet
       pcall(function()
-        vim.cmd('LspRestart clangd')
+        -- Force LSP to pick up new fallbackFlags/defines
+        local lspTools = require('platformio.lsp.tools')
+        lspTools.lsp_restart()
       end)
     end
   end)
 end
 
--- -- Force LSP to pick up new fallbackFlags/defines
--- local lspTools = require('platformio.lsp.tools')
--- lspTools.lsp_restart()
 -- 6. Keybindings
 -- Switch Environment
 vim.keymap.set('n', '<leader>\\e', function()
