@@ -10,32 +10,32 @@ local debounce_timer = vim.uv.new_timer()
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 -- stylua: ignore
 local function pio_generate_db()
-  vim.schedule(function() vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO) end)
+  vim.notify('PIO: Generating Compile Database...', vim.log.levels.INFO)
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    if obj.code ~= 0 then
-      vim.schedule(function()
+    vim.schedule(function()
+      if obj.code ~= 0 then
         if obj.code == 127 then
           vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
         else
           vim.notify('PIO Manager db: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
         end
+        return
+      end
+      vim.schedule(function()
+        vim.notify('PIO: Generating Compile Database successful', vim.log.levels.INFO)
       end)
-      return
-    end
-    vim.schedule(function() vim.notify('PIO: Generating Compile Database successful', vim.log.levels.INFO) end)
+    end)
   end)
 end
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
---- stylua: ignore
+-- stylua: ignore
 local pio_manager = (function()
   local cache = nil -- Stores the decoded platformio.ini JSON structure
   -- INFO:
   local function find_in_data(data, section_name, key_name)
     -- Safety check: Ensure data is a valid table from a successful JSON decode
-    if type(data) ~= 'table' then
-      return nil
-    end
+    if type(data) ~= 'table' then return nil end
 
     for _, section in ipairs(data) do
       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
@@ -74,77 +74,77 @@ local pio_manager = (function()
       vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(int_obj)
         vim.schedule(function()
           vim.notify('PIO: Fetching metadata ...', vim.log.levels.INFO)
-        end)
 
-        if int_obj.code ~= 0 then
-          -- Schedule notification to avoid error in the system callback thread
-          vim.schedule(function()
-            if int_obj.code == 127 then
-              vim.notify("PIO Manager metadata: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
-            else
-              vim.notify('PIO Manager metadata: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
-            end
-          end)
-          return
-        end
-
-        if int_obj.code == 0 and int_obj.stdout then
-          local ok, raw_data = pcall(vim.json.decode, int_obj.stdout)
-          if ok and raw_data then
-            local _, data = next(raw_data)
-            if data then
-              local fallbackFlags = {}
-              -- 1. Process Includes
-              if data.includes then
-                for category, paths in pairs(data.includes) do
-                  -- If it's a toolchain path, use -isystem to suppress warnings
-                  -- and tell clangd these are standard libraries
-                  if category == 'toolchain' then
-                    local flag = '-isystem'
-                    for _, path in ipairs(paths) do
-                      -- table.insert(fallbackFlags, string.format('%q', flag))
-                      -- table.insert(fallbackFlags, string.format('%q', path:gsub('\\', '/')))
-                      table.insert(fallbackFlags, string.format('%q', flag .. path:gsub('\\', '/')))
-                    end
-                  end
-                  -- local flag = (category == 'toolchain') and '-isystem' or '-I'
-                  -- for _, path in ipairs(paths) do
-                  --   table.insert(fallbackFlags, flag .. path)
-                  -- end
-                end
-              end
-              -- 2. Process Defines
-              if data.defines then
-                for _, define in ipairs(data.defines) do
-                  table.insert(fallbackFlags, string.format('%q', '-D' .. define))
-                end
-              end
-
-              -- get [cc_compiler]and [falbackFlags]
-              -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
-              _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
-              _G.metadata.fallbackFlags = fallbackFlags
-
-              -- print(vim.inspect(_G.metadata))
-              if callback then
-                vim.schedule(function()
-                  vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
-                  callback()
-                end)
-              end
-            end
-          else
+          if int_obj.code ~= 0 then
+            -- Schedule notification to avoid error in the system callback thread
             vim.schedule(function()
-              vim.notify('PIO: Syncing Environment failed', vim.log.levels.WARN)
+              if int_obj.code == 127 then
+                vim.notify("PIO Manager metadata: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+              else
+                vim.notify('PIO Manager metadata: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+              end
             end)
+            return
           end
-        end
-        -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
-        if attempts > 0 then
-          vim.defer_fn(function()
-            get_metadata(attempts - 1)
-          end, 500)
-        end
+
+          if int_obj.code == 0 and int_obj.stdout then
+            local ok, raw_data = pcall(vim.json.decode, int_obj.stdout)
+            if ok and raw_data then
+              local _, data = next(raw_data)
+              if data then
+                local fallbackFlags = {}
+                -- 1. Process Includes
+                if data.includes then
+                  for category, paths in pairs(data.includes) do
+                    -- If it's a toolchain path, use -isystem to suppress warnings
+                    -- and tell clangd these are standard libraries
+                    if category == 'toolchain' then
+                      local flag = '-isystem'
+                      for _, path in ipairs(paths) do
+                        -- table.insert(fallbackFlags, string.format('%q', flag))
+                        -- table.insert(fallbackFlags, string.format('%q', path:gsub('\\', '/')))
+                        table.insert(fallbackFlags, string.format('%q', flag .. path:gsub('\\', '/')))
+                      end
+                    end
+                    -- local flag = (category == 'toolchain') and '-isystem' or '-I'
+                    -- for _, path in ipairs(paths) do
+                    --   table.insert(fallbackFlags, flag .. path)
+                    -- end
+                  end
+                end
+                -- 2. Process Defines
+                if data.defines then
+                  for _, define in ipairs(data.defines) do
+                    table.insert(fallbackFlags, string.format('%q', '-D' .. define))
+                  end
+                end
+
+                -- get [cc_compiler]and [falbackFlags]
+                -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
+                _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
+                _G.metadata.fallbackFlags = fallbackFlags
+
+                -- print(vim.inspect(_G.metadata))
+                if callback then
+                  vim.schedule(function()
+                    vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
+                    callback()
+                  end)
+                end
+              end
+            else
+              vim.schedule(function()
+                vim.notify('PIO: Syncing Environment failed', vim.log.levels.WARN)
+              end)
+            end
+          end
+          -- RETRY LOGIC: Handles "Error 1" (file busy) or temporary syntax errors during save
+          if attempts > 0 then
+            vim.defer_fn(function()
+              get_metadata(attempts - 1)
+            end, 500)
+          end
+        end)
       end)
     end
 
@@ -155,87 +155,87 @@ local pio_manager = (function()
     -- HELPER: Navigates the specific nested list format used by 'pio project config --json-output'
     -- The format is typically: { { "section_name", { {"key", "value"}, ... } }, ... }
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(ext_obj)
-      if ext_obj.code ~= 0 then
-        -- Schedule notification to avoid error in the system callback thread
-        vim.schedule(function()
+      vim.schedule(function()
+        if ext_obj.code ~= 0 then
+          -- Schedule notification to avoid error in the system callback thread
           if ext_obj.code == 127 then
             vim.notify("PIO Manager config: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
           else
             vim.notify('PIO Manager config: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
           end
-        end)
-        return
-      end
+          return
+        end
 
-      _G.metadata.core_dir = ''
-      _G.metadata.packages_dir = ''
-      _G.metadata.platforms_dir = ''
-      _G.metadata.active_env = ''
-      _G.metadata.default_envs = {}
-      _G.metadata.envs = {}
+        _G.metadata.core_dir = ''
+        _G.metadata.packages_dir = ''
+        _G.metadata.platforms_dir = ''
+        _G.metadata.active_env = ''
+        _G.metadata.default_envs = {}
+        _G.metadata.envs = {}
 
-      local decoded = vim.json.decode(ext_obj.stdout)
-      for _, section in ipairs(decoded) do
-        if type(section) == 'table' and #section >= 2 then
-          local name, data = section[1], section[2]
-          -- 1. Extract Global PlatformIO Settings if available [core_dir][packages_dir][platforms_dir][default_envs]
-          if name == 'platformio' then
-            for _, kv in ipairs(data) do
-              local key, val = kv[1], kv[2]
-              if key ~= nil then
-                -- if _G.metadata[key] ~= nil then
-                _G.metadata[key] = val
+        local decoded = vim.json.decode(ext_obj.stdout)
+        for _, section in ipairs(decoded) do
+          if type(section) == 'table' and #section >= 2 then
+            local name, data = section[1], section[2]
+            -- 1. Extract Global PlatformIO Settings if available [core_dir][packages_dir][platforms_dir][default_envs]
+            if name == 'platformio' then
+              for _, kv in ipairs(data) do
+                local key, val = kv[1], kv[2]
+                if key ~= nil then
+                  -- if _G.metadata[key] ~= nil then
+                  _G.metadata[key] = val
+                end
+              end
+            -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
+            elseif name:match('^env:') then
+              local env_name = name:match('^env:(.+)')
+              _G.metadata.envs[env_name] = {}
+              for _, kv in ipairs(data) do
+                _G.metadata.envs[env_name][kv[1]] = kv[2]
               end
             end
-          -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
-          elseif name:match('^env:') then
-            local env_name = name:match('^env:(.+)')
-            _G.metadata.envs[env_name] = {}
-            for _, kv in ipairs(data) do
-              _G.metadata.envs[env_name][kv[1]] = kv[2]
+          end
+        end
+        -- assign [active_env]
+        if #_G.metadata.default_envs > 0 then
+          _G.metadata.active_env = _G.metadata.default_envs[1] or ''
+        elseif _G.metadata.envs and next(_G.metadata.envs) ~= '' then
+          _G.metadata.active_env = next(_G.metadata.envs) or ''
+        end
+
+        -- INFO: -- Define Mapping (key in INI, Env Var, Default Subfolder)
+        local map = {
+          core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
+          packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
+          platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
+        }
+        for _, kv in ipairs(map) do
+          -- 4.0 Fallback Logic: INI -> Env Var -> Default
+          local result = _G.metadata[kv.ini] or os.getenv(kv.env or (home .. kv.sub)):gsub('[\\/]+$', '')
+          -- 5. Expand ${platformio.core_dir}
+          if type(result) == 'string' then
+            if result:find('${platformio.core_dir}', 1, true) then
+              result = result:gsub('%${platformio.core_dir}', _G.metadata.core_dir)
             end
           end
+          -- 6. Normalize Slashes for Windows
+          -- _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
+          _G.metadata[kv.ini] = result:gsub('\\', '/'):gsub('//+', '/')
         end
-      end
-      -- assign [active_env]
-      if #_G.metadata.default_envs > 0 then
-        _G.metadata.active_env = _G.metadata.default_envs[1] or ''
-      elseif _G.metadata.envs and next(_G.metadata.envs) ~= '' then
-        _G.metadata.active_env = next(_G.metadata.envs) or ''
-      end
+        -- return _G.metadata[map[type].ini]
+        -- end
 
-      -- INFO: -- Define Mapping (key in INI, Env Var, Default Subfolder)
-      local map = {
-        core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
-        packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
-        platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
-      }
-      for _, kv in ipairs(map) do
-        -- 4.0 Fallback Logic: INI -> Env Var -> Default
-        local result = _G.metadata[kv.ini] or os.getenv(kv.env or (home .. kv.sub)):gsub('[\\/]+$', '')
-        -- 5. Expand ${platformio.core_dir}
-        if type(result) == 'string' then
-          if result:find('${platformio.core_dir}', 1, true) then
-            result = result:gsub('%${platformio.core_dir}', _G.metadata.core_dir)
-          end
+        if _G.metadata.active_env ~= '' then
+          vim.schedule(function()
+            vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
+          end)
+          get_metadata(1, _G.metadata.active_env)
+        else
+          vim.schedule(function()
+            vim.notify('PIO: no [env:] found, add board first', vim.log.levels.ERROR)
+          end)
         end
-        -- 6. Normalize Slashes for Windows
-        -- _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
-        _G.metadata[kv.ini] = result:gsub('\\', '/'):gsub('//+', '/')
-      end
-      -- return _G.metadata[map[type].ini]
-      -- end
-
-      if _G.metadata.active_env ~= '' then
-        vim.schedule(function()
-          vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
-        end)
-        get_metadata(1, _G.metadata.active_env)
-      else
-        vim.schedule(function()
-          vim.notify('PIO: no [env:] found, add board first', vim.log.levels.ERROR)
-        end)
-      end
+      end)
     end)
   end
 
