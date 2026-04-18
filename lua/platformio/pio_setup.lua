@@ -259,7 +259,8 @@ local pio_manager = (function()
       end
       if #_G.metadata.default_envs > 0 then
         _G.metadata.active_env = _G.metadata.default_envs[1] or ''
-      else
+      -- else
+      elseif _G.metadata.envs and #_G.metadata.envs > 0 then
         _G.metadata.active_env = next(_G.metadata.envs) or ''
       end
 
