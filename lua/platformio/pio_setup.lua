@@ -487,6 +487,7 @@ function M.init()
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
+    boilerplate_gen([[generate_compileDB.py]], vim.g.platformioRootDir)
     ---------------------------------------------------------------------------------
 
     require('platformio.lsp.clangd')
