@@ -493,7 +493,8 @@ function M.init()
     end
 
     -- Always start the watcher so it can catch a future 'pio init'
-    M.start_pio_watcher()
+    -- M.start_pio_watcher()
+    M.start_watcher()
 
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
