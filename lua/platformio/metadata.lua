@@ -15,6 +15,15 @@ _G.metadata = _G.metadata
     fallbackFlags = {},
   }
 
+_G.get_pio_status = function()
+  if _G.metadata and _G.metadata.active_env ~= '' then
+    return ' [   ' .. _G.metadata.active_env .. '] '
+  end
+  return ''
+end
+
+vim.o.statusline = '%f %m %r %= %{v:lua.get_pio_status()} %y %p%% %l:%c'
+
 local M = {}
 local last_saved_hash = ''
 local config_path = vim.fn.getcwd() .. '/.project_config.json'
