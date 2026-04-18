@@ -453,8 +453,6 @@ function M.init()
   if config.lspClangd.enabled == true then
     vim.notify('PIO setup initialize', vim.log.levels.INFO)
 
-    -- get_meta()
-
     -- activate meta save and upload and env switch
     local metadata = require('platformio.metadata')
     metadata.load_project_config()
@@ -470,11 +468,11 @@ function M.init()
     })
     -- 5. Keybindings
     -- Switch Environment
-    vim.keymap.set('n', '<leader>pe', metadata.switch_env, { desc = 'PlatformIO: Switch Environment' })
+    vim.keymap.set('n', '<leader>\\e', metadata.switch_env, { desc = 'PlatformIO: Switch Environment' })
     -- Manual Status Check
-    vim.keymap.set('n', '<leader>ps', function()
+    vim.keymap.set('n', '<leader>\\s', function()
       metadata().save_project_config(false)
-    end, { desc = 'PlatformIO: Status' })
+    end, { desc = 'PlatformIO: config status' })
 
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
