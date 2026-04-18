@@ -1,3 +1,9 @@
+-- Performance-proof: Uses guaranteed Vimscript sha256 via Lua bridge
+local function get_safe_hash(data)
+  -- sha256 is built into Neovim's core and never nil
+  return vim.fn.sha256(data)
+end
+
 local M = {}
 local last_saved_hash = nil
 local config_path = vim.fn.getcwd() .. '/.pioConfig.json'
@@ -35,12 +41,6 @@ local default_metadata = {
 }
 
 -- 1. Optimized Save Function
-
--- Performance-proof: Uses guaranteed Vimscript sha256 via Lua bridge
-local function get_safe_hash(data)
-  -- sha256 is built into Neovim's core and never nil
-  return vim.fn.sha256(data)
-end
 
 function M.save_project_config(quiet)
   if not _G.metadata or vim.fn.filereadable('platformio.ini') == 0 then
