@@ -34,9 +34,28 @@
 
 local M = {}
 local last_saved_hash = nil
-local config_path = vim.fn.getcwd() .. '/.project_config.json'
+local config_path = vim.fn.getcwd() .. '/.pioConfig.json'
 
-M.metadata = _G.metadata
+-- This function ensures metadata is NEVER nil when you call it
+local function get_meta()
+  if not _G.metadata then
+    _G.metadata = {
+      envs = {},
+      active_env = '',
+      default_envs = {},
+      core_dir = '',
+      packages_dir = '',
+      platforms_dir = '',
+      query_driver = '',
+      cc_compiler = '',
+      triplet = '',
+      toolchain = '',
+      sysroot = '',
+      fallbackFlags = {},
+    }
+  end
+  -- return _G.metadata
+end
 
 -- 1. Optimized Save Function
 function M.save_project_config(quiet)
@@ -77,9 +96,10 @@ function M.load_project_config()
       if ok and decoded then
         _G.metadata = decoded
         last_saved_hash = vim.hash(content)
-        vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, {
-          title = 'PlatformIO Loaded',
-        })
+        vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: .pioCongig.json Loaded' })
+      else
+        get_meta()
+        vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: defautl Loaded' })
       end
     end
   end
