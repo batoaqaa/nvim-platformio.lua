@@ -1,18 +1,18 @@
--- Global metadata initialization
-_G.metadata = {
-  envs = {},
-  active_env = '',
-  default_envs = {},
-  core_dir = '',
-  packages_dir = '',
-  platforms_dir = '',
-  query_driver = '',
-  cc_compiler = '',
-  triplet = '',
-  toolchain = '',
-  sysroot = '',
-  fallbackFlags = {},
-}
+-- -- Global metadata initialization
+-- _G.metadata = {
+--   envs = {},
+--   active_env = '',
+--   default_envs = {},
+--   core_dir = '',
+--   packages_dir = '',
+--   platforms_dir = '',
+--   query_driver = '',
+--   cc_compiler = '',
+--   triplet = '',
+--   toolchain = '',
+--   sysroot = '',
+--   fallbackFlags = {},
+-- }
 
 local M = {}
 local last_saved_hash = nil
