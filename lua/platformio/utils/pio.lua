@@ -2,7 +2,6 @@ local M = {}
 
 M.selected_framework = ''
 
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio..lsp.tools')
 
@@ -217,6 +216,7 @@ function M.handleDb()
   misc.gitignore_lsp_configs('compile_commands.json')
   local pio_manager = require('platformio.utils.pio').pio_manager
   pio_manager.refresh(function()
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     M.fix_pio_compile_commands()
     lsp.lsp_restart('clangd')
@@ -229,6 +229,7 @@ end
 function M.handlePioinit()
   -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+  local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
   vim.notify('Pioinit: Success', vim.log.levels.INFO)
 end
