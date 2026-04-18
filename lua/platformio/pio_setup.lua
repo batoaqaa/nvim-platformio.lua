@@ -469,7 +469,7 @@ function M.init()
     vim.keymap.set('n', '<leader>\\e', metadata.switch_env, { desc = 'Switch environment' })
     -- Manual Status Check
     vim.keymap.set('n', '<leader>\\s', function()
-      metadata().save_project_config(false)
+      metadata.save_project_config(false)
     end, { desc = 'Config status' })
 
     ----------------------------------------------------------------------------------------
