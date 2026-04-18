@@ -453,7 +453,7 @@ function M.init()
     -- get_meta()
 
     -- activate meta save and upload and env switch
-    local metadata = require('platformio.utils.metadata')
+    local metadata = require('platformio.metadata')
     metadata.load_project_config()
 
     local pio_group = vim.api.nvim_create_augroup('PioPersist', { clear = true })
