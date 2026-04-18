@@ -133,17 +133,17 @@ end
 
 -- 6. Keybindings
 -- Switch Environment
--- vim.keymap.set('n', '<leader>\\e', function()
---   M.switch_env()
--- end, { desc = 'Switch environment' })
+vim.keymap.set('n', '<leader>\\e', function()
+  M.switch_env()
+end, { desc = 'Switch environment' })
 
 -- write
--- vim.keymap.set('n', '<leader>\\s', function()
---   M.save_project_config(false)
--- end, { desc = 'Config status' })
+vim.keymap.set('n', '<leader>\\s', function()
+  M.save_project_config(false)
+end, { desc = 'Config status' })
 
 -- Manual Status Check
-vim.keymap.set('n', '<leader>ps', function()
+vim.keymap.set('n', '<leader>\\s', function()
   M.show_status()
 end, { desc = 'PIO Status' })
 
