@@ -15,15 +15,15 @@ _G.metadata = _G.metadata
     fallbackFlags = {},
   }
 
+-- Move the %#PioStatus# and %* outside of the curly braces
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+
 _G.get_pio_status = function()
   if _G.metadata and _G.metadata.active_env ~= '' then
-    -- return ' [   ' .. _G.metadata.active_env .. '] '
-    return '%#PioStatus# [   ' .. _G.metadata.active_env .. '] %*'
+    return ' [   ' .. _G.metadata.active_env .. '] '
   end
   return ''
 end
-
-vim.o.statusline = '%f %m %r %= %{v:lua.get_pio_status()} %y %p%% %l:%c'
 
 local M = {}
 local last_saved_hash = ''
