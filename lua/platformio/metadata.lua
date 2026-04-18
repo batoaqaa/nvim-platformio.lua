@@ -17,7 +17,8 @@ _G.metadata = _G.metadata
 
 _G.get_pio_status = function()
   if _G.metadata and _G.metadata.active_env ~= '' then
-    return ' [   ' .. _G.metadata.active_env .. '] '
+    -- return ' [   ' .. _G.metadata.active_env .. '] '
+    return '%#PioStatus# [   ' .. _G.metadata.active_env .. '] %*'
   end
   return ''
 end
