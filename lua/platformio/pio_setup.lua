@@ -95,7 +95,7 @@ local pio_manager = (function()
 
     for _, section in ipairs(data) do
       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
-      if type(section) == 'table' and #section >= 2 then
+      if section and type(section) == 'table' and #section >= 2 then
         local s_id = section[1] -- Section header string
         local s_body = section[2] -- Table of key-value pairs
 
