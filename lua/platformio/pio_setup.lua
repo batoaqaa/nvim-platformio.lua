@@ -4,63 +4,7 @@ local misc = require('platformio.utils.misc')
 local lsp = require('platformio.lsp.tools')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
--- lua/pio_setup.lua
--- This module manages PlatformIO project integration, LSP toolchain detection,
--- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
-
 local debounce_timer = vim.uv.new_timer()
-
--- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
--- -- INFO:
--- -- =============================================================================
--- -- UNIVERSAL TOOLCHAIN DETECTION
--- -- =============================================================================
--- --- stylua: ignore
--- local function get_sysroot_triplet(cc_compiler)
---   local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
---   -- Early exit if path is nil or not a directory
---   if not bin_path or vim.fn.isdirectory(bin_path) == 0 then
---     return nil
---   end
---
---   -- Normalize backslashes to forward slashes for cross-platform consistency
---   bin_path = bin_path:gsub('\\', '/')
---   local files = vim.fn.readdir(bin_path)
---   local triplet = nil
---
---   -- Loop through files to find the compiler and extract the triplet
---   for _, name in ipairs(files) do
---     -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
---     local match = name:match('^(.*)%-g[c%+][c%+]')
---     if match then
---       triplet = match
---       break
---     end
---   end
---
---   -- Return nil if no compiler was found in the bin directory
---   if not triplet then
---     return nil
---   end
---
---   -- toolchain_root is the parent of the 'bin' folder
---   local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
---   -- sysroot folder is expected to have the same name as the triplet
---   local sysroot = toolchain_root .. '/' .. triplet
---
---   -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
---   -- Only return data if the sysroot folder actually exists on disk
---   if vim.fn.isdirectory(sysroot) == 1 then
---     return {
---       triplet = triplet,
---       sysroot = sysroot,
---       toolchain_root = toolchain_root,
---       query_driver = bin_path .. '/' .. triplet .. '-*',
---     }
---   end
---   return nil
--- end
---
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -390,60 +334,131 @@ end
 
 -- INFO:
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
+--- stylua: ignore
+----------------------------------------------------------------------------------------------
+
+local last_ini_hash = nil
+
+-- Helper to safely read file content
+local function safe_read_file(path)
+  local f = io.open(path, 'r')
+  if not f then
+    return nil
+  end
+  local content = f:read('*a')
+  f:close()
+  return content
+end
+
+local function wait_and_refresh()
+  -- Check if handle is valid before proceeding
+  if not pio_manager or not lsp then
+    vim.notify('PIO Manager or LSP module not found', vim.log.levels.ERROR)
+    return
+  end
+
+  -- Check for lockfile (adjust path if your project uses different build dir)
+  local lock_file = vim.uv.cwd() .. '/.pio/build/lockfile'
+  if vim.fn.filereadable(lock_file) == 1 then
+    vim.defer_fn(wait_and_refresh, 1000)
+    return
+  end
+
+  pio_manager.refresh(function()
+    pcall(function()
+      boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+      -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+      pio_generate_db()
+      lsp.lsp_restart('clangd')
+    end)
+    vim.notify('Build finished: Config reloaded', vim.log.levels.INFO, { title = 'PlatformIO' })
+  end)
+end
+
 -- stylua: ignore
-local function start_pio_watcher()
-  local dir_path = vim.uv.cwd()
-  if not dir_path then return end
+function M.start_pio_watcher()
+  local cwd = vim.uv.cwd()
+  if not cwd then return end
 
-  -- Create a directory watcher
+  local ini_path = cwd .. '/platformio.ini'
+  if vim.fn.filereadable(ini_path) == 0 then return end
+
+  -- Initial hash setup
+  local init_content = safe_read_file(ini_path)
+  if init_content then last_ini_hash = vim.fn.sha256(init_content) end
+
   local handle = vim.uv.new_fs_event()
-  if not handle then return end
+  if not handle then vim.notify('Failed to create FS watcher', vim.log.levels.ERROR) return
+  end
 
-  -- local last_trigger = 0
-  -- Watch the directory for platformio.ini creation or changes
   handle:start(
-    dir_path,
-    {
-      watch_entry = false, -- watch the file/dir itself
-      stat = false,        -- use stat to detect changes (slower but more reliable on some FS)
-      recursive = false,   -- watch subdirectories (if path is a directory)
-    },
+    cwd,
+    { recursive = false },
     vim.schedule_wrap(function(err, filename, events)
-      if err or not events or not events.change then return end
-      -- Trigger only if the changed file is platformio.ini
-      if filename == 'platformio.ini' and (events.change or events.rename) then
-        -- -- ignore events within time
-        -- local current_time = vim.uv.now()
-        -- -- IGNORE events if they happen within 100ms of the last one
-        -- if current_time - last_trigger < 100 then
-        --     return
-        -- end
-        -- last_trigger = current_time
+      -- 1. Check for UV errors or nil filenames
+      if err then
+        vim.notify('Watcher error: ' .. tostring(err), vim.log.levels.ERROR)
+        return
+      end
+      if filename ~= 'platformio.ini' or not events then return end
 
+      -- 2. Safe read with pcall (Windows may lock the file during 'pio run')
+      local ok, new_content = pcall(safe_read_file, ini_path)
+      if not ok or not new_content then return end
+
+      -- 3. Content check
+      local new_hash = vim.fn.sha256(new_content)
+      if new_hash ~= last_ini_hash then
+        last_ini_hash = new_hash
+
+        -- 4. Check for timer nil
         if debounce_timer then
           debounce_timer:stop()
-          debounce_timer:start(
-            500,
-            0,
-            vim.schedule_wrap(function()
-              pio_manager.refresh(function()
-                -- vim.schedule(function()
-                -- local status, data = pcall(lsp.get_sysroot_triplet, _G.metadata.cc_compiler)
-                -- if status and data and data.triplet and data.triplet ~= '' then
-                --   _G.metadata.triplet = data.triplet
-                --   _G.metadata.sysroot = data.sysroot
-                --   _G.metadata.query_driver = data.query_driver
-                --   _G.metadata.toolchain = data.toolchain_root
-                -- end
-                -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
-                boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-                boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-
-                pio_generate_db()
-                lsp.lsp_restart('clangd')
-                -- end)
-  end) end)) end end end))
+          debounce_timer:start(500, 0, vim.schedule_wrap(wait_and_refresh))
+        end
+      end
+    end)
+  )
 end
+
+----------------------------------------------------------------------------------------------
+-- local function start_pio_watcher()
+--   local dir_path = vim.uv.cwd()
+--   if not dir_path then return end
+--
+--   -- Create a directory watcher
+--   local handle = vim.uv.new_fs_event()
+--   if not handle then return end
+--
+--   -- local last_trigger = 0
+--   -- Watch the directory for platformio.ini creation or changes
+--   handle:start(
+--     dir_path,
+--     {
+--       watch_entry = false, -- watch the file/dir itself
+--       stat = false,        -- use stat to detect changes (slower but more reliable on some FS)
+--       recursive = false,   -- watch subdirectories (if path is a directory)
+--     },
+--     vim.schedule_wrap(function(err, filename, events)
+--       if err or not events or not events.change then return end
+--       -- Trigger only if the changed file is platformio.ini
+--       if filename == 'platformio.ini' and (events.change or events.rename) then
+--         if debounce_timer then
+--           debounce_timer:stop()
+--           debounce_timer:start(
+--             500,
+--             0,
+--             vim.schedule_wrap(function()
+--               pio_manager.refresh(function()
+--                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+--                 boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+--                 -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+--                 pio_generate_db()
+--                 lsp.lsp_restart('clangd')
+--                 -- end)
+--   end) end)) end end end))
+-- end
 ------------------------------------------------------------------------------------------------------
 -- INFO: 6.  Exported setup function
 function M.init()
@@ -459,10 +474,6 @@ function M.init()
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[.clangd]], require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-    -- boilerplate_gen([[.clangd]], vim.fn.stdpath('data'))
-    -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
     ---------------------------------------------------------------------------------
@@ -473,7 +484,7 @@ function M.init()
     end
 
     -- Always start the watcher so it can catch a future 'pio init'
-    start_pio_watcher()
+    M.start_pio_watcher()
 
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then

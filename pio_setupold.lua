@@ -4,7 +4,63 @@
 -- local lsp = require('platformio.lsp.tools')
 -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 --
+-- -- lua/pio_setup.lua
+-- -- This module manages PlatformIO project integration, LSP toolchain detection,
+-- -- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
+--
 -- local debounce_timer = vim.uv.new_timer()
+--
+-- -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+-- -- INFO:
+-- -- =============================================================================
+-- -- UNIVERSAL TOOLCHAIN DETECTION
+-- -- =============================================================================
+-- --- stylua: ignore
+-- local function get_sysroot_triplet(cc_compiler)
+--   local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
+--   -- Early exit if path is nil or not a directory
+--   if not bin_path or vim.fn.isdirectory(bin_path) == 0 then
+--     return nil
+--   end
+--
+--   -- Normalize backslashes to forward slashes for cross-platform consistency
+--   bin_path = bin_path:gsub('\\', '/')
+--   local files = vim.fn.readdir(bin_path)
+--   local triplet = nil
+--
+--   -- Loop through files to find the compiler and extract the triplet
+--   for _, name in ipairs(files) do
+--     -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
+--     local match = name:match('^(.*)%-g[c%+][c%+]')
+--     if match then
+--       triplet = match
+--       break
+--     end
+--   end
+--
+--   -- Return nil if no compiler was found in the bin directory
+--   if not triplet then
+--     return nil
+--   end
+--
+--   -- toolchain_root is the parent of the 'bin' folder
+--   local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+--   -- sysroot folder is expected to have the same name as the triplet
+--   local sysroot = toolchain_root .. '/' .. triplet
+--
+--   -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+--   -- Only return data if the sysroot folder actually exists on disk
+--   if vim.fn.isdirectory(sysroot) == 1 then
+--     return {
+--       triplet = triplet,
+--       sysroot = sysroot,
+--       toolchain_root = toolchain_root,
+--       query_driver = bin_path .. '/' .. triplet .. '-*',
+--     }
+--   end
+--   return nil
+-- end
+--
 --
 -- -- INFO:
 -- -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -39,7 +95,7 @@
 --
 --     for _, section in ipairs(data) do
 --       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
---       if section and type(section) == 'table' and #section >= 2 then
+--       if type(section) == 'table' and #section >= 2 then
 --         local s_id = section[1] -- Section header string
 --         local s_body = section[2] -- Table of key-value pairs
 --
@@ -166,7 +222,6 @@
 --         end)
 --         return
 --       end
---
 --       _G.metadata.core_dir = ''
 --       _G.metadata.packages_dir = ''
 --       _G.metadata.platforms_dir = ''
@@ -200,7 +255,7 @@
 --       -- assign [active_env]
 --       if #_G.metadata.default_envs > 0 then
 --         _G.metadata.active_env = _G.metadata.default_envs[1] or ''
---       elseif _G.metadata.envs and next(_G.metadata.envs) ~= '' then
+--       elseif _G.metadata.envs and #_G.metadata.envs > 0 then
 --         _G.metadata.active_env = next(_G.metadata.envs) or ''
 --       end
 --
@@ -356,6 +411,14 @@
 --       if err or not events or not events.change then return end
 --       -- Trigger only if the changed file is platformio.ini
 --       if filename == 'platformio.ini' and (events.change or events.rename) then
+--         -- -- ignore events within time
+--         -- local current_time = vim.uv.now()
+--         -- -- IGNORE events if they happen within 100ms of the last one
+--         -- if current_time - last_trigger < 100 then
+--         --     return
+--         -- end
+--         -- last_trigger = current_time
+--
 --         if debounce_timer then
 --           debounce_timer:stop()
 --           debounce_timer:start(
@@ -363,8 +426,18 @@
 --             0,
 --             vim.schedule_wrap(function()
 --               pio_manager.refresh(function()
+--                 -- vim.schedule(function()
+--                 local status, data = pcall(get_sysroot_triplet, _G.metadata.cc_compiler)
+--                 if status and data and data.triplet and data.triplet ~= '' then
+--                   _G.metadata.triplet = data.triplet
+--                   _G.metadata.sysroot = data.sysroot
+--                   _G.metadata.query_driver = data.query_driver
+--                   _G.metadata.toolchain = data.toolchain_root
+--                 end
+--                 -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
 --                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
 --                 boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+--
 --                 pio_generate_db()
 --                 lsp.lsp_restart('clangd')
 --                 -- end)
@@ -376,11 +449,6 @@
 --   local config = require('platformio').config
 --   if config.lspClangd.enabled == true then
 --     vim.notify('PIO setup initialize', vim.log.levels.INFO)
---
---     -- activate meta save and upload and env switch
---     local metadata = require('platformio.metadata')
---     metadata.load_project_config()
---
 --     ----------------------------------------------------------------------------------------
 --     -- INFO: create clangd required files
 --     -----------------------------------------------------------------------------------------
