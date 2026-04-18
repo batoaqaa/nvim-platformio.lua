@@ -94,15 +94,25 @@ function M.show_status()
   vim.notify(string.format('Environment: %s\nTarget: %s', env, meta.triplet or 'Unknown'), vim.log.levels.INFO, { title = 'PlatformIO Status' })
 end
 
+local pio_group = vim.api.nvim_create_augroup('PioPersist', { clear = true })
+vim.api.nvim_create_autocmd({ 'BufWritePost', 'VimLeavePre' }, {
+  group = pio_group,
+  callback = function()
+    -- Pass 'true' to save silently in the background
+    M.save_project_config(true)
+  end,
+  desc = 'Automatically save PlatformIO project metadata',
+})
+
 -- 5. Keybindings
 -- Switch Environment
-vim.keymap.set('n', '<leader>\\e', metadata.switch_env(), { desc = 'Switch environment' })
+vim.keymap.set('n', '<leader>\\e', M.switch_env(), { desc = 'Switch environment' })
 
 -- write
 -- vim.keymap.set('n', '<leader>\\s', function()
---   metadata.save_project_config(false)
+--   M.save_project_config(false)
 -- end, { desc = 'Config status' })
 
 -- Manual Status Check
-vim.keymap.set('n', '<leader>ps', metadata.show_status(), { desc = 'PIO Status' })
+vim.keymap.set('n', '<leader>ps', M.show_status(), { desc = 'PIO Status' })
 return M

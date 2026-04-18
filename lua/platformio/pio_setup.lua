@@ -455,16 +455,6 @@ function M.init()
     local metadata = require('platformio.metadata')
     metadata.load_project_config()
 
-    local pio_group = vim.api.nvim_create_augroup('PioPersist', { clear = true })
-    vim.api.nvim_create_autocmd({ 'BufWritePost', 'VimLeavePre' }, {
-      group = pio_group,
-      callback = function()
-        -- Pass 'true' to save silently in the background
-        metadata.save_project_config(true)
-      end,
-      desc = 'Automatically save PlatformIO project metadata',
-    })
-
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
