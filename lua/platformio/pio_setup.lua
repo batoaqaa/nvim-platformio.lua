@@ -1,3 +1,19 @@
+_G.metadata = _G.metadata
+  or {
+    envs = {},
+    active_env = '',
+    default_envs = {},
+    core_dir = '',
+    packages_dir = '',
+    platforms_dir = '',
+    query_driver = '',
+    cc_compiler = '',
+    triplet = '',
+    toolchain = '',
+    sysroot = '',
+    fallbackFlags = {},
+  }
+
 M = {}
 
 local misc = require('platformio.utils.misc')
