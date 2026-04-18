@@ -223,14 +223,12 @@ local pio_manager = (function()
         return
       end
 
-      if _G.metadata then
-        _G.metadata.core_dir = ''
-        _G.metadata.packages_dir = ''
-        _G.metadata.platforms_dir = ''
-        _G.metadata.active_env = ''
-        _G.metadata.default_envs = {}
-        _G.metadata.envs = {}
-      end
+      _G.metadata.core_dir = ''
+      _G.metadata.packages_dir = ''
+      _G.metadata.platforms_dir = ''
+      _G.metadata.active_env = ''
+      _G.metadata.default_envs = {}
+      _G.metadata.envs = {}
 
       local decoded = vim.json.decode(ext_obj.stdout)
       for _, section in ipairs(decoded) do
@@ -468,11 +466,11 @@ function M.init()
     })
     -- 5. Keybindings
     -- Switch Environment
-    vim.keymap.set('n', '<leader>\\e', metadata.switch_env, { desc = 'PlatformIO: Switch Environment' })
+    vim.keymap.set('n', '<leader>\\e', metadata.switch_env, { desc = 'Switch environment' })
     -- Manual Status Check
     vim.keymap.set('n', '<leader>\\s', function()
       metadata().save_project_config(false)
-    end, { desc = 'PlatformIO: config status' })
+    end, { desc = 'Config status' })
 
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files

@@ -2,22 +2,37 @@ local M = {}
 local last_saved_hash = nil
 local config_path = vim.fn.getcwd() .. '/.pioConfig.json'
 
--- Global metadata initialization
-_G.metadata = _G.metadata
-  or {
-    envs = {},
-    active_env = '',
-    default_envs = {},
-    core_dir = '',
-    packages_dir = '',
-    platforms_dir = '',
-    query_driver = '',
-    cc_compiler = '',
-    triplet = '',
-    toolchain = '',
-    sysroot = '',
-    fallbackFlags = {},
-  }
+-- -- Global metadata initialization
+-- _G.metadata = _G.metadata
+--   or {
+--     envs = {},
+--     active_env = '',
+--     default_envs = {},
+--     core_dir = '',
+--     packages_dir = '',
+--     platforms_dir = '',
+--     query_driver = '',
+--     cc_compiler = '',
+--     triplet = '',
+--     toolchain = '',
+--     sysroot = '',
+--     fallbackFlags = {},
+--   }
+
+local default_metadata = {
+  envs = {},
+  active_env = '',
+  default_envs = {},
+  core_dir = '',
+  packages_dir = '',
+  platforms_dir = '',
+  query_driver = '',
+  cc_compiler = '',
+  triplet = '',
+  toolchain = '',
+  sysroot = '',
+  fallbackFlags = {},
+}
 
 -- 1. Optimized Save Function
 function M.save_project_config(quiet)
@@ -48,28 +63,36 @@ end
 
 -- 2. Robust Load Function (Startup)
 function M.load_project_config()
-  if vim.fn.filereadable(config_path) == 1 then
-    local file = io.open(config_path, 'r')
+  local path = vim.fn.getcwd() .. '/.project_config.json'
+  local success = false
+
+  -- 1. Attempt to read and decode
+  if vim.fn.filereadable(path) == 1 then
+    local file = io.open(path, 'r')
     if file then
       local content = file:read('*a')
       file:close()
-
       local ok, decoded = pcall(vim.json.decode, content)
-      if ok and decoded then
+      if ok and type(decoded) == 'table' then
         _G.metadata = decoded
         last_saved_hash = vim.hash(content)
-        vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: .pioCongig.json Loaded' })
-        -- else
-        --   get_meta()
-        --   vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: defautl Loaded' })
+        success = true
       end
-      -- else
-      --   get_meta()
-      --   vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: defautl Loaded' })
+    end
+  end
+
+  -- 2. Fallback: If loading failed or file didn't exist, use defaults
+  if not success then
+    -- We use vim.deepcopy to ensure we don't accidentally edit the 'default' template
+    _G.metadata = vim.deepcopy(default_metadata)
+    last_saved_hash = vim.hash(vim.json.encode(_G.metadata))
+
+    -- Optional: Notify only if we are actually in a PIO project
+    if vim.fn.filereadable('platformio.ini') == 1 then
+      vim.notify('Initialized new project metadata', vim.log.levels.INFO, { title = 'PlatformIO' })
     end
   end
 end
-
 -- 3. Environment Switcher UI
 function M.switch_env()
   if not _G.metadata.envs or next(_G.metadata.envs) == nil then
