@@ -1,22 +1,42 @@
 -- -- Global metadata initialization
--- _G.metadata = {
---   envs = {},
---   active_env = '',
---   default_envs = {},
---   core_dir = '',
---   packages_dir = '',
---   platforms_dir = '',
---   query_driver = '',
---   cc_compiler = '',
---   triplet = '',
---   toolchain = '',
---   sysroot = '',
---   fallbackFlags = {},
--- }
+-- Load the PIO setup logic
+-- if not _G.metadata then
+--   _G.metadata = {
+--     envs = {},
+--     active_env = '',
+--     default_envs = {},
+--     core_dir = '',
+--     packages_dir = '',
+--     platforms_dir = '',
+--     query_driver = '',
+--     cc_compiler = '',
+--     triplet = '',
+--     toolchain = '',
+--     sysroot = '',
+--     fallbackFlags = {},
+--   }
+-- end
+-- _G.metadata = _G.metadata
+--   or {
+--     envs = {},
+--     active_env = '',
+--     default_envs = {},
+--     core_dir = '',
+--     packages_dir = '',
+--     platforms_dir = '',
+--     query_driver = '',
+--     cc_compiler = '',
+--     triplet = '',
+--     toolchain = '',
+--     sysroot = '',
+--     fallbackFlags = {},
+--   }
 
 local M = {}
 local last_saved_hash = nil
 local config_path = vim.fn.getcwd() .. '/.project_config.json'
+
+M.metadata = _G.metadata
 
 -- 1. Optimized Save Function
 function M.save_project_config(quiet)
