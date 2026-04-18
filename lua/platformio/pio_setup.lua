@@ -222,12 +222,15 @@ local pio_manager = (function()
         end)
         return
       end
-      _G.metadata.core_dir = ''
-      _G.metadata.packages_dir = ''
-      _G.metadata.platforms_dir = ''
-      _G.metadata.active_env = ''
-      _G.metadata.default_envs = {}
-      _G.metadata.envs = {}
+
+      if _G.metadata then
+        _G.metadata.core_dir = ''
+        _G.metadata.packages_dir = ''
+        _G.metadata.platforms_dir = ''
+        _G.metadata.active_env = ''
+        _G.metadata.default_envs = {}
+        _G.metadata.envs = {}
+      end
 
       local decoded = vim.json.decode(ext_obj.stdout)
       for _, section in ipairs(decoded) do
