@@ -94,4 +94,15 @@ function M.show_status()
   vim.notify(string.format('Environment: %s\nTarget: %s', env, meta.triplet or 'Unknown'), vim.log.levels.INFO, { title = 'PlatformIO Status' })
 end
 
+-- 5. Keybindings
+-- Switch Environment
+vim.keymap.set('n', '<leader>\\e', metadata.switch_env(), { desc = 'Switch environment' })
+
+-- write
+-- vim.keymap.set('n', '<leader>\\s', function()
+--   metadata.save_project_config(false)
+-- end, { desc = 'Config status' })
+
+-- Manual Status Check
+vim.keymap.set('n', '<leader>ps', metadata.show_status(), { desc = 'PIO Status' })
 return M

@@ -465,17 +465,6 @@ function M.init()
       desc = 'Automatically save PlatformIO project metadata',
     })
 
-    -- 5. Keybindings
-    -- Switch Environment
-    vim.keymap.set('n', '<leader>\\e', metadata.switch_env(), { desc = 'Switch environment' })
-
-    -- write
-    -- vim.keymap.set('n', '<leader>\\s', function()
-    --   metadata.save_project_config(false)
-    -- end, { desc = 'Config status' })
-
-    -- Manual Status Check
-    vim.keymap.set('n', '<leader>ps', metadata.show_status(), { desc = 'PIO Status' })
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
