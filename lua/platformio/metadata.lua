@@ -135,16 +135,16 @@ end
 -- Switch Environment
 vim.keymap.set('n', '<leader>\\e', function()
   M.switch_env()
-end, { desc = 'Switch environment' })
+end, { desc = 'Switch [E]nvironment' })
 
 -- write
-vim.keymap.set('n', '<leader>\\s', function()
+vim.keymap.set('n', '<leader>\\w', function()
   M.save_project_config(false)
-end, { desc = 'Config status' })
+end, { desc = 'config [W]rite' })
 
 -- Manual Status Check
 vim.keymap.set('n', '<leader>\\s', function()
   M.show_status()
-end, { desc = 'PIO Status' })
+end, { desc = 'config [S]tatus' })
 
 return M
