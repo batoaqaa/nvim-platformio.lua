@@ -450,22 +450,6 @@ function M.init()
   if config.lspClangd.enabled == true then
     vim.notify('PIO setup initialize', vim.log.levels.INFO)
 
-    if not _G.metadata then
-      _G.metadata = {
-        envs = {},
-        active_env = '',
-        default_envs = {},
-        core_dir = '',
-        packages_dir = '',
-        platforms_dir = '',
-        query_driver = '',
-        cc_compiler = '',
-        triplet = '',
-        toolchain = '',
-        sysroot = '',
-        fallbackFlags = {},
-      }
-    end
     -- -- activate meta save and upload and env switch
     -- local metadata = require('platformio.utils.metadata')
     -- metadata.load_project_config()

@@ -184,6 +184,22 @@ function M.setup(user_config)
   require('platformio.piomenu').piomenu(M.config)
 
   -- Load the PIO setup logic
+  if not _G.metadata then
+    _G.metadata = {
+      envs = {},
+      active_env = '',
+      default_envs = {},
+      core_dir = '',
+      packages_dir = '',
+      platforms_dir = '',
+      query_driver = '',
+      cc_compiler = '',
+      triplet = '',
+      toolchain = '',
+      sysroot = '',
+      fallbackFlags = {},
+    }
+  end
   require('platformio.pio_setup').init()
 end
 
