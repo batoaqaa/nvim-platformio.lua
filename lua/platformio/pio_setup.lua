@@ -13,7 +13,7 @@ local is_ignoring_watcher = false
 -- stylua: ignore
 local function pio_generate_db()
   is_ignoring_watcher = true -- Mute watcher
-  vim.notify('PIO: Generating Compile DB...', vim.log.levels.INFO)
+  vim.schedule(function() vim.notify('PIO: Generating Compile DB ...', vim.log.levels.INFO) end)
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     vim.schedule(function()
       is_ignoring_watcher = false -- Unmute
@@ -21,11 +21,11 @@ local function pio_generate_db()
         if obj.code == 127 then
           vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
         else
-          vim.notify('PIO Manager db: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+          vim.notify('PIO Manager db: Generating Compile DB failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
         end
         return
       end
-      vim.notify('PIO: Generating Compile Database successful', vim.log.levels.INFO)
+      vim.notify('PIO: Generating Compile DB successful', vim.log.levels.INFO)
     end)
   end)
 end
@@ -129,7 +129,7 @@ local pio_manager = (function()
                 -- print(vim.inspect(_G.metadata))
                 if callback then
                   vim.schedule(function()
-                    vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
+                    vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
                     callback()
                   end)
                 end
@@ -229,7 +229,7 @@ local pio_manager = (function()
 
         if _G.metadata.active_env ~= '' then
           vim.schedule(function()
-            vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
+            vim.notify('PIO: Fetching config successful', vim.log.levels.INFO)
           end)
           get_metadata(1, _G.metadata.active_env)
         else
@@ -351,6 +351,9 @@ local function get_safe_hash(data)
 end
 -- 4. Execute Compiledb (Using vim.system + Muting)
 function M.run_compiledb()
+  if is_ignoring_watcher then
+    return
+  end
   is_ignoring_watcher = true -- Mute watcher
 
   vim.notify('Generating Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
