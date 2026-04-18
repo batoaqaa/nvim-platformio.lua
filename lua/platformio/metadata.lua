@@ -104,7 +104,34 @@ vim.api.nvim_create_autocmd({ 'BufWritePost', 'VimLeavePre' }, {
   desc = 'Automatically save PlatformIO project metadata',
 })
 
--- 5. Keybindings
+-- 5. Environment Switcher UI
+function M.switch_env()
+  if not _G.metadata.envs or next(_G.metadata.envs) == nil then
+    vim.notify('No environments found. Run PlatformIO Refresh first.', vim.log.levels.WARN)
+    return
+  end
+
+  local options = vim.tbl_keys(_G.metadata.envs)
+  table.sort(options)
+
+  vim.ui.select(options, {
+    prompt = 'Select PlatformIO Environment:',
+    format_item = function(item)
+      local indicator = (item == _G.metadata.active_env) and '● ' or '○ '
+      return indicator .. item
+    end,
+  }, function(choice)
+    if choice then
+      _G.metadata.active_env = choice
+      -- Save immediately on user selection
+      M.save_project_config(false)
+      -- Force LSP to pick up new fallbackFlags/defines
+      vim.cmd('LspRestart clangd')
+    end
+  end)
+end
+
+-- 6. Keybindings
 -- Switch Environment
 -- vim.keymap.set('n', '<leader>\\e', function()
 --   M.switch_env()
