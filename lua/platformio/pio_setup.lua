@@ -467,7 +467,7 @@ function M.init()
 
     -- 5. Keybindings
     -- Switch Environment
-    vim.keymap.set('n', '<leader>\\e', metadata.switch_env, { desc = 'Switch environment' })
+    vim.keymap.set('n', '<leader>\\e', metadata.switch_env(), { desc = 'Switch environment' })
 
     -- write
     -- vim.keymap.set('n', '<leader>\\s', function()
@@ -475,7 +475,7 @@ function M.init()
     -- end, { desc = 'Config status' })
 
     -- Manual Status Check
-    vim.keymap.set('n', '<leader>ps', metadata.show_status, { desc = 'PIO Status' })
+    vim.keymap.set('n', '<leader>ps', metadata.show_status(), { desc = 'PIO Status' })
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
