@@ -403,8 +403,6 @@ function M.start_watcher()
           current_ini_hash = new_hash
           M.run_compiledb() -- Smart: Auto-update DB if config changes
           pio_manager.refresh(function()
-            boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-            boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
             -- pio_generate_db()
             -- M.run_compiledb()
             M.run_compiledb() -- Smart: Auto-update DB if config changes
@@ -467,6 +465,8 @@ function M.init()
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
+    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
@@ -488,6 +488,7 @@ function M.init()
         -- vim.schedule(function()
         -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
         -- pio_generate_db()
+        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         M.run_compiledb() -- Smart: Auto-update DB if config changes
         -- lsp.lsp_restart('clangd')
         -- end)
