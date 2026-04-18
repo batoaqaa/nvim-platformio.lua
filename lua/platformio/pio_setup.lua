@@ -5,18 +5,16 @@ local lsp = require('platformio.lsp.tools')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 local debounce_timer = vim.uv.new_timer()
-local last_ini_hash = ''
-local is_ignoring_watcher = false
+local last_hash = ''
+local is_busy = false
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
 -- stylua: ignore
 local function pio_generate_db()
-  is_ignoring_watcher = true -- Mute watcher
   vim.schedule(function() vim.notify('PIO: Generating Compile DB ...', vim.log.levels.INFO) end)
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
     vim.schedule(function()
-      is_ignoring_watcher = false -- Unmute
       if obj.code ~= 0 then
         if obj.code == 127 then
           vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
@@ -339,98 +337,97 @@ end
 --- stylua: ignore
 ----------------------------------------------------------------------------------------------
 
--- local last_ini_hash = ""
--- local is_ignoring_watcher = false
-
--- Safe hashing: uses sha256 to avoid 'nil' errors found with vim.hash
-local function get_safe_hash(data)
-  if not data then
-    return ''
+local dir_path = vim.uv.cwd()
+local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
+local config_file = vim.fs.joinpath(dir_path, '.project_config.json')
+-- 1. Helper: Unified hashing for change detection
+local function get_hash(path)
+  if vim.fn.filereadable(path) == 0 then
+    return nil
   end
-  return vim.fn.sha256(data)
+  local ok, data = pcall(vim.fn.readfile, path) -- readfile is safer than io.open
+  return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
 end
--- 4. Execute Compiledb (Using vim.system + Muting)
+
+-- 2. Smart Save/Load: Uses JSON and Hashing
+function M.sync_config(force_load)
+  if force_load then
+    if vim.fn.filereadable(config_file) == 1 then
+      local data = table.concat(vim.fn.readfile(config_file), '')
+      _G.metadata = vim.json.decode(data)
+      last_hash = vim.fn.sha256(data)
+    end
+  else
+    local current_data = vim.json.encode(_G.metadata)
+    local current_hash = vim.fn.sha256(current_data)
+    if current_hash ~= last_hash then
+      vim.fn.writefile({ current_data }, config_file)
+      last_hash = current_hash
+    end
+  end
+end
+
+-- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
-  if is_ignoring_watcher then
+  if is_busy then
     return
   end
-  is_ignoring_watcher = true -- Mute watcher
+  is_busy = true
+  vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
-  vim.notify('Generating Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
-
-  vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
+  vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      is_ignoring_watcher = false -- Unmute
+      is_busy = false
       if obj.code == 0 then
-        vim.notify('Compiledb updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-        -- Manual refresh once finished
-        pio_manager.refresh(function()
-          boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-          boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-          pio_generate_db()
-          lsp.lsp_restart('clangd')
-        end)
+        vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+        -- Use pcall in case M.refresh is defined elsewhere
+        -- pio_manager.refresh(function()
+        -- boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
+        -- pio_generate_db()
+        lsp.lsp_restart('clangd')
+        -- end)
+        --
       else
-        vim.notify('Compiledb failed: ' .. (obj.stderr or 'Unknown error'), vim.log.levels.ERROR)
+        vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
       end
     end)
   end)
 end
 
--- 5. Bulletproof Watcher (Content-aware & Lock-aware)
-function M.start_pio_watcher()
-  local dir_path = vim.uv.cwd()
-  local ini_path = dir_path .. '/platformio.ini'
-  if not dir_path or vim.fn.filereadable(ini_path) == 0 then
+-- 4. Simple Watcher: Only triggers if the FILE CONTENT changed
+function M.start_watcher()
+  if not dir_path or vim.fn.filereadable(ini_file) == 0 then
     return
   end
-
-  -- Seed the initial hash
-  local init_f = io.open(ini_path, 'r')
-  if init_f then
-    last_ini_hash = get_safe_hash(init_f:read('*a'))
-    init_f:close()
-  end
+  local current_ini_hash = get_hash(ini_file)
 
   local handle = vim.uv.new_fs_event()
-  if not handle then
-    return
-  end
-
-  handle:start(
-    dir_path,
-    { recursive = false },
-    vim.schedule_wrap(function(err, filename)
-      if err or is_ignoring_watcher or filename ~= 'platformio.ini' then
-        return
-      end
-
-      -- Safe read (pcall handles Windows file locks during build)
-      local ok, content = pcall(function()
-        local f = io.open(ini_path, 'r')
-        if not f then
-          return nil
+  if handle then
+    handle:start(
+      dir_path,
+      { recursive = false },
+      vim.schedule_wrap(function(err, fname)
+        if err or is_busy or fname ~= 'platformio.ini' then
+          return
         end
-        local data = f:read('*a')
-        f:close()
-        return data
-      end)
 
-      if ok and content then
-        local new_hash = get_safe_hash(content)
-        if new_hash ~= last_ini_hash then
-          last_ini_hash = new_hash
-          -- Trigger refresh via your manager
+        local new_hash = get_hash(ini_file)
+        if new_hash and new_hash ~= current_ini_hash then
+          current_ini_hash = new_hash
+          M.run_compiledb() -- Smart: Auto-update DB if config changes
           pio_manager.refresh(function()
             boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
             boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-            pio_generate_db()
-            lsp.lsp_restart('clangd')
+            -- pio_generate_db()
+            -- M.run_compiledb()
+            M.run_compiledb() -- Smart: Auto-update DB if config changes
+            -- lsp.lsp_restart('clangd')
           end)
         end
-      end
-    end)
-  )
+      end)
+    )
+  end
 end
 
 ----------------------------------------------------------------------------------------------
