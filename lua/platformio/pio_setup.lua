@@ -349,9 +349,9 @@ end
 -- 2. Smart Save/Load: Uses JSON and Hashing
 -- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
-  if _G.metadata.isBusy then
-    return
-  end
+  -- if _G.metadata.isBusy then
+  --   return
+  -- end
   _G.metadata.isBusy = true
   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
@@ -387,10 +387,16 @@ function M.start_watcher()
     handle:start(
       dir_path,
       { recursive = false },
-      vim.schedule_wrap(function(err, fname)
-        if err or _G.metadata.isBusy or fname ~= 'platformio.ini' then
+      vim.schedule_wrap(function(err, fname, events)
+        if err or fname ~= 'platformio.ini' or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
           return
         end
+        --       -- Trigger only if the changed file is platformio.ini
+        --       if filename == 'platformio.ini' and (events.change or events.rename) then
+        --       if filename == 'platformio.ini' and (events.change or events.rename) then
+        -- if err or _G.metadata.isBusy or fname ~= 'platformio.ini' then
+        --   return
+        -- end
 
         local new_hash = get_hash(ini_file)
         if new_hash and new_hash ~= current_ini_hash then
