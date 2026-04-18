@@ -71,9 +71,9 @@ local function pio_generate_db()
     if obj.code ~= 0 then
       vim.schedule(function()
         if obj.code == 127 then
-          vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+          vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
         else
-          vim.notify('PIO Manager: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+          vim.notify('PIO Manager db: Generating Compile Database failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
         end
       end)
       return
@@ -136,9 +136,9 @@ local pio_manager = (function()
           -- Schedule notification to avoid error in the system callback thread
           vim.schedule(function()
             if int_obj.code == 127 then
-              vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+              vim.notify("PIO Manager metadata: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
             else
-              vim.notify('PIO Manager: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+              vim.notify('PIO Manager metadata: Failed to fetch metadata(' .. int_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
             end
           end)
           return
@@ -149,7 +149,7 @@ local pio_manager = (function()
           if ok and raw_data then
             local _, data = next(raw_data)
             if data then
-              local fallback_flags = {}
+              local fallbackFlags = {}
               -- 1. Process Includes
               if data.includes then
                 for category, paths in pairs(data.includes) do
@@ -158,27 +158,28 @@ local pio_manager = (function()
                   if category == 'toolchain' then
                     local flag = '-isystem'
                     for _, path in ipairs(paths) do
-                      -- table.insert(fallback_flags, string.format('%q', flag))
-                      -- table.insert(fallback_flags, string.format('%q', path:gsub('\\', '/')))
-                      table.insert(fallback_flags, string.format('%q', flag .. path:gsub('\\', '/')))
+                      -- table.insert(fallbackFlags, string.format('%q', flag))
+                      -- table.insert(fallbackFlags, string.format('%q', path:gsub('\\', '/')))
+                      table.insert(fallbackFlags, string.format('%q', flag .. path:gsub('\\', '/')))
                     end
                   end
                   -- local flag = (category == 'toolchain') and '-isystem' or '-I'
                   -- for _, path in ipairs(paths) do
-                  --   table.insert(fallback_flags, flag .. path)
+                  --   table.insert(fallbackFlags, flag .. path)
                   -- end
                 end
               end
               -- 2. Process Defines
               if data.defines then
                 for _, define in ipairs(data.defines) do
-                  table.insert(fallback_flags, string.format('%q', '-D' .. define))
+                  table.insert(fallbackFlags, string.format('%q', '-D' .. define))
                 end
               end
 
+              -- get [cc_compiler]and [falbackFlags]
               -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
               _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
-              _G.metadata.fallback_flags = fallback_flags
+              _G.metadata.fallbackFlags = fallbackFlags
 
               -- print(vim.inspect(_G.metadata))
               if callback then
@@ -203,16 +204,10 @@ local pio_manager = (function()
       end)
     end
 
-    -- INFO: -- 1. Setup Base Paths
+    -- INFO: Setup Base Paths
     local home = os.getenv('HOME') or os.getenv('USERPROFILE')
-    -- INFO: -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
-    local map = {
-      core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
-      packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
-      platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
-    }
 
-    -- INFO: 3. Try to get explicit value from platformio.ini
+    -- INFO: Try to get explicit value from platformio.ini
     -- HELPER: Navigates the specific nested list format used by 'pio project config --json-output'
     -- The format is typically: { { "section_name", { {"key", "value"}, ... } }, ... }
     vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(ext_obj)
@@ -220,9 +215,9 @@ local pio_manager = (function()
         -- Schedule notification to avoid error in the system callback thread
         vim.schedule(function()
           if ext_obj.code == 127 then
-            vim.notify("PIO Manager: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+            vim.notify("PIO Manager config: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
           else
-            vim.notify('PIO Manager: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+            vim.notify('PIO Manager config: Failed to fetch config (' .. ext_obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
           end
         end)
         return
@@ -238,7 +233,7 @@ local pio_manager = (function()
       for _, section in ipairs(decoded) do
         if type(section) == 'table' and #section >= 2 then
           local name, data = section[1], section[2]
-          -- 1. Extract Global PlatformIO Settings
+          -- 1. Extract Global PlatformIO Settings if available [core_dir][packages_dir][platforms_dir][default_envs]
           if name == 'platformio' then
             for _, kv in ipairs(data) do
               local key, val = kv[1], kv[2]
@@ -247,7 +242,7 @@ local pio_manager = (function()
                 _G.metadata[key] = val
               end
             end
-            -- 2. Extract all hardware envs like [env:seeed_xiao_esp32c3], skipping generic [env]
+          -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
           elseif name:match('^env:') then
             local env_name = name:match('^env:(.+)')
             _G.metadata.envs[env_name] = {}
@@ -257,13 +252,19 @@ local pio_manager = (function()
           end
         end
       end
+      -- assign [active_env]
       if #_G.metadata.default_envs > 0 then
         _G.metadata.active_env = _G.metadata.default_envs[1] or ''
-      -- else
-      elseif _G.metadata.envs and #_G.metadata.envs > 0 then
+      elseif _G.metadata.envs and next(_G.metadata.envs) ~= '' then
         _G.metadata.active_env = next(_G.metadata.envs) or ''
       end
 
+      -- INFO: -- Define Mapping (key in INI, Env Var, Default Subfolder)
+      local map = {
+        core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
+        packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
+        platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
+      }
       for _, kv in ipairs(map) do
         -- 4.0 Fallback Logic: INI -> Env Var -> Default
         local result = _G.metadata[kv.ini] or os.getenv(kv.env or (home .. kv.sub)):gsub('[\\/]+$', '')
@@ -473,7 +474,6 @@ function M.init()
       pio_manager.refresh(function()
         -- vim.schedule(function()
         -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-        boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
         pio_generate_db()
         lsp.lsp_restart('clangd')
         -- end)
