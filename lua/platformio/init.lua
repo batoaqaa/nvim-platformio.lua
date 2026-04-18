@@ -183,7 +183,9 @@ function M.setup(user_config)
 
   require('platformio.piomenu').piomenu(M.config)
 
-  require('platformio.pio_setup').init()
+  vim.schedule(function()
+    require('platformio.pio_setup').init()
+  end)
 end
 
 return M
