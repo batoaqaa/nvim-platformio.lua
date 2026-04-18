@@ -3,7 +3,7 @@ local M = {}
 M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
-local lsp = require('platformio.utils.lsp')
+local lsp = require('platformio..lsp.tools')
 
 ------------------------------------------------------
 -- stylua: ignore

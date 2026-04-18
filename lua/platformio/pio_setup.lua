@@ -1,7 +1,7 @@
 M = {}
 
 local misc = require('platformio.utils.misc')
-local lsp = require('platformio.utils.lsp')
+local lsp = require('platformio.lsp.tools')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 -- lua/pio_setup.lua
@@ -449,6 +449,28 @@ function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then
     vim.notify('PIO setup initialize', vim.log.levels.INFO)
+
+    -- -- activate meta save and upload and env switch
+    -- local metadata = require('platformio.utils.metadata')
+    -- metadata.load_project_config()
+    --
+    -- local pio_group = vim.api.nvim_create_augroup('PioPersist', { clear = true })
+    -- vim.api.nvim_create_autocmd({ 'BufWritePost', 'VimLeavePre' }, {
+    --   group = pio_group,
+    --   callback = function()
+    --     -- Pass 'true' to save silently in the background
+    --     metadata.save_project_config(true)
+    --   end,
+    --   desc = 'Automatically save PlatformIO project metadata',
+    -- })
+    -- -- 5. Keybindings
+    -- -- Switch Environment
+    -- vim.keymap.set('n', '<leader>pe', metadata.switch_env, { desc = 'PlatformIO: Switch Environment' })
+    -- -- Manual Status Check
+    -- vim.keymap.set('n', '<leader>ps', function()
+    --   metadata().save_project_config(false)
+    -- end, { desc = 'PlatformIO: Status' })
+
     ----------------------------------------------------------------------------------------
     -- INFO: create clangd required files
     -----------------------------------------------------------------------------------------
@@ -461,9 +483,9 @@ function M.init()
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
     ---------------------------------------------------------------------------------
 
-    require('platformio.lspConfig.clangd')
+    require('platformio.lsp.clangd')
     if config.lspClangd.attach.enabled then
-      require('platformio.lspConfig.attach')
+      require('platformio.lsp.attach')
     end
 
     -- Always start the watcher so it can catch a future 'pio init'

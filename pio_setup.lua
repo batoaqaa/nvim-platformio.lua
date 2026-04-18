@@ -1,7 +1,7 @@
 -- M = {}
 --
 -- local misc = require('platformio.utils.misc')
--- local lsp = require('platformio.utils.lsp')
+-- local lsp = require('platformio.lsp.tools')
 -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 --
 -- -- lua/pio_setup.lua
@@ -461,9 +461,9 @@
 --     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
 --     ---------------------------------------------------------------------------------
 --
---     require('platformio.lspConfig.clangd')
+--     require('platformio.lsp.clangd')
 --     if config.lspClangd.attach.enabled then
---       require('platformio.lspConfig.attach')
+--       require('platformio.lsp.attach')
 --     end
 --
 --     -- Always start the watcher so it can catch a future 'pio init'

@@ -1,6 +1,6 @@
 local M = {}
 
-local lsp = require('platformio.utils.lsp')
+local lsp = require('platformio.lsp.tools')
 
 -- stylua: ignore
 function M.piolsp()

@@ -1,5 +1,5 @@
 -- local misc = require('platformio.utils.misc')
--- local lsp = require('platformio.utils.lsp')
+-- local lsp = require('platformio.lsp.tools')
 --
 -- local debounce_timer = vim.uv.new_timer()
 --
@@ -262,9 +262,9 @@
 --       ---------------------------------------------------------------------------------
 --
 --       -- vim.api.nvim_echo({ { 'lspClangd true', 'Info' } }, true, {})
---       require('platformio.lspConfig.clangd')
+--       require('platformio.lsp.clangd')
 --       if config.lspClangd.attach.enabled then
---         require('platformio.lspConfig.attach')
+--         require('platformio.lsp.attach')
 --       end
 --       if vim.fn.filereadable(vim.fn.getcwd() .. '/platformio.ini') == 1 then
 --         pio_manager.refresh(function()

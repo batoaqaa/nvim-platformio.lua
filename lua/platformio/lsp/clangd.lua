@@ -1,19 +1,4 @@
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-_G.metadata = {
-  envs = {},
-  active_env = '',
-  default_envs = {},
-  core_dir = '',
-  packages_dir = '',
-  platforms_dir = '',
-  query_driver = '',
-  cc_compiler = '',
-  triplet = '',
-  toolchain = '',
-  sysroot = '',
-  fallbackFlags = {},
-}
-
 local ok, result
 ok, result = pcall(require, 'fidget')
 if ok then
@@ -276,5 +261,5 @@ local pyrefly = {
 vim.lsp.config('pyrefly', pyrefly)
 
 -- restart lsp
--- require('platformio.utils.lsp').lsp_restart('clangd')
+-- require('platformio.lsp.tools').lsp_restart('clangd')
 ----------------------------------------------------------------------------------
