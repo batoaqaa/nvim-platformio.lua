@@ -1,5 +1,5 @@
 local M = {}
-local lsp = require('platformio.lsp.tools')
+
 -- INFO:
 -- =============================================================================
 -- UNIVERSAL TOOLCHAIN DETECTION
@@ -55,7 +55,7 @@ function M.lsp_restart(name)
   -- vim.schedule_wrap(function()
   vim.notify('LSP restart.', vim.log.levels.WARN)
 
-  local status, data = pcall(lsp.get_sysroot_triplet, _G.metadata.cc_compiler)
+  local status, data = pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
   if status and data and data.triplet and data.triplet ~= '' then
     _G.metadata.triplet = data.triplet
     _G.metadata.sysroot = data.sysroot
