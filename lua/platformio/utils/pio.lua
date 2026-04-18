@@ -171,10 +171,12 @@ function M.dispatcher(_, _, data)
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
           local task = table.remove(M.queue, 1)
+          _G.metadata.isBusy = false
           if task then vim.schedule(task) end
         elseif status == 'FAILED' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
+          _G.metadata.isBusy = false
           vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
         end
         break
@@ -203,6 +205,7 @@ M.run_sequence = function(tasks)
   end
   full_cmd = full_cmd .. ' || ' .. failure
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+  _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
 end
 

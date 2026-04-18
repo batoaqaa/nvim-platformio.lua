@@ -1,6 +1,7 @@
 -- 1. Initialize Global Table immediately (Prevents nil errors)
 _G.metadata = _G.metadata
   or {
+    is_busy = false,
     envs = {},
     active_env = '',
     default_envs = {},
@@ -29,10 +30,30 @@ local M = {}
 local last_saved_hash = ''
 local config_path = vim.fn.getcwd() .. '/.project_config.json'
 
--- Helper: Performance-proof hashing using built-in Vimscript (never nil)
-local function get_safe_hash(data)
+local function getHash(data)
   return vim.fn.sha256(data)
 end
+
+-- local last_hash = ''
+-- local dir_path = vim.uv.cwd()
+-- local config_file = vim.fs.joinpath(dir_path, '.project_config.json')
+--
+-- function M.sync_config(force_load)
+--   if force_load then
+--     if vim.fn.filereadable(config_file) == 1 then
+--       local data = table.concat(vim.fn.readfile(config_file), '')
+--       _G.metadata = vim.json.decode(data)
+--       last_hash = getHash(data)
+--     end
+--   else
+--     local current_data = vim.json.encode(_G.metadata)
+--     local current_hash = getHash(current_data)
+--     if current_hash ~= last_hash then
+--       vim.fn.writefile({ current_data }, config_file)
+--       last_hash = current_hash
+--     end
+--   end
+-- end
 
 -- 2. Self-Healing Load & Auto-Create
 function M.load_project_config()
@@ -46,7 +67,7 @@ function M.load_project_config()
       local ok, decoded = pcall(vim.json.decode, content)
       if ok and type(decoded) == 'table' then
         _G.metadata = decoded
-        last_saved_hash = get_safe_hash(content)
+        last_saved_hash = getHash(content)
         success = true
       end
     end
@@ -60,7 +81,7 @@ function M.load_project_config()
     if file then
       file:write(encoded)
       file:close()
-      last_saved_hash = get_safe_hash(encoded)
+      last_saved_hash = getHash(encoded)
       if vim.fn.filereadable('platformio.ini') == 1 then
         vim.notify('New project config created', vim.log.levels.INFO, { title = 'PlatformIO' })
       end
@@ -75,7 +96,7 @@ function M.save_project_config(quiet)
   end
 
   local current_data = vim.json.encode(_G.metadata)
-  local current_hash = get_safe_hash(current_data)
+  local current_hash = getHash(current_data)
 
   -- Only write if data actually changed since last load/save
   if current_hash ~= last_saved_hash then

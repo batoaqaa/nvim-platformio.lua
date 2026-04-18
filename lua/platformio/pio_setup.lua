@@ -4,9 +4,7 @@ local misc = require('platformio.utils.misc')
 local lsp = require('platformio.lsp.tools')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
-local debounce_timer = vim.uv.new_timer()
-local last_hash = ''
-local is_busy = false
+-- local debounce_timer = vim.uv.new_timer()
 
 -- INFO:
 -- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
@@ -339,7 +337,6 @@ end
 
 local dir_path = vim.uv.cwd()
 local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
-local config_file = vim.fs.joinpath(dir_path, '.project_config.json')
 -- 1. Helper: Unified hashing for change detection
 local function get_hash(path)
   if vim.fn.filereadable(path) == 0 then
@@ -350,34 +347,17 @@ local function get_hash(path)
 end
 
 -- 2. Smart Save/Load: Uses JSON and Hashing
-function M.sync_config(force_load)
-  if force_load then
-    if vim.fn.filereadable(config_file) == 1 then
-      local data = table.concat(vim.fn.readfile(config_file), '')
-      _G.metadata = vim.json.decode(data)
-      last_hash = vim.fn.sha256(data)
-    end
-  else
-    local current_data = vim.json.encode(_G.metadata)
-    local current_hash = vim.fn.sha256(current_data)
-    if current_hash ~= last_hash then
-      vim.fn.writefile({ current_data }, config_file)
-      last_hash = current_hash
-    end
-  end
-end
-
 -- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
-  if is_busy then
+  if _G.metadata.isBusy then
     return
   end
-  is_busy = true
+  _G.metadata.isBusy = true
   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      is_busy = false
+      _G.metadata.isBusy = false
       if obj.code == 0 then
         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
         -- Use pcall in case M.refresh is defined elsewhere
@@ -408,7 +388,7 @@ function M.start_watcher()
       dir_path,
       { recursive = false },
       vim.schedule_wrap(function(err, fname)
-        if err or is_busy or fname ~= 'platformio.ini' then
+        if err or _G.metadata.isBusy or fname ~= 'platformio.ini' then
           return
         end
 
