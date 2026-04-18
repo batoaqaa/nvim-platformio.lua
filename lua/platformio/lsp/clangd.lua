@@ -107,7 +107,7 @@ function _G.get_clangd_config()
   local f_flags, q_driver = '', '--query-driver=**'
 
   -- 2. Run your toolchain detection
-  if _G.metadata.cc_compiler ~= '' then
+  if _G.metadata and _G.metadata.cc_compiler and  _G.metadata.cc_compiler ~= '' then
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
       local include_flags = table.concat(_G.metadata.fallbackFlags, ", ")
       f_flags = string.format([["-std=c++17", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, include_flags)
