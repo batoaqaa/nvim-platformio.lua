@@ -25,21 +25,6 @@ local config_path = vim.fn.getcwd() .. '/.pioConfig.json'
 --     fallbackFlags = {},
 --   }
 
-local default_metadata = {
-  envs = {},
-  active_env = '',
-  default_envs = {},
-  core_dir = '',
-  packages_dir = '',
-  platforms_dir = '',
-  query_driver = '',
-  cc_compiler = '',
-  triplet = '',
-  toolchain = '',
-  sysroot = '',
-  fallbackFlags = {},
-}
-
 -- 1. Optimized Save Function
 
 function M.save_project_config(quiet)
@@ -69,42 +54,50 @@ function M.save_project_config(quiet)
 end
 
 -- 2. Robust Load Function (Startup)
+local default_metadata = {
+  envs = {},
+  active_env = '',
+  default_envs = {},
+  core_dir = '',
+  packages_dir = '',
+  platforms_dir = '',
+  query_driver = '',
+  cc_compiler = '',
+  triplet = '',
+  toolchain = '',
+  sysroot = '',
+  fallbackFlags = {},
+}
+
 function M.load_project_config()
   local path = vim.fn.getcwd() .. '/.project_config.json'
   local success = false
 
-  -- 1. Try to read existing file
   if vim.fn.filereadable(path) == 1 then
     local file = io.open(path, 'r')
     if file then
       local content = file:read('*a')
       file:close()
       local ok, decoded = pcall(vim.json.decode, content)
-
       if ok and type(decoded) == 'table' then
         _G.metadata = decoded
-        last_saved_hash = vim.fn.sha256(content)
+        last_saved_hash = get_safe_hash(content)
         success = true
       end
     end
   end
 
-  -- 2. If no file OR read failed, initialize defaults AND save to disk
+  -- If no file or failed to read, write defaults immediately
   if not success then
-    -- Use vim.deepcopy to prevent reference bugs
     _G.metadata = vim.deepcopy(default_metadata)
-
-    -- Immediately persist the defaults so the file exists
     local encoded = vim.json.encode(_G.metadata)
     local file = io.open(path, 'w')
     if file then
       file:write(encoded)
       file:close()
-      last_saved_hash = vim.fn.sha256(encoded)
-
-      -- Only notify if we are actually in a PlatformIO project
+      last_saved_hash = get_safe_hash(encoded)
       if vim.fn.filereadable('platformio.ini') == 1 then
-        vim.notify('Created new .project_config.json', vim.log.levels.INFO, { title = 'PlatformIO' })
+        vim.notify('Initialized new project settings', vim.log.levels.INFO, { title = 'PlatformIO' })
       end
     end
   end
