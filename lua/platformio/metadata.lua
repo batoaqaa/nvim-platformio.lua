@@ -106,9 +106,9 @@ vim.api.nvim_create_autocmd({ 'BufWritePost', 'VimLeavePre' }, {
 
 -- 5. Keybindings
 -- Switch Environment
-vim.keymap.set('n', '<leader>\\e', function()
-  M.switch_env()
-end, { desc = 'Switch environment' })
+-- vim.keymap.set('n', '<leader>\\e', function()
+--   M.switch_env()
+-- end, { desc = 'Switch environment' })
 
 -- write
 -- vim.keymap.set('n', '<leader>\\s', function()
@@ -119,4 +119,5 @@ end, { desc = 'Switch environment' })
 vim.keymap.set('n', '<leader>ps', function()
   M.show_status()
 end, { desc = 'PIO Status' })
+
 return M
