@@ -101,6 +101,9 @@ function M.load_project_config()
         get_meta()
         vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: defautl Loaded' })
       end
+    else
+      get_meta()
+      vim.notify('Environment: ' .. (_G.metadata.active_env or 'None'), vim.log.levels.INFO, { title = 'PlatformIO: defautl Loaded' })
     end
   end
 end
