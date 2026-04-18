@@ -501,8 +501,9 @@ function M.init()
       pio_manager.refresh(function()
         -- vim.schedule(function()
         -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-        pio_generate_db()
-        lsp.lsp_restart('clangd')
+        -- pio_generate_db()
+        M.run_compiledb() -- Smart: Auto-update DB if config changes
+        -- lsp.lsp_restart('clangd')
         -- end)
       end)
     end
