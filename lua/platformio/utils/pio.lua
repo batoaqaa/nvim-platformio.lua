@@ -229,14 +229,14 @@ end
 function M.handlePioinit()
   -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-  vim.schedule(function()
-    local pio_manager = require('platformio.pio_setup').pio_manager
-    pio_manager.refresh(function()
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-      vim.notify('Pioinit: Success', vim.log.levels.INFO)
-    end)
+  -- vim.schedule(function()
+  local pio_manager = require('platformio.pio_setup').pio_manager
+  pio_manager.refresh(function()
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+    vim.notify('Pioinit: Success', vim.log.levels.INFO)
   end)
+  -- end)
 end
 -- Handle after poioinit execution
 -- stylua: ignore
