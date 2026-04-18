@@ -1,25 +1,45 @@
-_G.metadata = _G.metadata
-  or {
-    envs = {},
-    active_env = '',
-    default_envs = {},
-    core_dir = '',
-    packages_dir = '',
-    platforms_dir = '',
-    query_driver = '',
-    cc_compiler = '',
-    triplet = '',
-    toolchain = '',
-    sysroot = '',
-    fallbackFlags = {},
-  }
-
+-- _G.metadata = _G.metadata
+--   or {
+--     envs = {},
+--     active_env = '',
+--     default_envs = {},
+--     core_dir = '',
+--     packages_dir = '',
+--     platforms_dir = '',
+--     query_driver = '',
+--     cc_compiler = '',
+--     triplet = '',
+--     toolchain = '',
+--     sysroot = '',
+--     fallbackFlags = {},
+--   }
+--
 M = {}
 
 local misc = require('platformio.utils.misc')
 local lsp = require('platformio.lsp.tools')
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
+-- This function ensures metadata is NEVER nil when you call it
+local function get_meta()
+  if not _G.metadata then
+    _G.metadata = {
+      envs = {},
+      active_env = '',
+      default_envs = {},
+      core_dir = '',
+      packages_dir = '',
+      platforms_dir = '',
+      query_driver = '',
+      cc_compiler = '',
+      triplet = '',
+      toolchain = '',
+      sysroot = '',
+      fallbackFlags = {},
+    }
+  end
+  return _G.metadata
+end
 -- lua/pio_setup.lua
 -- This module manages PlatformIO project integration, LSP toolchain detection,
 -- and automatic sysroot patching for standard library headers (<algorithm>, etc.)
@@ -465,6 +485,8 @@ function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then
     vim.notify('PIO setup initialize', vim.log.levels.INFO)
+
+    get_meta()
 
     -- -- activate meta save and upload and env switch
     -- local metadata = require('platformio.utils.metadata')
