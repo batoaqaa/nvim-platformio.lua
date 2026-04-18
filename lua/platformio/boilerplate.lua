@@ -52,7 +52,8 @@ build_flags =
 ]],
   content = function(self)
     -- local pio = require('platformio.utils.pio')
-    return string.format(self.template, require('platformio.utils.pio').get_pio_dir('core'))
+    -- return string.format(self.template, require('platformio.utils.pio').get_pio_dir('core'))
+    return string.format(self.template, _G.metadata.core_dir)
   end,
 }
 
