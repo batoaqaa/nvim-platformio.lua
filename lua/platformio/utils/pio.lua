@@ -169,15 +169,17 @@ function M.dispatcher(_, _, data)
       pio_buffer = pio_buffer .. data[i]
     end
 
-    for status in pio_buffer:gmatch('___DONE___:(%a+)') do
+    for status in pio_buffer:gmatch('_DONE_:(%a+)') do
       if status then
         if status == 'PASS' then
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
           local task = table.remove(M.queue, 1)
-          if task then
-            vim.schedule(task)
-          end
+          vim.schedule(function()
+            if task then
+              task()
+            end
+          end)
         elseif status == 'LAST' then
           _G.metadata.isBusy = false
         elseif status == 'FAIL' then
