@@ -23,10 +23,6 @@ function M.check_prefix(str, prefix)
   return str:sub(1, #prefix) == prefix
 end
 
-local function pathmul(n)
-  return '..' .. string.rep('/..', n)
-end
-
 ------------------------------------------------------
 
 -- INFO: get current OS enter
@@ -144,6 +140,8 @@ function M.ToggleTerminal(command, direction)
     end
     title = 'Pio Monitor: [In normal mode press: q or :q to hide; :q! to quit; :PioTermList to list terminals]'
     pioOpts.display_name = 'piomon:' .. orig_window
+    pioOpts.id = 98
+    pioOpts.on_stdout = nil
   else -- INFO: if previous cli terminal already opened ==> reopen
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
@@ -163,6 +161,11 @@ function M.ToggleTerminal(command, direction)
     end
     title = 'Pio CLI> [In normal mode press: q or :q to hide; :q! to quit; :PioTermList to list terminals]'
     pioOpts.display_name = 'piocli:' .. orig_window
+    pioOpts.id = 99
+
+    -- INFO: on_stdout
+    -- on_stdout = stdout_callback,
+    pioOpts.on_stdout = pio.stdoutFilter
   end
   pioOpts.direction = direction
   ------------------------------------------------------
@@ -245,7 +248,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    on_stdout = pio.stdoutFilter,
+    -- on_stdout = pio.stdoutFilter,
 
     -- INFO: on_create() {
     on_create = function(t)
