@@ -5,7 +5,7 @@ M.selected_framework = ''
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 local ToggleTerminal = require('platformio.utils.term')
-ToggleTerminal.stdoutFilter = nil
+ToggleTerminal.on_stdout_handler = nil
 
 M.is_processing = false
 ------------------------------------------------------
@@ -229,7 +229,7 @@ function M.stdoutFilter(_, _, data)
 end
 
 -- _G.metadata.isBusy = true
-ToggleTerminal.stdoutFilter = M.stdoutFilter
+ToggleTerminal.on_stdout_handler = M.stdoutFilter
 local pio_terminal = ToggleTerminal.ToggleTerminal('', 'float')
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
