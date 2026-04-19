@@ -81,6 +81,9 @@ end
 ------------------------------------------------------
 -- INFO: Send command
 local function send(term, cmd)
+  if not term.job_id then
+    return
+  end
   vim.fn.chansend(term.job_id, cmd .. M.enter())
   if vim.api.nvim_buf_is_loaded(term.bufnr) and vim.api.nvim_buf_is_valid(term.bufnr) then
     if term.window and vim.api.nvim_win_is_valid(term.window) then --vim.ui.term_has_open_win(term) then
@@ -265,7 +268,7 @@ function M.ToggleTerminal(command, direction)
             local quitbang = vim.fn.getcmdline() == 'q!'
             if quitbang or quit then
               local name_splt = M.strsplit(t.display_name, ':')
-              if t and quitbang then
+              if quitbang then
                 if name_splt[1] == 'piomon' then -- monitor terminal
                   local exit = vim.api.nvim_replace_termcodes('<C-C>exit', true, true, true)
                   send(t, exit)
