@@ -6,8 +6,8 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 local config = require('platformio').config
-local pio = require('platformio.utils.pio')
-
+-- local pio = require('platformio.utils.pio')
+M.stdoutFilter = nil
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
   local t = {}
@@ -141,7 +141,7 @@ function M.ToggleTerminal(command, direction)
     title = 'Pio Monitor: [In normal mode press: q or :q to hide; :q! to quit; :PioTermList to list terminals]'
     pioOpts.display_name = 'piomon:' .. orig_window
     pioOpts.id = 98
-    pioOpts.on_stdout = nil
+    pioOpts.on_stdout = M.stdoutFilter
   else -- INFO: if previous cli terminal already opened ==> reopen
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
@@ -165,7 +165,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    pioOpts.on_stdout = pio.stdoutFilter
+    pioOpts.on_stdout = M.stdoutFilter
   end
   pioOpts.direction = direction
   ------------------------------------------------------
