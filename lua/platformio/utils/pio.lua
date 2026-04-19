@@ -9,49 +9,98 @@ local lsp_restart = require('platformio.lsp.tools').lsp_restart
 -- stylua: ignore
 function M.compile_commandsFix()
   local filename = vim.uv.cwd() .. '/compile_commands.json'
-  local content = vim.fn.readfile(filename)
-  if #content == 0 then return end
+  if vim.fn.filereadable(filename) == 0 then return end
 
-  local ok, data = pcall(vim.json.decode, table.concat(content, "\n"))
+  -- Atomic read using built-in Vim function
+  local content = table.concat(vim.fn.readfile(filename), "\n")
+  local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= 'table' then return end
 
   -- 1. Build Path Map (Scan toolchain)
   local path_map = {}
-
-  local pio_binaries = _G.metadata.query_driver or "/bin/*"
-  -- local pio_binaries = (_G.metadata.toolchain or "") .. '/bin/*'
-  for _, full_path in ipairs(vim.fn.glob(pio_binaries, false, true)) do
+  local toolchain_bin = (_G.metadata and _G.metadata.toolchain or "") .. '/bin/*'
+  for _, full_path in ipairs(vim.fn.glob(toolchain_bin, false, true)) do
     local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
     path_map[name] = full_path
   end
 
-  -- 2. Update Entries
+  -- 2. Update Entries efficiently with string matching
   local modified = false
   for _, entry in ipairs(data) do
     local cmd = entry.command or ""
-    local first_token = cmd:match("^%S+") -- Get first word before space
+    local first_token = cmd:match("^%S+") -- Grab only the compiler driver
 
+    -- Fix if it's a relative path (doesn't start with / or Drive letter)
     if first_token and not (first_token:sub(1,1) == '/' or first_token:match('^%a:')) then
       local short_name = first_token:gsub('%.exe$', '')
       if path_map[short_name] then
-        -- Swap first token with full path safely
+        -- Replace only the first token to preserve arguments
         entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
         modified = true
       end
     end
   end
 
-  -- 3. Save with Formatting
+  -- 3. Save with Python formatting
   if modified then
     local json_str = vim.json.encode(data)
-    -- Use python to format, then write file
     local formatted = vim.fn.system('python -m json.tool', json_str)
+
     if vim.v.shell_error == 0 then
+      -- Atomic write back to disk
       vim.fn.writefile(vim.split(formatted, "\n"), filename)
       vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    else
+      vim.notify('PIO Fix: Python formatting failed', vim.log.levels.ERROR)
     end
   end
 end
+
+-- function M.compile_commandsFix()
+--   local filename = vim.uv.cwd() .. '/compile_commands.json'
+--   local content = vim.fn.readfile(filename)
+--   if #content == 0 then return end
+--
+--   local ok, data = pcall(vim.json.decode, table.concat(content, "\n"))
+--   if not ok or type(data) ~= 'table' then return end
+--
+--   -- 1. Build Path Map (Scan toolchain)
+--   local path_map = {}
+--
+--   local pio_binaries = _G.metadata.query_driver or "/bin/*"
+--   -- local pio_binaries = (_G.metadata.toolchain or "") .. '/bin/*'
+--   for _, full_path in ipairs(vim.fn.glob(pio_binaries, false, true)) do
+--     local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+--     path_map[name] = full_path
+--   end
+--
+--   -- 2. Update Entries
+--   local modified = false
+--   for _, entry in ipairs(data) do
+--     local cmd = entry.command or ""
+--     local first_token = cmd:match("^%S+") -- Get first word before space
+--
+--     if first_token and not (first_token:sub(1,1) == '/' or first_token:match('^%a:')) then
+--       local short_name = first_token:gsub('%.exe$', '')
+--       if path_map[short_name] then
+--         -- Swap first token with full path safely
+--         entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+--         modified = true
+--       end
+--     end
+--   end
+--
+--   -- 3. Save with Formatting
+--   if modified then
+--     local json_str = vim.json.encode(data)
+--     -- Use python to format, then write file
+--     local formatted = vim.fn.system('python -m json.tool', json_str)
+--     if vim.v.shell_error == 0 then
+--       vim.fn.writefile(vim.split(formatted, "\n"), filename)
+--       vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+--     end
+--   end
+-- end
 
 -- function M.compile_commandsFix()
 --   local filename = vim.uv.cwd() .. '/compile_commands.json'
