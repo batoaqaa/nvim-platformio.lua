@@ -178,12 +178,11 @@ function M.dispatcher(_, _, data)
           vim.schedule(function()
             if task then
               task()
-              _G.metadata.isBusy = false
             end
           end)
         elseif status == 'LAST' then
           _G.metadata.isBusy = false
-        elseif status == 'FAILED' then
+        elseif status == 'FAIL' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
           vim.schedule(function()
