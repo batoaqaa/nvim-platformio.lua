@@ -28,7 +28,7 @@ end
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
 -- stylua: ignore
-local pio_manager = (function()
+M.pio_manager = (function()
   local cache = nil -- Stores the decoded platformio.ini JSON structure
   -- INFO:
   local function find_in_data(data, section_name, key_name)
@@ -401,7 +401,7 @@ function M.start_watcher()
         local new_hash = get_hash(ini_file)
         if new_hash and new_hash ~= current_ini_hash then
           current_ini_hash = new_hash
-          pio_manager.refresh(function()
+          M.pio_manager.refresh(function()
             -- pio_generate_db()
             -- M.run_compiledb()
             M.run_compiledb() -- Smart: Auto-update DB if config changes
@@ -483,7 +483,7 @@ function M.init()
 
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-      pio_manager.refresh(function()
+      M.pio_manager.refresh(function()
         -- vim.schedule(function()
         -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
         -- pio_generate_db()
