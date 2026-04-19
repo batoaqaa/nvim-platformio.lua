@@ -58,17 +58,18 @@ local function pick_framework(board_details)
 
         local pio = require('platformio.utils.pio')
         pio.selected_framework = selection[1]
-
-        pio.run_sequence({
-          {
-            cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
-            cb = pio.handlePioinit,
-          },
-          {
-            cmd = 'pio run -t compiledb',
-            cb = pio.handleDb,
-          },
-        })
+        local setup_project = require('platformio.utils.pio2').setup_project
+        setup_project(board_details['id'], pio.selected_framework)
+        -- pio.run_sequence({
+        --   {
+        --     cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
+        --     cb = pio.handlePioinit,
+        --   },
+        --   {
+        --     cmd = 'pio run -t compiledb',
+        --     cb = pio.handleDb,
+        --   },
+        -- })
       end)
       return true
     end,

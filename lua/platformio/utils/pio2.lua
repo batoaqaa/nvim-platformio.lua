@@ -1,97 +1,126 @@
 local M = {}
 local Terminal = require('toggleterm.terminal').Terminal
 
+-- State Management
 M.queue = {}
 M.is_processing = false
+M.current_callback = nil
 
--- 1. Persistent Terminal Instance
--- Using a high ID (99) to avoid clashing with your usual terminals
-local pio_terminal = Terminal:new({
-  id = 99,
-  direction = 'float',
-  close_on_exit = false,
-  hidden = true, -- Don't show in the standard toggle cycle
-})
+-- 1. Persistent Terminal Configuration
+-- Defined once to avoid "cannot assign after loading" errors.
+local ToggleTerminal = require('platformio.utils.term2').ToggleTerminal
+_G.metadata.isBusy = true
+local pio_terminal = ToggleTerminal('', 'float')
+-- local pio_terminal = Terminal:new({
+--   id = 99,
+--   direction = 'float',
+--   close_on_exit = false, -- Keep window open so user can see results
+--   -- Proxy callback: uses the variable defined in M.run_shell_job
+--   on_exit = function(t, job, exit_code)
+--     if type(current_callback) == 'function' then
+--       current_callback(t, job, exit_code)
+--     end
+--   end,
+--   -- Dynamic focus/scroll handler
+--   on_open = function(term)
+--     if term.window and vim.api.nvim_win_is_valid(term.window) then
+--       vim.api.nvim_set_current_win(term.window)
+--       vim.cmd('normal! G') -- Scroll to bottom
+--     end
+--   end,
+-- })
 
 -- 2. The Optimized Path Fixer
 function M.compile_commandsFix()
   local filename = vim.uv.cwd() .. '/compile_commands.json'
+
+  -- Nil/Error Check: Ensure file exists
   if vim.fn.filereadable(filename) == 0 then
     M.process_queue()
     return
   end
 
-  -- Atomic read using built-in Vim function
-  local content = table.concat(vim.fn.readfile(filename), '\n')
-  local ok, data = pcall(vim.json.decode, content)
-  if not ok or type(data) ~= 'table' then
+  -- Atomic Read
+  local lines = vim.fn.readfile(filename)
+  if not lines or #lines == 0 then
     M.process_queue()
     return
   end
 
-  -- 1. Build Path Map (Scan toolchain)
-  local path_map = {}
-  local toolchain_bin = (_G.metadata and _G.metadata.toolchain or '') .. '/bin/*'
-  for _, full_path in ipairs(vim.fn.glob(toolchain_bin, false, true)) do
-    local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-    path_map[name] = full_path
+  local content = table.concat(lines, '\n')
+  local ok, data = pcall(vim.json.decode, content)
+
+  -- Nil/Error Check: Valid JSON
+  if not ok or type(data) ~= 'table' then
+    vim.notify('PIO Fix: Invalid JSON', vim.log.levels.ERROR)
+    M.process_queue()
+    return
   end
 
-  -- 2. Update Entries efficiently with string matching
+  -- Build Path Map from Toolchain Metadata
+  local path_map = {}
+  local toolchain = _G.metadata and _G.metadata.toolchain or ''
+  if toolchain ~= '' then
+    local bin_path = toolchain .. '/bin/*'
+    for _, full_path in ipairs(vim.fn.glob(bin_path, false, true)) do
+      local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+      path_map[name] = full_path
+    end
+  end
+
+  -- Update Entries
   local modified = false
   for _, entry in ipairs(data) do
     local cmd = entry.command or ''
-    local first_token = cmd:match('^%S+') -- Grab only the compiler driver
-
-    -- Fix if it's a relative path (doesn't start with / or Drive letter)
+    local first_token = cmd:match('^%S+')
+    -- If driver is relative, replace with absolute path from map
     if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
       local short_name = first_token:gsub('%.exe$', '')
       if path_map[short_name] then
-        -- Replace only the first token to preserve arguments
         entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
         modified = true
       end
     end
   end
 
-  -- 3. Save with Python formatting
+  -- Save if changes made
   if modified then
     local json_str = vim.json.encode(data)
     local formatted = vim.fn.system('python -m json.tool', json_str)
-
     if vim.v.shell_error == 0 then
-      -- Atomic write back to disk
       vim.fn.writefile(vim.split(formatted, '\n'), filename)
-      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
-    else
-      vim.notify('PIO Fix: Python formatting failed', vim.log.levels.ERROR)
+      vim.notify('PIO: Fixed compile_commands.json', vim.log.levels.INFO)
     end
   end
 
-  -- Chain to next task
+  -- Proceed to next task (or final shell handoff)
   M.process_queue()
 end
 
--- 3. Shell Runner via ToggleTerm
+-- 3. Shell Runner (Queue and Manual)
 function M.run_shell_job(cmd, on_exit_callback, is_manual)
+  if not cmd or cmd == '' then
+    return
+  end
+
   pio_terminal.cmd = cmd
 
   if is_manual then
-    -- Manual mode: No queue logic, just run and stop
-    pio_terminal.on_exit = nil
+    -- Manual Mode: Clear callback to prevent queue interference
+    M.current_callback = nil
   else
-    -- Queue mode: Define sequential behavior
-    pio_terminal.on_exit = function(_, _, exit_code)
+    -- Queue Mode: Set logic for the next step
+    M.current_callback = function(_, _, exit_code)
       if exit_code == 0 then
-        if on_exit_callback then
+        if type(on_exit_callback) == 'function' then
           on_exit_callback()
         end
-        -- Always schedule queue moves to avoid terminal-state race conditions
+        -- Use schedule to avoid race conditions with terminal closing/opening
         vim.schedule(function()
           M.process_queue()
         end)
       else
-        vim.notify('PIO Queue Stopped: Error in ' .. cmd, vim.log.levels.ERROR)
+        vim.notify('PIO Queue Failed: ' .. cmd, vim.log.levels.ERROR)
         M.queue = {}
         M.is_processing = false
       end
@@ -105,6 +134,7 @@ end
 function M.process_queue()
   local task = table.remove(M.queue, 1)
 
+  -- Nil Check: End of queue
   if not task then
     M.is_processing = false
     return
@@ -112,43 +142,49 @@ function M.process_queue()
 
   M.is_processing = true
 
+  -- Decide execution path
   if task.cmd then
     M.run_shell_job(task.cmd, task.cb, false)
   elseif type(task.cb) == 'function' then
-    -- For Lua-only tasks, they must eventually call M.process_queue()
+    -- For Lua tasks (like Fixer), run directly
     vim.schedule(task.cb)
+  else
+    -- Fallback: Skip invalid tasks
+    M.process_queue()
   end
 end
 
--- 5. Public API
--- Use this for the sequential build/init flow
+-- 5. Main Entry Point
 function M.setup_project(board_id, framework)
   if M.is_processing then
-    vim.notify('PIO: Processing already in progress', vim.log.levels.WARN)
+    vim.notify('PIO: Queue already running', vim.log.levels.WARN)
     return
   end
+
+  -- Determine OS Shell for the final handoff
+  local shell = vim.o.shell or (vim.fn.has('win32') == 1 and 'cmd' or 'bash')
 
   M.queue = {
     {
       cmd = string.format('pio project init --board %s -O "framework=%s"', board_id, framework),
-      cb = function()
-        vim.notify('Init Complete')
-      end,
     },
     {
       cmd = 'pio run -t compiledb',
     },
     {
-      cb = M.compile_commandsFix,
+      cb = M.compile_commandsFix, -- Internal: calls M.process_queue()
+    },
+    {
+      -- FINAL TASK: Spawn an interactive shell
+      -- This keeps the terminal alive so the user can type or use :send()
+      cmd = shell,
+      cb = function()
+        vim.notify('PIO: Automation complete. Shell ready.', vim.log.levels.INFO)
+      end,
     },
   }
 
   M.process_queue()
-end
-
--- Use this for one-off commands that don't trigger the queue
-function M.run_manual(cmd)
-  M.run_shell_job(cmd, nil, true)
 end
 
 return M

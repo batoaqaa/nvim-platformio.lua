@@ -8,6 +8,7 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 local config = require('platformio').config
 local pio = require('platformio.utils.pio')
 
+local current_callback = require('platformio.utils.pio2').current_callback
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
   local t = {}
@@ -245,6 +246,11 @@ function M.ToggleTerminal(command, direction)
     -- on_exit = function(_)
     --   exit_callback()
     -- end,
+    on_exit = function(t, job, exit_code)
+      if type(current_callback) == 'function' then
+        current_callback(t, job, exit_code)
+      end
+    end,
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
@@ -313,11 +319,7 @@ function M.ToggleTerminal(command, direction)
     prev.term:close()
   end
   terminal:toggle()
-  vim.defer_fn(function()
-    if command and command ~= '' then
-      send(terminal, command)
-    end
-  end, 50) -- 50ms delay, adjust as needed sgget
+  return terminal
 end
 
 return M
