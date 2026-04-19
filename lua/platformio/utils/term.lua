@@ -245,7 +245,7 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    on_stdout = pio.dispatcher,
+    on_stdout = pio.stdoutFilter,
 
     -- INFO: on_create() {
     on_create = function(t)

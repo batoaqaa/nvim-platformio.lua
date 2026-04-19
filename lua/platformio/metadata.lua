@@ -168,10 +168,17 @@ function M.switch_env()
 
       -- 6. RESTART LSP (Crucial for refreshing includes/defines)
       -- We wrap in pcall in case clangd isn't actually running yet
+
+      local pio_manager = require('platformio.pio_setup').pio_manager
+      pio_manager.refresh(function()
+        M.fix_pio_compile_commands()
+        lsp_restart('clangd')
+      end)
+
       pcall(function()
         -- Force LSP to pick up new fallbackFlags/defines
-        local lspTools = require('platformio.lsp.tools')
-        lspTools.lsp_restart()
+        local lsp_restart = require('platformio.lsp.tools').lsp_restart
+        lsp_restart()
       end)
     end
   end)

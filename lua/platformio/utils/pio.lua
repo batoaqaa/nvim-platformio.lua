@@ -3,67 +3,7 @@ local M = {}
 M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
-local lsp = require('platformio.lsp.tools')
-
-------------------------------------------------------
--- stylua: ignore
-function M.get_pio_dir(type)
-  -- 1. Setup Base Paths
-  local home = os.getenv('HOME') or os.getenv('USERPROFILE')
-
-  -- 2. Define Mapping (key in INI, Env Var, Default Subfolder)
-  local map = {
-    core = { ini = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
-    packages = { ini = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/packages' },
-    platforms = { ini = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/platforms' },
-  }
-
-  local core_ini, dir_ini = nil, nil
-  local core_map, dir_map = map['core'], map[type]
-  if not core_map and not dir_map then
-    return nil
-  end
-
-  -- 3. Try to get explicit value from platformio.ini
-  local handle = io.popen('pio project config --json-output')
-  if handle then
-    local json_str = handle:read('*all')
-    local _, config = pcall(vim.json.decode, json_str)
-    for _, section in ipairs(config) do
-      if section[1] == 'platformio' then
-        for _, kv in ipairs(section[2]) do
-          if kv[1] == dir_map.ini then
-            dir_ini = tostring(kv[2]):match('([^,%s]+)')
-          end
-          if kv[1] == core_map.ini then
-            core_ini = kv[2]
-          end
-        end
-        break
-      end
-    end
-    handle:close()
-  end
-
-  -- 4.0 Fallback Logic: INI -> Env Var -> Default
-  local core_dir = core_ini or os.getenv('PLATFORMIO_CORE_DIR' or (home .. map['core'].sub)):gsub('[\\/]+$', '')
-  core_dir = misc.normalize_path(core_dir) --core_dir:gsub('\\', '/'):gsub('//+', '/')
-
-  if type == 'core' then
-    return core_dir
-  end
-
-  local  result = dir_ini or os.getenv(dir_map.env) or (core_dir .. dir_map.sub)
-
-  -- 5. Expand ${platformio.core_dir}
-  if result:find('${platformio.core_dir}', 1, true) then
-    result = result:gsub('%${platformio.core_dir}', core_dir)
-  end
-
-  -- 6. Normalize Slashes for Windows
-  result = misc.normalize_path(result) --result:gsub('\\', '/'):gsub('//+', '/')
-  return result
-end
+local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 ------------------------------------------------------
 -- stylua: ignore
@@ -140,22 +80,22 @@ function M.fix_pio_compile_commands()
         out_file:write(formatted_json)
         out_file:close()
         vim.notify('compiledb: fixed', vim.log.levels.INFO)
-        -- lsp.lsp_restart('clangd')
+        -- lsp_restart('clangd')
       end
     end
   end
 end
 
 ------------------------------------------------------
--- INFO: Dispatcher
+-- INFO: ToggleTerminal commands sequencer
 
 M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
 ------------------------------------------------------
--- The Dispatcher (The Brain)
+-- INFO: ToggleTerminal commands stdout filter
 -- stylua: ignore
-function M.dispatcher(_, _, data)
+function M.stdoutFilter(_, _, data)
   if #M.queue == 0 then return end
 
   -- 1. attach partial buffer from previous data last line to 1st line
@@ -190,6 +130,7 @@ function M.dispatcher(_, _, data)
 end
 
 ------------------------------------------------------
+-- INFO: ToggleTerminal commands Sequencer
 --- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
@@ -227,7 +168,7 @@ function M.handleDb()
     boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     M.fix_pio_compile_commands()
-    lsp.lsp_restart('clangd')
+    lsp_restart('clangd')
   end)
 end
 
@@ -251,7 +192,7 @@ end
 function M.handlePiolib()
   vim.notify('Piolib: Success', vim.log.levels.INFO)
 end
--- INFO: endDispatcher
+-- INFO: end commands sequencer
 ------------------------------------------------------
 
 return M
