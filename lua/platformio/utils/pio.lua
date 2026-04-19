@@ -171,13 +171,19 @@ function M.dispatcher(_, _, data)
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
           local task = table.remove(M.queue, 1)
-          _G.metadata.isBusy = false
-          if task then vim.schedule(task) end
+          vim.schedule(function()
+            if task then
+              task()
+              _G.metadata.isBusy = false
+            end
+          end)
         elseif status == 'FAILED' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
-          _G.metadata.isBusy = false
-          vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+          vim.schedule(function()
+            _G.metadata.isBusy = false
+            vim.notify('PIO Sequence: Aborted', 4)
+          end)
         end
         break
       end

@@ -6,25 +6,6 @@ local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 -- local debounce_timer = vim.uv.new_timer()
 
--- INFO:
--- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
--- stylua: ignore
-local function pio_generate_db()
-  vim.schedule(function() vim.notify('PIO: Generating Compile DB ...', vim.log.levels.INFO) end)
-  vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    vim.schedule(function()
-      if obj.code ~= 0 then
-        if obj.code == 127 then
-          vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
-        else
-          vim.notify('PIO Manager db: Generating Compile DB failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
-        end
-        return
-      end
-      vim.notify('PIO: Generating Compile DB successful', vim.log.levels.INFO)
-    end)
-  end)
-end
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
 -- stylua: ignore
@@ -275,68 +256,88 @@ M.pio_manager = (function()
   }
 end)()
 
--- INFO:
-function _G.get_pio_sdk_info()
-  local pio_info = { includes = {}, cc_compiler = '' }
-  if vim.fn.filereadable('platformio.ini') == 0 then
-    return nil
-  end
-
-  local handle = io.popen('pio run -t envdump')
-  if not handle then
-    return nil
-  end
-
-  local packages_dir, cc_name, toolchain_pkg = '', '', ''
-
-  for line in handle:lines() do
-    -- 1. Get the global packages directory
-    packages_dir = packages_dir ~= '' and packages_dir or line:match("'PROJECT_PACKAGES_DIR': '([^']+)'")
-
-    -- 2. Get the compiler executable name (e.g., riscv32-esp-elf-gcc)
-    cc_name = cc_name ~= '' and cc_name or line:match("'CC': '([^']+)'")
-
-    -- 3. Find the specific toolchain package name from the PACKAGES list
-    -- Matches lines like "- toolchain-riscv32-esp @ 14.2.0"
-    local pkg = line:match('%- (toolchain%-[^ ]+)')
-    if pkg then
-      toolchain_pkg = pkg
-    end
-
-    -- 4. Collect include paths
-    local path_list = line:match("'CPPPATH': %[(.+)%]")
-    if path_list then
-      for path in path_list:gmatch("'([^']+)'") do
-        table.insert(pio_info.includes, '-I' .. path)
-      end
-    end
-  end
-  handle:close()
-
-  -- Construct the absolute path: <packages_dir>/<toolchain_pkg>/bin/<cc_name>
-  if packages_dir and packages_dir ~= '' and toolchain_pkg and toolchain_pkg ~= '' and cc_name ~= '' then
-    local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
-    if vim.fn.executable(full_path) == 1 then
-      pio_info.cc_compiler = full_path
-    end
-  end
-
-  local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
-  print('get_pio_sdk_info(): final=' .. final)
-  -- Normalize paths for the OS and ensure backslashes for Windows if needed
-  -- print(vim.inspect(_G.metadata))
-  return (misc.normalize_path(final))
-  -- return _G.metadata.query_driver
-  -- return pio_info
-end
+-- -- INFO:
+-- function _G.get_pio_sdk_info()
+--   local pio_info = { includes = {}, cc_compiler = '' }
+--   if vim.fn.filereadable('platformio.ini') == 0 then
+--     return nil
+--   end
+--
+--   local handle = io.popen('pio run -t envdump')
+--   if not handle then
+--     return nil
+--   end
+--
+--   local packages_dir, cc_name, toolchain_pkg = '', '', ''
+--
+--   for line in handle:lines() do
+--     -- 1. Get the global packages directory
+--     packages_dir = packages_dir ~= '' and packages_dir or line:match("'PROJECT_PACKAGES_DIR': '([^']+)'")
+--
+--     -- 2. Get the compiler executable name (e.g., riscv32-esp-elf-gcc)
+--     cc_name = cc_name ~= '' and cc_name or line:match("'CC': '([^']+)'")
+--
+--     -- 3. Find the specific toolchain package name from the PACKAGES list
+--     -- Matches lines like "- toolchain-riscv32-esp @ 14.2.0"
+--     local pkg = line:match('%- (toolchain%-[^ ]+)')
+--     if pkg then
+--       toolchain_pkg = pkg
+--     end
+--
+--     -- 4. Collect include paths
+--     local path_list = line:match("'CPPPATH': %[(.+)%]")
+--     if path_list then
+--       for path in path_list:gmatch("'([^']+)'") do
+--         table.insert(pio_info.includes, '-I' .. path)
+--       end
+--     end
+--   end
+--   handle:close()
+--
+--   -- Construct the absolute path: <packages_dir>/<toolchain_pkg>/bin/<cc_name>
+--   if packages_dir and packages_dir ~= '' and toolchain_pkg and toolchain_pkg ~= '' and cc_name ~= '' then
+--     local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
+--     if vim.fn.executable(full_path) == 1 then
+--       pio_info.cc_compiler = full_path
+--     end
+--   end
+--
+--   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
+--   print('get_pio_sdk_info(): final=' .. final)
+--   -- Normalize paths for the OS and ensure backslashes for Windows if needed
+--   -- print(vim.inspect(_G.metadata))
+--   return (misc.normalize_path(final))
+--   -- return _G.metadata.query_driver
+--   -- return pio_info
+-- end
 
 -- INFO:
 -- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
 --- stylua: ignore
 ----------------------------------------------------------------------------------------------
+-- INFO:
+-- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
+-- stylua: ignore
+-- local function pio_generate_db()
+--   vim.schedule(function() vim.notify('PIO: Generating Compile DB ...', vim.log.levels.INFO) end)
+--   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
+--     vim.schedule(function()
+--       if obj.code ~= 0 then
+--         if obj.code == 127 then
+--           vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
+--         else
+--           vim.notify('PIO Manager db: Generating Compile DB failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
+--         end
+--         return
+--       end
+--       vim.notify('PIO: Generating Compile DB successful', vim.log.levels.INFO)
+--     end)
+--   end)
+-- end
 
 local dir_path = vim.uv.cwd()
 local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
+
 -- 1. Helper: Unified hashing for change detection
 local function get_hash(path)
   if vim.fn.filereadable(path) == 0 then
@@ -381,6 +382,7 @@ function M.start_watcher()
     return
   end
   local current_ini_hash = get_hash(ini_file)
+  _G.metadata.isBusy = false
 
   local handle = vim.uv.new_fs_event()
   if handle then
@@ -391,12 +393,6 @@ function M.start_watcher()
         if err or fname ~= 'platformio.ini' or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
           return
         end
-        --       -- Trigger only if the changed file is platformio.ini
-        --       if filename == 'platformio.ini' and (events.change or events.rename) then
-        --       if filename == 'platformio.ini' and (events.change or events.rename) then
-        -- if err or _G.metadata.isBusy or fname ~= 'platformio.ini' then
-        --   return
-        -- end
 
         local new_hash = get_hash(ini_file)
         if new_hash and new_hash ~= current_ini_hash then
