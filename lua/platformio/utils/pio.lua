@@ -177,7 +177,7 @@ function M.dispatcher(_, _, data)
           local task = table.remove(M.queue, 1)
           -- vim.schedule(function()
           if task then
-            vim.schedule(task())
+            vim.schedule(task)
           end
           -- end)
         elseif status == 'LAST' then
