@@ -10,7 +10,6 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 local misc = require('platformio.utils.misc')
 local previewers = require('telescope.previewers')
--- local piolsp = require('platformio.piolsp') --.piolsp
 
 local libentry_maker = function(opts)
   local displayer = entry_display.create({

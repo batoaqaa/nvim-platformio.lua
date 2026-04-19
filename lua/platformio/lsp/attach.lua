@@ -32,7 +32,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
             end)
           end, bufnr)
         end, { desc = 'Switch between source/header' })
-        -- piolsp.fix_pio_compile_commands()
       end
 
       -- use lsp completion if no blink
@@ -100,13 +99,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
     ------------------------------------------------------------------
     vim.cmd([[autocmd FileType * set formatoptions-=ro]])
     --
-    -- -- Optional: Auto-run every time you attach an LSP to a C/C++ file
-    -- vim.api.nvim_create_autocmd('LspAttach', {
-    --   pattern = { '*.c', '*.cpp', '*.h', '*.hpp' },
-    --   callback = function()
-    --     piolsp.fix_pio_compile_commands()
-    --   end,
-    -- })
   end,
 })
 

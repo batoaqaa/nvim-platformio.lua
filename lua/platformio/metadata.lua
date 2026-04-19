@@ -171,7 +171,8 @@ function M.switch_env()
 
       local pio_manager = require('platformio.pio_setup').pio_manager
       pio_manager.refresh(function()
-        M.fix_pio_compile_commands()
+        M.compile_commands()
+        local lsp_restart = require('platformio.tools').lsp_restart
         lsp_restart('clangd')
       end)
 
