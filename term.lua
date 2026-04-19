@@ -313,12 +313,11 @@ function M.ToggleTerminal(command, direction)
     prev.term:close()
   end
   terminal:toggle()
-  -- vim.defer_fn(function()
-  --   if command and command ~= '' then
-  --     send(terminal, command)
-  --   end
-  -- end, 50) -- 50ms delay, adjust as needed sgget
-  return terminal
+  vim.defer_fn(function()
+    if command and command ~= '' then
+      send(terminal, command)
+    end
+  end, 50) -- 50ms delay, adjust as needed sgget
 end
 
 return M
