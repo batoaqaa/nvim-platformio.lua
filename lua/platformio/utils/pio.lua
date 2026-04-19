@@ -154,20 +154,16 @@ local pio_buffer = '' -- Persistent stream buffer
 
 ------------------------------------------------------
 -- The Dispatcher (The Brain)
---- stylua: ignore
+-- stylua: ignore
 function M.dispatcher(_, _, data)
-  if #M.queue == 0 then
-    return
-  end
+  if #M.queue == 0 then return end
 
   -- 1. attach partial buffer from previous data last line to 1st line
   pio_buffer = pio_buffer .. data[1]
   -- 2. If the chunk has more than one element, we've encountered newlines
   if #data > 1 then
     -- 3. Process any "middle" lines which are guaranteed to be complete
-    for i = 2, #data - 1 do
-      pio_buffer = pio_buffer .. data[i]
-    end
+    for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
 
     for status in pio_buffer:gmatch('_DONE_:(%a+)') do
       if status then
@@ -175,27 +171,22 @@ function M.dispatcher(_, _, data)
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
           local task = table.remove(M.queue, 1)
-          -- vim.schedule(function()
-          if task then
-            vim.schedule(task)
-          end
-          -- end)
+          if task then vim.schedule(task) end
         elseif status == 'LAST' then
           _G.metadata.isBusy = false
+          M.queue = {} -- Clear queue on any other status
+          pio_buffer = ''
+          vim.schedule(function() vim.notify('PIO Sequence: Finished', 4) end)
         elseif status == 'FAIL' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
-          vim.schedule(function()
-            vim.notify('PIO Sequence: Aborted', 4)
-          end)
+          vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
         end
         break
       end
     end
   end
-  if #pio_buffer > 10000 then
-    pio_buffer = pio_buffer:sub(-5000)
-  end
+  if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
 end
 
 ------------------------------------------------------
@@ -233,6 +224,7 @@ function M.handleDb()
   local pio_manager = require('platformio.pio_setup').pio_manager
   pio_manager.refresh(function()
     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     M.fix_pio_compile_commands()
     lsp.lsp_restart('clangd')
@@ -246,12 +238,12 @@ function M.handlePioinit()
   -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
   -- vim.schedule(function()
-  local pio_manager = require('platformio.pio_setup').pio_manager
-  pio_manager.refresh(function()
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-    vim.notify('Pioinit: Success', vim.log.levels.INFO)
-  end)
+  -- local pio_manager = require('platformio.pio_setup').pio_manager
+  -- pio_manager.refresh(function()
+  -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+  -- boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+  vim.notify('Pioinit: Success', vim.log.levels.INFO)
+  -- end)
   -- end)
 end
 -- Handle after poioinit execution
