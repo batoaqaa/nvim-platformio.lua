@@ -265,7 +265,7 @@ function M.ToggleTerminal(command, direction)
             local quitbang = vim.fn.getcmdline() == 'q!'
             if quitbang or quit then
               local name_splt = M.strsplit(t.display_name, ':')
-              if quitbang then
+              if t and quitbang then
                 if name_splt[1] == 'piomon' then -- monitor terminal
                   local exit = vim.api.nvim_replace_termcodes('<C-C>exit', true, true, true)
                   send(t, exit)
