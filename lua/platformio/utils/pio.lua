@@ -154,20 +154,24 @@ local pio_buffer = '' -- Persistent stream buffer
 
 ------------------------------------------------------
 -- The Dispatcher (The Brain)
--- stylua: ignore
+--- stylua: ignore
 function M.dispatcher(_, _, data)
-  if #M.queue == 0 then return end
+  if #M.queue == 0 then
+    return
+  end
 
-  -- 1. attach partial buffer from previous data last line to 1st line 
+  -- 1. attach partial buffer from previous data last line to 1st line
   pio_buffer = pio_buffer .. data[1]
   -- 2. If the chunk has more than one element, we've encountered newlines
   if #data > 1 then
     -- 3. Process any "middle" lines which are guaranteed to be complete
-    for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
+    for i = 2, #data - 1 do
+      pio_buffer = pio_buffer .. data[i]
+    end
 
     for status in pio_buffer:gmatch('___DONE___:(%a+)') do
       if status then
-        if status == 'SUCCESS' then
+        if status == 'PASS' then
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
           local task = table.remove(M.queue, 1)
@@ -177,11 +181,12 @@ function M.dispatcher(_, _, data)
               _G.metadata.isBusy = false
             end
           end)
+        elseif status == 'LAST' then
+          _G.metadata.isBusy = false
         elseif status == 'FAILED' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
           vim.schedule(function()
-            _G.metadata.isBusy = false
             vim.notify('PIO Sequence: Aborted', 4)
           end)
         end
@@ -189,27 +194,33 @@ function M.dispatcher(_, _, data)
       end
     end
   end
-  if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
+  if #pio_buffer > 10000 then
+    pio_buffer = pio_buffer:sub(-5000)
+  end
 end
 
 ------------------------------------------------------
--- stylua: ignore
+--- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
 
-  local success = 'echo ___DONE___":"SUCCESS'
-  local failure = 'echo ___DONE___":"FAILED'
+  local pass = 'echo _DONE_":"PASS'
+  local last = 'echo _DONE_":"LAST'
+  local failure = 'echo _DONE_":"FAIL'
 
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
-    local part = string.format('%s && %s', task.cmd, success)
-    if full_cmd == '' then full_cmd = part
-    else full_cmd = full_cmd .. ' && ' .. part end -- Chain multiple commands
+    local part = string.format('%s && %s', task.cmd, pass)
+    if full_cmd == '' then
+      full_cmd = part
+    else
+      full_cmd = full_cmd .. ' && ' .. part
+    end -- Chain multiple commands
   end
-  full_cmd = full_cmd .. ' || ' .. failure
+  full_cmd = full_cmd .. ' && ' .. last .. ' || ' .. failure
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
