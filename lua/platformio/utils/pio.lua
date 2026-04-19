@@ -4,6 +4,8 @@ M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
+local ToggleTerminal = require('platformio.utils.term')
+ToggleTerminal.stdoutFilter = nil
 
 M.is_processing = false
 ------------------------------------------------------
@@ -226,7 +228,6 @@ function M.stdoutFilter(_, _, data)
   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
 end
 
-local ToggleTerminal = require('platformio.utils.term')
 -- _G.metadata.isBusy = true
 ToggleTerminal.stdoutFilter = M.stdoutFilter
 local pio_terminal = ToggleTerminal.ToggleTerminal('', 'float')
