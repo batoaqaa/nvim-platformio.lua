@@ -5,10 +5,11 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+M.current_callback = nil
+
 local config = require('platformio').config
 local pio = require('platformio.utils.pio')
 
-local current_callback = require('platformio.utils.pio2').current_callback
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
   local t = {}
@@ -247,8 +248,8 @@ function M.ToggleTerminal(command, direction)
     --   exit_callback()
     -- end,
     on_exit = function(t, job, exit_code)
-      if type(current_callback) == 'function' then
-        current_callback(t, job, exit_code)
+      if type(M.current_callback) == 'function' then
+        M.current_callback(t, job, exit_code)
       end
     end,
 

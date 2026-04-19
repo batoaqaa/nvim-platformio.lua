@@ -4,7 +4,7 @@ local Terminal = require('toggleterm.terminal').Terminal
 -- State Management
 M.queue = {}
 M.is_processing = false
-M.current_callback = nil
+local current_callback = require('platformio.utils.term2').current_callback
 
 -- 1. Persistent Terminal Configuration
 -- Defined once to avoid "cannot assign after loading" errors.
@@ -107,10 +107,10 @@ function M.run_shell_job(cmd, on_exit_callback, is_manual)
 
   if is_manual then
     -- Manual Mode: Clear callback to prevent queue interference
-    M.current_callback = nil
+    current_callback = nil
   else
     -- Queue Mode: Set logic for the next step
-    M.current_callback = function(_, _, exit_code)
+    current_callback = function(_, _, exit_code)
       if exit_code == 0 then
         if type(on_exit_callback) == 'function' then
           on_exit_callback()
