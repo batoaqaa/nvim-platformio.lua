@@ -6,7 +6,6 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 local config = require('platformio').config
--- local pio = require('platformio.utils.pio')
 M.stdoutFilter = nil
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
