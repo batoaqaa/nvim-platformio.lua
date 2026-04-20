@@ -269,7 +269,8 @@ end
 function M.handleDb()
   vim.notify('compiledb: Pass', vim.log.levels.INFO)
   misc.gitignore_lsp_configs('compile_commands.json')
-  M.compile_commandsFix()
+  -- M.compile_commandsFix()
+  _G.metadata.dbTrigger = true
 end
 
 ------------------------------------------------------
