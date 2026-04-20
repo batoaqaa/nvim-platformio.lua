@@ -242,7 +242,7 @@ M.run_sequence = function(tasks)
   pio_buffer = ''
   local full_cmd = ''
   local done = ' && echo _CMMNDS_":"DONE'
-  local pass = ' && echo _CMMNDS_":"PASS'
+  local pass = ' && echo _CMMNDS_":"PASS '
   local fail = ' || echo _CMMNDS_":"FAIL'
   --
   for _, task in ipairs(tasks) do
