@@ -10,7 +10,7 @@ local M = {}
 -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
 
 -- Add this to your init.lua or statusline config
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
 
 -- Optional: Add a nice color for the environment name
 vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
