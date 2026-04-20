@@ -8,14 +8,7 @@
 
 local piolsserial = require('platformio.piolsserial')
 local misc = require('platformio.utils.misc')
-
--- INFO: Dependency Injection: Plug the logic into the terminal
--- these 4 lines used to fix require loop between
--- 'platformio.utils.term' and 'platformio.utils.pio'
-local term = require('platformio.utils.term')
 local pio = require('platformio.utils.pio')
-term.stdout_callback = pio.stdout()
-pio.term = term.ToggleTerminal
 
 -- Pioinit
 vim.api.nvim_create_user_command('Pioinit', function()

@@ -8,8 +8,7 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 local config = require('platformio').config
 
 -- to fix require loop, toggleterm is using stdout_callback function in 'platformio.utils.pio'
--- M.stdout_callback will be assigned in 'plgin/platformio' to 'platformio.utils.pio.stdout_callback'
--- below on_stdout will be assigned to M.stdout_callback
+-- M.stdout_callback will be assigned by 'platformio.utils.pio'
 M.stdout_callback = nil
 
 ------------------------------------------------------
@@ -168,14 +167,11 @@ function M.ToggleTerminal(command, direction)
     pioOpts.id = 99
 
     -- INFO: on_stdout
-    -- on_stdout = stdout_callback,
-    -- pioOpts.on_stdout = pio.stdoutFilter
-    pioOpts.on_stdout = M.stdout_callback
-    -- function(t, job, exit_code)
-    --   if type(M.stdout_callback) == 'function' then
-    --     M.stdout_callback(t, job, exit_code)
-    --   end
-    -- end
+    pioOpts.on_stdout = function(t, job, exit_code)
+      if type(M.stdout_callback) == 'function' then
+        M.stdout_callback(t, job, exit_code)
+      end
+    end
   end
   pioOpts.direction = direction
   ------------------------------------------------------
@@ -255,10 +251,6 @@ function M.ToggleTerminal(command, direction)
     -- on_exit = function(_)
     --   exit_callback()
     -- end,
-
-    -- INFO: on_stdout
-    -- on_stdout = stdout_callback,
-    -- on_stdout = pio.stdoutFilter,
 
     -- INFO: on_create() {
     on_create = function(t)

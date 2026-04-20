@@ -3,13 +3,8 @@ local M = {}
 M.selected_framework = ''
 
 -- to fix require loop, this value is set in plugin/platformio
-M.term = nil
 
-M.stdout_callback = nil
-M.stdout = function()
-  return M.stdout_callback
-end
-
+local term = require('platformio.utils.term')
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
@@ -267,7 +262,7 @@ M.run_sequence = function(tasks)
 
   table.insert(M.queue, function()
     vim.notify('Pioinit: Done', vim.log.levels.INFO)
-    M.stdout_callback = nil
+    term.stdout_callback = nil
   end)
 
   table.insert(M.queue, function()
@@ -277,11 +272,8 @@ M.run_sequence = function(tasks)
   -- full_cmd = full_cmd .. ' || ' .. fail
   _G.metadata.isBusy = true
   -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
-  -- ToggleTerminal(full_cmd, 'float')
-  -- if M.term then
-  M.stdout_callback = M.stdoutcallback
-  M.term(full_cmd, 'float')
-  -- end
+  term.stdout_callback = M.stdoutcallback
+  term.ToggleTerminal(full_cmd, 'float')
 end
 
 -- {
