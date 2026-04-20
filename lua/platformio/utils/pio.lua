@@ -88,22 +88,26 @@ function M.compile_commandsFix()
   -- PHASE 3: Save and Refresh
 
   if modified then
-    local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    -- 1. Encode with indentation
+    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
 
-    if ok_enc and json_str then
-      -- Open in 'wb' (write binary) mode to prevent Windows from 
-      -- mangling the newlines automatically.
+    if ok and json_str then
+      -- 2. Windows specific: Force CRLF line endings
+      -- This replaces every \n that is NOT preceded by \r with \r\n
+      if vim.fn.has("win32") == 1 then
+        json_str = json_str:gsub("([^\r])\n", "%1\r\n")
+      end
+
+      -- 3. Write as a Binary string to prevent the OS from 
+      -- re-mangling the characters during the save process.
       local f = io.open(filename, "wb")
       if f then
-        -- Add a trailing newline to the end of the file (standard practice)
-        f:write(json_str .. "\n")
+        f:write(json_str .. "\r\n") -- Final trailing newline
         f:close()
 
-        -- Force Neovim to refresh the view of the file
+        -- Refresh Neovim's view of the file
         vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-        vim.notify("PIO: JSON formatted correctly", 2)
-      else
-        vim.notify("PIO: Could not open file for writing", 4)
+        vim.notify("PIO: JSON formatted for Windows (CRLF)", 2)
       end
     end
   end
