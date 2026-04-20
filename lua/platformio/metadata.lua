@@ -13,7 +13,7 @@ local M = {}
 -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
 --
 -- Optional: Add a nice color for the environment name
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+-- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 --
 -- function M.refresh_statusline()
 --   local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
@@ -27,19 +27,43 @@ vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 -- end
 
 -- 1. Define the logic in a global table to make it accessible to v:lua
-_G.MyStatusLine = function()
-  local mode = vim.api.nvim_get_mode().mode
-  local file = vim.fn.expand('%:t') -- Just the filename
-  local modified = vim.bo.modified and ' [+]' or ''
-  return string.format(' %s | %s%s %%= %%l:%%c ', mode, file, modified)
+-- _G.MyStatusLine = function()
+--   local mode = vim.api.nvim_get_mode().mode
+--   local file = vim.fn.expand('%:t') -- Just the filename
+--   local modified = vim.bo.modified and ' [+]' or ''
+--   return string.format(' %s | %s%s %%= %%l:%%c ', mode, file, modified)
+-- end
+--
+-- -- 2. Set the global statusline behavior
+-- vim.o.laststatus = 3
+--
+-- -- 3. Use v:lua to call your function
+-- -- vim.o.statusline = '%!v:lua.MyStatusLine()'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.MyStatusLine()}%* %y %p%% %l:%c'
+
+function M.refresh_statusline()
+  -- Check if metadata exists and has an active environment
+  local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
+
+  if env then
+    -- Set the buffer-local variable
+    vim.b.pio_env = string.format(' [ %s ] ', env)
+  else
+    vim.b.pio_env = '' -- Clear it if not in a PIO project
+  end
+
+  -- Force an immediate visual refresh of the status bar
+  vim.cmd('redrawstatus')
 end
 
--- 2. Set the global statusline behavior
-vim.o.laststatus = 3
+-- Standard Statusline layout
+-- %#PioStatus# applies your custom color
+-- %{get(b:,"pio_env","")} safely reads the buffer variable
+-- %* resets the color back to default
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
 
--- 3. Use v:lua to call your function
--- vim.o.statusline = '%!v:lua.MyStatusLine()'
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.MyStatusLine()}%* %y %p%% %l:%c'
+-- Define a nice color for the environment name (e.g., Blue)
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 -------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
