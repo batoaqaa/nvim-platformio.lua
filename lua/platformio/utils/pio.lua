@@ -275,7 +275,7 @@ M.run_sequence = function(tasks)
   -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   -- ToggleTerminal(full_cmd, 'float')
   -- if M.term then
-  M.stdout_callback = M.stdoutcallback()
+  M.stdout_callback = M.stdoutcallback
   M.term(full_cmd, 'float')
   -- end
 end
