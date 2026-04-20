@@ -114,6 +114,12 @@ _G.metadata = setmetatable({}, {
             vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
           end
         end)
+      elseif key == 'active_env' then
+        -- Force global statusline so it doesn't get pushed around by Trouble or splits
+        vim.o.laststatus = 3
+
+        -- Ensure your custom layout is the final word
+        vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
       end
       -- if key == 'active_env' then
       --   vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
