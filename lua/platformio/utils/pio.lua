@@ -121,7 +121,7 @@ function M.compile_commandsFix()
     return
   end
 
-  -- print('PioFix0')
+  print('PioFix0')
   -- PHASE 1: Scan Disk to build a Map of Name -> Absolute Path
   local path_map = {}
   local pio_home = _G.metadata.core_dir --os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
