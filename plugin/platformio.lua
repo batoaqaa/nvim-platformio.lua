@@ -9,7 +9,7 @@
 local piolsserial = require('platformio.piolsserial')
 local misc = require('platformio.utils.misc')
 local pio = require('platformio.utils.pio')
-local meta = require('platformio.meta')
+local meta = require('platformio.metadata')
 
 -- Statusline: Using luaeval for best cross-platform stability
 vim.o.laststatus = 3
