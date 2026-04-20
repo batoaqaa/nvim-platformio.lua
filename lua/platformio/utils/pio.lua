@@ -86,16 +86,39 @@ function M.compile_commandsFix()
   end
 
   -- PHASE 3: Save and Refresh
+
+
   if modified then
+    -- 1. Encode with 2-space indentation
     local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
     if ok_enc then
-      local f = io.open(filename, "w")
-      if f then
-        f:write(json_str)
-        f:close()
-      end
+      -- 2. Robust split: handles both \r\n and \n correctly
+      -- This ensures 'lines' is a proper table for vim.fn.writefile
+      local lines = vim.split(json_str, "[\r\n]+", { trimempty = true })
+
+      -- 3. Atomic write back to disk
+      -- 's' flag forces a system sync for data integrity
+      vim.fn.writefile(lines, filename, 's')
+
+      -- 4. Essential: Tell Neovim to refresh the file if it is already open
+      -- This prevents the editor from displaying stale "one-line" cached data
+      vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+
+      vim.notify('compiledb: paths fixed and formatted', 2)
     end
   end
+
+  -- if modified then
+  --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
+  --   if ok_enc then
+  --     local f = io.open(filename, "w")
+  --     if f then
+  --       f:write(json_str)
+  --       f:close()
+  --     end
+  --   end
+  -- end
+
   -- if modified then
   --   local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
   --   if not jok or not json_str then
