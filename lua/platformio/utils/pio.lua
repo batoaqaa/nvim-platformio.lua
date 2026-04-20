@@ -201,7 +201,7 @@ function M.stdoutFilter(_, _, data)
     -- 3. Process any "middle" lines which are guaranteed to be complete
     for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
 
-    for status in pio_buffer:gmatch('_DONE_:(%a+)') do
+    for status in pio_buffer:gmatch('_COMMANDS_:(%a+)') do
       if status then
         -- if status == 'PASS' then
         --   pio_buffer = data[#data]
@@ -214,7 +214,7 @@ function M.stdoutFilter(_, _, data)
           local task = table.remove(M.queue, 1)
           if task then vim.schedule(task) end
         elseif status == 'LAST' then
-          _G.metadata.isBusy = false
+          -- _G.metadata.isBusy = false
           M.queue = {} -- Clear queue on any other status
           pio_buffer = ''
           vim.schedule(function() vim.notify('PIO Sequence: Finished', 4) end)
@@ -239,9 +239,9 @@ M.run_sequence = function(tasks)
   pio_buffer = ''
   local full_cmd = ''
   --
-  local pass = 'echo _DONE_":"PASS'
-  local last = 'echo _DONE_":"LAST'
-  local fail = 'echo _DONE_":"FAIL'
+  local pass = 'echo _COMMANDS_":"PASS'
+  local last = 'echo _COMMANDS_":"LAST'
+  local fail = 'echo _COMMANDS_":"FAIL'
   --
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
@@ -253,6 +253,7 @@ M.run_sequence = function(tasks)
     end -- Chain multiple commands
   end
   full_cmd = full_cmd .. ' && ' .. last .. ' || ' .. fail
+  -- full_cmd = full_cmd .. ' || ' .. fail
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
@@ -311,7 +312,24 @@ function M.setup_project(board, framework)
 end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
-function M.handleDb()
+function M.handlePioinitDb()
+  M.compile_commandsFix()
+  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+  misc.gitignore_lsp_configs('compile_commands.json')
+  local pio_manager = require('platformio.pio_setup').pio_manager
+  pio_manager.refresh(function()
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    lsp_restart('clangd')
+  end)
+  _G.metadata.isBusy = false
+end
+
+------------------------------------------------------
+-- Handle after 'pio run -t compiledb' execution
+function M.handlePioinitLast()
+  M.compile_commandsFix()
   vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
   misc.gitignore_lsp_configs('compile_commands.json')
   local pio_manager = require('platformio.pio_setup').pio_manager
@@ -323,11 +341,10 @@ function M.handleDb()
     lsp_restart('clangd')
   end)
 end
-
 ------------------------------------------------------
 -- Handle after poioinit execution
 --- stylua: ignore
-function M.handlePioinit()
+function M.handlePioinitPass()
   -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
   -- vim.schedule(function()

@@ -61,12 +61,16 @@ local function pick_framework(board_details)
         pio.run_sequence({
           {
             cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
-            cb = pio.handlePioinit,
+            cb = pio.handlePioinitPass,
           },
           {
             cmd = 'pio run -t compiledb',
-            cb = pio.handleDb,
+            cb = pio.handlePioinitDb,
           },
+          -- {
+          --   cmd = 'echo _DONE_":"LAST',
+          --   cb = pio.handlePioinitLast,
+          -- },
         })
       end)
       return true
