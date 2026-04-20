@@ -11,15 +11,16 @@ local M = {}
 
 -- The Statusline Getter (used by the UI)
 function M.get_pio_status()
-  if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
-    return string.format(' [ %s ] ', _G.metadata.active_env)
-  end
-  return ''
+  -- Using pcall ensures that if 'require' or 'metadata' fails,
+  -- the statusline just shows nothing instead of throwing an error.
+  local ok, status = pcall(function()
+    if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
+      return string.format(' [ %s ] ', _G.metadata.active_env)
+    end
+    return ''
+  end)
+  return ok and status or ''
 end
---
--- Optional: Add a nice color for the environment name
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
-
 -------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
 local last_saved_hash = ''
