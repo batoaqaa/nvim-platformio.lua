@@ -41,6 +41,9 @@ local M = {}
 -- -- vim.o.statusline = '%!v:lua.MyStatusLine()'
 -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.MyStatusLine()}%* %y %p%% %l:%c'
 
+-- Define a nice color for the environment name (e.g., Blue)
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+
 function M.refresh_statusline()
   -- Check if metadata exists and has an active environment
   local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
@@ -61,9 +64,6 @@ end
 -- %{get(b:,"pio_env","")} safely reads the buffer variable
 -- %* resets the color back to default
 vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
-
--- Define a nice color for the environment name (e.g., Blue)
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 -------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
