@@ -350,23 +350,24 @@ end
 -- 2. Smart Save/Load: Uses JSON and Hashing
 -- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
-  -- if _G.metadata.isBusy then
-  --   return
-  -- end
+  if _G.metadata.isBusy then
+    return
+  end
   _G.metadata.isBusy = true
   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      _G.metadata.isBusy = false
+      -- _G.metadata.isBusy = false
       if obj.code == 0 then
+        M.compile_commandsFix()
         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_manager.refresh(function()
         -- boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
         -- boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
         -- pio_generate_db()
-        lsp_restart('clangd')
+        -- lsp_restart('clangd')
         -- end)
         --
       else

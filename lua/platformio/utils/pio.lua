@@ -54,13 +54,8 @@ function M.compile_commandsFix()
       vim.notify('PIO Fix: Python formatting failed', vim.log.levels.ERROR)
     end
   end
-  local pio_manager = require('platformio.pio_setup').pio_manager
-  pio_manager.refresh(function()
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    lsp_restart('clangd')
-  end)
+  lsp_restart('clangd')
+  _G.metadata.isBusy = false
 end
 
 -- function M.compile_commandsFix()
@@ -208,7 +203,7 @@ function M.stdoutFilter(_, _, data)
     -- 3. Process any "middle" lines which are guaranteed to be complete
     for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
 
-    for status in pio_buffer:gmatch('_COMMANDS_:(%a+)') do
+    for status in pio_buffer:gmatch('_CMMNDS_:(%a+)') do
       if status then
         -- if status == 'PASS' then
         --   pio_buffer = data[#data]
@@ -246,9 +241,9 @@ M.run_sequence = function(tasks)
   pio_buffer = ''
   local full_cmd = ''
   --
-  local pass = 'echo _COMMANDS_":"PASS'
-  local done = 'echo _COMMANDS_":"DONE'
-  local fail = 'echo _COMMANDS_":"FAIL'
+  local pass = 'echo _CMMNDS_":"PASS'
+  -- local done = 'echo _CMMNDS_":"DONE'
+  local fail = 'echo _CMMNDS_":"FAIL'
   --
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
@@ -259,8 +254,8 @@ M.run_sequence = function(tasks)
       full_cmd = full_cmd .. ' && ' .. part
     end -- Chain multiple commands
   end
-  full_cmd = full_cmd .. ' && ' .. done .. ' || ' .. fail
-  -- full_cmd = full_cmd .. ' || ' .. fail
+  -- full_cmd = full_cmd .. ' && ' .. done .. ' || ' .. fail
+  full_cmd = full_cmd .. ' || ' .. fail
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
@@ -319,38 +314,36 @@ end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()
-  vim.notify('compiledb: Done', vim.log.levels.INFO)
+  vim.notify('compiledb: Pass', vim.log.levels.INFO)
   misc.gitignore_lsp_configs('compile_commands.json')
   M.compile_commandsFix()
-  -- local pio_manager = require('platformio.pio_setup').pio_manager
-  -- pio_manager.refresh(function()
-  --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-  --   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-  --   boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-  --   lsp_restart('clangd')
-  -- end)
-  -- _G.metadata.isBusy = false
 end
 
 ------------------------------------------------------
 -- Handle after poioinit execution
 --- stylua: ignore
 function M.handlePioinitPass()
-  vim.notify('Pioinit: PASS', vim.log.levels.INFO)
+  local pio_manager = require('platformio.pio_setup').pio_manager
+  pio_manager.refresh(function()
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+  end)
+  vim.notify('Pioinit: Pass', vim.log.levels.INFO)
 end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
-function M.handlePioinitDone()
-  vim.notify('Pioinit: Done', vim.log.levels.INFO)
-  -- local pio_manager = require('platformio.pio_setup').pio_manager
-  -- pio_manager.refresh(function()
-  --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-  --   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-  --   boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-  --   M.compile_commandsFix()
-  --   lsp_restart('clangd')
-  -- end)
-end
+-- function M.handlePioinitDone()
+--   vim.notify('Pioinit: Done', vim.log.levels.INFO)
+--   -- local pio_manager = require('platformio.pio_setup').pio_manager
+--   -- pio_manager.refresh(function()
+--   --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+--   --   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+--   --   boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+--   --   M.compile_commandsFix()
+--   --   lsp_restart('clangd')
+--   -- end)
+-- end
 -- Handle after poioinit execution
 -- stylua: ignore
 function M.handlePiolib()

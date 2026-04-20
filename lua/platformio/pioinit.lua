@@ -61,16 +61,17 @@ local function pick_framework(board_details)
         pio.run_sequence({
           {
             cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
+            -- cb = function () vim.notify('Pioinit: Pass', vim.log.levels.INFO) end
             cb = pio.handlePioinitPass,
           },
           {
             cmd = 'pio run -t compiledb',
             cb = pio.handleDb,
           },
-          -- {
-          --   cmd = 'echo _DONE_":"LAST',
-          --   cb = pio.handlePioinitLast,
-          -- },
+          {
+            cmd = 'echo _CMMNDS_":"LAST',
+            cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
+          },
         })
       end)
       return true
