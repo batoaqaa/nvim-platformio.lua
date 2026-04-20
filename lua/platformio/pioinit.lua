@@ -65,7 +65,7 @@ local function pick_framework(board_details)
           },
           {
             cmd = 'pio run -t compiledb',
-            cb = pio.handlePioinitDb,
+            cb = pio.handleDb,
           },
           -- {
           --   cmd = 'echo _DONE_":"LAST',
