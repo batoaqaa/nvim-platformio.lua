@@ -234,73 +234,33 @@ end
 
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
---- stylua: ignore
+-- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  --
-  local pass = 'echo _CMMNDS_":"PASS'
   -- local done = 'echo _CMMNDS_":"DONE'
-  local fail = 'echo _CMMNDS_":"FAIL'
+  local pass = ' && echo _CMMNDS_":"PASS'
+  local fail = ' || echo _CMMNDS_":"FAIL'
   --
-  for _, task in ipairs(tasks) do
+  local total_tasks = #tasks
+  for i, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
-    local part = string.format('%s && %s', task.cmd, pass)
-    if full_cmd == '' then
-      full_cmd = part
-    else
-      full_cmd = full_cmd .. ' && ' .. part
-    end -- Chain multiple commands
+
+    local part = ''
+    if i == total_tasks then part = task.cmd or ''
+    else part = string.format('%s && %s', task.cmd, pass) end
+
+    if full_cmd == '' then full_cmd = part
+    else full_cmd = full_cmd .. ' && ' .. part end
   end
   -- full_cmd = full_cmd .. ' && ' .. done .. ' || ' .. fail
   full_cmd = full_cmd .. ' || ' .. fail
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
-
-  -- for _, task in ipairs(M.tasks) do
-  --   if task.cmd then
-  --     -- It's a shell task: wrap it with the pass/fail sentinels
-  --     local wrapped_cmd = string.format('%s && %s || %s', task.cmd, pass, fail)
-  --     table.insert(M.queue, {
-  --       cmd = wrapped_cmd,
-  --       cb = task.cb,
-  --     })
-  --   else
-  --     -- It's a Lua-only task: pass it through exactly as it is
-  --     table.insert(M.queue, task)
-  --   end
-  -- end
-  -- M.process_queue()
 end
-
-------------------------------------------------------------------
--- 3. Queue Controller
--- function M.process_queue()
---   local task = table.remove(M.queue, 1)
---
---   if not task then
---     M.is_processing = false
---     if M.current_cb then
---       M.current_cb()
---     end -- Final callback
---     return
---   end
---
---   M.is_processing = true
---
---   if task.cmd then
---     M.run_shell_job(task.cmd, task.cb)
---   elseif type(task.cb) == 'function' then
---     vim.schedule(function()
---       task.cb()
---       -- Lua tasks need to manually move the queue
---       M.process_queue()
---     end)
---   end
--- end
 
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
@@ -311,36 +271,20 @@ function M.handleDb()
 end
 
 ------------------------------------------------------
--- Handle after poioinit execution
---- stylua: ignore
+-- Handle after pioinit execution
 function M.handlePioinitPass()
+  vim.notify('Pioinit: Pass', vim.log.levels.INFO)
   local pio_manager = require('platformio.pio_setup').pio_manager
   pio_manager.refresh(function()
     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
     boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
   end)
-  vim.notify('Pioinit: Pass', vim.log.levels.INFO)
 end
 ------------------------------------------------------
--- Handle after 'pio run -t compiledb' execution
--- function M.handlePioinitDone()
---   vim.notify('Pioinit: Done', vim.log.levels.INFO)
---   -- local pio_manager = require('platformio.pio_setup').pio_manager
---   -- pio_manager.refresh(function()
---   --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
---   --   boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
---   --   boilerplate_gen([[.clangd]], _G.metadata.core_dir)
---   --   M.compile_commandsFix()
---   --   lsp_restart('clangd')
---   -- end)
--- end
--- Handle after poioinit execution
--- stylua: ignore
+-- Handle after piolib execution
 function M.handlePiolib()
   vim.notify('Piolib: Success', vim.log.levels.INFO)
 end
--- INFO: end commands sequencer
-------------------------------------------------------
 
 return M
