@@ -47,7 +47,9 @@ extra_scripts =
 ;    pre:enable_toolchain.py ; enabled global env 'PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN'
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
-build_flags = 
+
+build_flags =
+    -I${platformio.packages_dir}/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
     -D COMPILATIONDB_INCLUDE_TOOLCHAIN
 ]],
   content = function(self)
