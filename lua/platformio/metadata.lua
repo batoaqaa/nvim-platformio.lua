@@ -45,13 +45,15 @@ _G.metadata = setmetatable({}, {
       if key == 'cc_compiler' then
         vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         pcall(function()
-          local LspRestart = require('platformio.utils.lsp').lsp_restart
           if _raw_metadata.dbTrigger then
             local dbFix = require('platformio.utils.pio').compile_commandsFix
             dbFix()
             _raw_metadata.dbTrigger = false
+            vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
           else
+            local LspRestart = require('platformio.utils.lsp').lsp_restart
             LspRestart('clangd')
+            vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
           end
         end)
       end
