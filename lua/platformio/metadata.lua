@@ -1,14 +1,21 @@
 local M = {}
 
-_G.get_pio_status = function()
-  if _G.metadata and _G.metadata.active_env ~= '' then
-    return ' [   ' .. _G.metadata.active_env .. '] '
+-- _G.get_pio_status = function()
+--   if _G.metadata and _G.metadata.active_env ~= '' then
+--     return ' [   ' .. _G.metadata.active_env .. '] '
+--   end
+--   return ''
+-- end
+-- -- Move the %#PioStatus# and %* outside of the curly braces
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+
+-- The Statusline Getter (used by the UI)
+function M.get_pio_status()
+  if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
+    return string.format(' [ %s ] ', _G.metadata.active_env)
   end
   return ''
 end
--- Move the %#PioStatus# and %* outside of the curly braces
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
-
 --
 -- Optional: Add a nice color for the environment name
 vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })

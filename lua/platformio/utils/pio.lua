@@ -2,6 +2,7 @@ local M = {}
 
 M.selected_framework = ''
 
+M.term = nil
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
@@ -256,9 +257,11 @@ M.run_sequence = function(tasks)
   table.insert(M.queue, function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end)
   table.insert(M.queue, function () vim.notify('Pioinit: Failed', vim.log.levels.INFO) end)
   -- full_cmd = full_cmd .. ' || ' .. fail
-  local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
-  ToggleTerminal(full_cmd, 'float')
+  -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+  -- ToggleTerminal(full_cmd, 'float')
+  M.term.ToggleTerminal(full_cmd, 'float')
+
 end
 
 -- {

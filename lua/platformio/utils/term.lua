@@ -6,7 +6,10 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 local config = require('platformio').config
-local pio = require('platformio.utils.pio')
+
+-- local pio = require('platformio.utils.pio')
+-- A socket for the logic module to plug into
+M.stdout_callback = nil
 
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
@@ -165,7 +168,12 @@ function M.ToggleTerminal(command, direction)
 
     -- INFO: on_stdout
     -- on_stdout = stdout_callback,
-    pioOpts.on_stdout = pio.stdoutFilter
+    -- pioOpts.on_stdout = pio.stdoutFilter
+    pioOpts.on_stdout = function(t, job, exit_code)
+      if type(M.stdout_callback) == 'function' then
+        M.stdout_callback(t, job, exit_code)
+      end
+    end
   end
   pioOpts.direction = direction
   ------------------------------------------------------

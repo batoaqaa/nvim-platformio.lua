@@ -6,9 +6,14 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
-local misc = require('platformio.utils.misc')
-local pio = require('platformio.utils.pio')
 local piolsserial = require('platformio.piolsserial')
+local misc = require('platformio.utils.misc')
+
+local term = require('platformio.utils.term')
+local pio = require('platformio.utils.pio')
+--Dependency Injection: Plug the logic into the terminal
+term.stdout_callback = pio.stdoutFilter
+pio.term = term.ToggleTerminal
 
 -- Pioinit
 vim.api.nvim_create_user_command('Pioinit', function()
