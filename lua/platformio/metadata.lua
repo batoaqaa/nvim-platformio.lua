@@ -1,11 +1,19 @@
 local M = {}
 
 _G.get_pio_status = function()
-  if _G.metadata and _G.metadata.active_env ~= '' then
-    return ' [   ' .. _G.metadata.active_env .. '] '
+  -- Add a manual check for the metatable if it exists
+  local val = _G.metadata and _G.metadata.active_env
+  if val and val ~= '' then
+    return ' [   ' .. val .. '] '
   end
   return ''
 end
+-- _G.get_pio_status = function()
+--   if _G.metadata and _G.metadata.active_env ~= '' then
+--     return ' [   ' .. _G.metadata.active_env .. '] '
+--   end
+--   return ''
+-- end
 -- Move the %#PioStatus# and %* outside of the curly braces
 -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
 
@@ -74,8 +82,10 @@ _G.metadata = setmetatable({}, {
         -- Force global statusline so it doesn't get pushed around by Trouble or splits
         vim.o.laststatus = 3
 
+        -- Using luaeval with escaped quotes is the "bulletproof" Linux method
+        vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("_G.get_pio_status()")}%* %y %p%% %l:%c'
         -- Ensure your custom layout is the final word
-        vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
         -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
       end
       -- if key == 'active_env' then
