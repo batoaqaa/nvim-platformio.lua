@@ -59,7 +59,6 @@ function M.compile_commandsFix()
     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
     boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    M.compile_commandsFix()
     lsp_restart('clangd')
   end)
 end
@@ -320,9 +319,9 @@ end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()
-  M.compile_commandsFix()
-  vim.notify('compiledb: compile_commands.json generated/updated', vim.log.levels.INFO)
+  vim.notify('compiledb: Done', vim.log.levels.INFO)
   misc.gitignore_lsp_configs('compile_commands.json')
+  M.compile_commandsFix()
   -- local pio_manager = require('platformio.pio_setup').pio_manager
   -- pio_manager.refresh(function()
   --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
@@ -337,14 +336,12 @@ end
 -- Handle after poioinit execution
 --- stylua: ignore
 function M.handlePioinitPass()
-  vim.notify('Pioinit: Done', vim.log.levels.INFO)
+  vim.notify('Pioinit: PASS', vim.log.levels.INFO)
 end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handlePioinitDone()
-  vim.notify('compiledb: Done', vim.log.levels.INFO)
-  M.compile_commandsFix()
-  misc.gitignore_lsp_configs('compile_commands.json')
+  vim.notify('Pioinit: Done', vim.log.levels.INFO)
   -- local pio_manager = require('platformio.pio_setup').pio_manager
   -- pio_manager.refresh(function()
   --   local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
