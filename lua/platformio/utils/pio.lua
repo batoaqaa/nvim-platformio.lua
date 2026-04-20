@@ -216,13 +216,13 @@ function M.stdoutFilter(_, _, data)
           local task = table.remove(M.queue, 1)
           if task then vim.schedule(task) end
         elseif status == 'DONE' then
-          M.queue = {} -- Clear queue on any other status
           pio_buffer = ''
+          M.queue = {} -- Clear queue on any other status
           local task = table.remove(M.queue, 1)
           if task then vim.schedule(task) end
         elseif status == 'FAIL' then
-          M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
+          M.queue = {} -- Clear queue on any other status (failure)
           local task = table.remove(M.queue, 1)
           if task then vim.schedule(task) end
         end

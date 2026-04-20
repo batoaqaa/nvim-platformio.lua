@@ -104,12 +104,12 @@ M.pio_manager = (function()
                 _G.metadata.fallbackFlags = fallbackFlags
 
                 -- print(vim.inspect(_G.metadata))
-                if callback then
-                  vim.schedule(function()
-                    vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
-                    callback()
-                  end)
-                end
+                -- if callback then
+                --   vim.schedule(function()
+                --     vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
+                --     callback()
+                --   end)
+                -- end
               end
             else
               vim.schedule(function()
@@ -122,6 +122,13 @@ M.pio_manager = (function()
             vim.defer_fn(function()
               get_metadata(attempts - 1)
             end, 500)
+          else
+            if callback then
+              vim.schedule(function()
+                vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
+                callback()
+              end)
+            end
           end
         end)
       end)
