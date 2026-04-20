@@ -326,7 +326,8 @@ vim.api.nvim_create_autocmd('User', {
 
 -- We use luaeval to call the getter we defined in pio.lua (or metadata.lua)
 vim.o.laststatus = 3
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').get_pio_status()")} %y %p%% %l:%c'
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').get_pio_status()")} %y %p%% %l:%c'
 vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 -- INFO: refreshes the statusline whenever you enter a C/C++ file
