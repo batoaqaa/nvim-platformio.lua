@@ -135,7 +135,10 @@ function M.compile_commandsFix()
 
     if vim.v.shell_error == 0 then
       -- Atomic write back to disk
-      vim.fn.writefile(vim.split(formatted, "\n"), filename)
+      -- vim.fn.writefile(vim.split(formatted, "\n"), filename)
+      -- Change this line in your working code:
+      vim.fn.writefile(vim.split(formatted, "\n"), filename, 's')
+
       vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
     else
       vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
