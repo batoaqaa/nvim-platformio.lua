@@ -14,6 +14,7 @@ local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 
 local _raw_metadata = {
+  is_busy = false,
   envs = {},
   active_env = '',
   default_envs = {},
@@ -23,7 +24,7 @@ local _raw_metadata = {
   query_driver = '',
   cc_compiler = '',
   triplet = '',
-  toolchain = '',
+  toolchain_root = '',
   sysroot = '',
   fallbackFlags = {},
   dbTrigger = false,
@@ -42,14 +43,14 @@ _G.metadata = setmetatable({}, {
     -- Trigger background actions
     vim.schedule(function()
       M.save_project_config(true)
-      if key == 'cc_compiler' then
+      if key == 'toolchain_root' then
         vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         pcall(function()
           if _raw_metadata.dbTrigger then
+            vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
             local dbFix = require('platformio.utils.pio').compile_commandsFix
             dbFix()
             _raw_metadata.dbTrigger = false
-            vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
           else
             local LspRestart = require('platformio.utils.lsp').lsp_restart
             LspRestart('clangd')

@@ -1,7 +1,7 @@
 M = {}
 
 local misc = require('platformio.utils.misc')
-local lsp_restart = require('platformio.lsp.tools').lsp_restart
+-- local lsp_restart = require('platformio.lsp.tools').lsp_restart
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 -- local debounce_timer = vim.uv.new_timer()
