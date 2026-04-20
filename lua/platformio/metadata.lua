@@ -1,13 +1,35 @@
 local M = {}
 
-_G.get_pio_status = function()
-  -- Add a manual check for the metatable if it exists
-  local val = _G.metadata and _G.metadata.active_env
-  if val and val ~= '' then
-    return ' [   ' .. val .. '] '
+local frames = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
+local frame_idx = 1
+
+function M.get_pio_status()
+  local meta = _G.metadata
+  if not meta then
+    return ''
   end
-  return ''
+
+  -- Accessing meta.active_env triggers __index automatically in Lua
+  local active = meta.active_env or ''
+  if active == '' then
+    return ''
+  end
+
+  if M.is_busy then
+    local icon = frames[frame_idx]
+    frame_idx = (frame_idx % #frames) + 1
+    return string.format(' [ %s %s ] ', icon, active)
+  end
+  return string.format(' [ %s ] ', active)
 end
+-- _G.get_pio_status = function()
+--   -- Add a manual check for the metatable if it exists
+--   local val = _G.metadata and _G.metadata.active_env
+--   if val and val ~= '' then
+--     return ' [   ' .. val .. '] '
+--   end
+--   return ''
+-- end
 -- _G.get_pio_status = function()
 --   if _G.metadata and _G.metadata.active_env ~= '' then
 --     return ' [   ' .. _G.metadata.active_env .. '] '
@@ -83,7 +105,8 @@ _G.metadata = setmetatable({}, {
         vim.o.laststatus = 3
 
         -- Using luaeval with escaped quotes is the "bulletproof" Linux method
-        vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("_G.get_pio_status()")}%* %y %p%% %l:%c'
+        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("_G.get_pio_status()")}%* %y %p%% %l:%c'
+
         -- Ensure your custom layout is the final word
         -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
         -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'

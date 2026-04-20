@@ -9,6 +9,19 @@
 local piolsserial = require('platformio.piolsserial')
 local misc = require('platformio.utils.misc')
 local pio = require('platformio.utils.pio')
+local meta = require('platformio.meta')
+
+-- Statusline: Using luaeval for best cross-platform stability
+vim.o.laststatus = 3
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').get_pio_status()")} %y %p%% %l:%c'
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+
+-- Simple timer to animate the spinner if M.is_busy
+vim.fn.timer_start(100, function()
+  if meta.is_busy then
+    vim.cmd('redrawstatus')
+  end
+end, { ['repeat'] = -1 })
 
 -- We use luaeval to call the getter we defined in pio.lua (or metadata.lua)
 -- vim.o.laststatus = 3
