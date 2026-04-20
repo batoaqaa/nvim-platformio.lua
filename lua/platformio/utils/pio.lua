@@ -87,32 +87,43 @@ function M.compile_commandsFix()
 
   -- PHASE 3: Save and Refresh
   if modified then
-    local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
-    if not jok or not json_str then
-      vim.notify("PIO: JSON Encoding failed", 4)
-      return M.process_queue() -- Don't get stuck
-    end
-
-    -- local lines = vim.split(json_str, '\n')
-    local lines = vim.split(json_str, "\n", { trimempty = true })
-
-    -- 1. Check if the directory is actually writable (Safety Check)
-    local dir = vim.fn.fnamemodify(filename, ":h")
-    if vim.fn.isdirectory(dir) == 0 then
-      vim.notify("PIO: Directory does not exist: " .. dir, 4)
-      return M.process_queue()
-    end
-
-    -- 2. Use pcall to prevent the function from "exiting" on error
-    local write_ok, status = pcall(vim.fn.writefile, lines, filename, 's')
-
-    if write_ok and status == 0 then
-      vim.notify('compiledb: fixed and saved', 2)
-    else
-      local err_msg = not write_ok and status or "Write error (check permissions)"
-      vim.notify('PIO Save Failed: ' .. err_msg, 4)
+    local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    if ok_enc then
+      local f = io.open(filename, "w")
+      if f then
+        f:write(json_str)
+        f:close()
+      end
     end
   end
+  -- if modified then
+  --   local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+  --   if not jok or not json_str then
+  --     vim.notify("PIO: JSON Encoding failed", 4)
+  --     return M.process_queue() -- Don't get stuck
+  --   end
+  --
+  --   -- local lines = vim.split(json_str, '\n')
+  --   local lines = vim.split(json_str, "\n", { trimempty = true })
+  --
+  --   -- 1. Check if the directory is actually writable (Safety Check)
+  --   local dir = vim.fn.fnamemodify(filename, ":h")
+  --   if vim.fn.isdirectory(dir) == 0 then
+  --     vim.notify("PIO: Directory does not exist: " .. dir, 4)
+  --     return M.process_queue()
+  --   end
+  --
+  --   -- 2. Use pcall to prevent the function from "exiting" on error
+  --   local write_ok, status = pcall(vim.fn.writefile, lines, filename, 's')
+  --
+  --   if write_ok and status == 0 then
+  --     vim.notify('compiledb: fixed and saved', 2)
+  --   else
+  --     local err_msg = not write_ok and status or "Write error (check permissions)"
+  --     vim.notify('PIO Save Failed: ' .. err_msg, 4)
+  --   end
+  -- end
+  --
   -- 3. Save with Python formatting
   -- if modified then
   --   local json_str = vim.json.encode(data)

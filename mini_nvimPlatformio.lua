@@ -59,7 +59,7 @@ end
 -- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#e0af68', bold = true })
 -- fg = text color, bg = background color
 vim.api.nvim_set_hl(0, 'PioStatus', {
-  fg = '#1a1b26', -- Dark text
+  fg = '#e0af68', -- Dark text
   bg = '#7aa2f7', -- Blue background
   bold = true,
 })
