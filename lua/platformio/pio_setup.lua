@@ -423,7 +423,8 @@ function M.run_compiledb()
     vim.schedule(function()
       -- _G.metadata.isBusy = false
       if obj.code == 0 then
-        M.compile_commandsFix()
+        local dbFix = require('platformio.utils.pio').compile_commandsFix
+        dbFix()
         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_manager.refresh(function()
