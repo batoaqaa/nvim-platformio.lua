@@ -331,20 +331,20 @@ vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% 
 vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 -- INFO: refreshes the statusline whenever you enter a C/C++ file
-vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
-  pattern = { 'c', 'cpp', 'objc', 'objcpp', 'h', 'hpp' },
-  callback = function()
-    -- Assuming your module is required as 'pio'
-    if _G.metadata then
-      -- 1. Run your refresh logic
-      require('platformio.metadata').refresh_statusline()
-
-      -- 2. Force an immediate visual repaint of the status bar
-      -- This is the 'secret sauce' for %{ } expressions
-      vim.cmd('redrawstatus')
-    end
-  end,
-})
+-- vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
+--   pattern = { 'c', 'cpp', 'objc', 'objcpp', 'h', 'hpp' },
+--   callback = function()
+--     -- Assuming your module is required as 'pio'
+--     if _G.metadata then
+--       -- 1. Run your refresh logic
+--       require('platformio.metadata').refresh_statusline()
+--
+--       -- 2. Force an immediate visual repaint of the status bar
+--       -- This is the 'secret sauce' for %{ } expressions
+--       vim.cmd('redrawstatus')
+--     end
+--   end,
+-- })
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
