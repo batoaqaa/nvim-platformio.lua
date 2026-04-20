@@ -59,11 +59,18 @@ function M.refresh_statusline()
   vim.cmd('redrawstatus')
 end
 
+-- We define this globally so v:lua can see it
+_G.get_pio_status = function()
+  -- Lua can always see its own vim.b variables correctly
+  return vim.b.pio_env or ''
+end
+-- Use %! to execute a Lua function that returns your string
+vim.o.statusline = '%f %m %r %= %#PioStatus#%!v:lua.get_pio_status()%* %y %p%% %l:%c'
 -- Standard Statusline layout
 -- %#PioStatus# applies your custom color
 -- %{get(b:,"pio_env","")} safely reads the buffer variable
 -- %* resets the color back to default
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
 
 -------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
