@@ -6,7 +6,8 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 local config = require('platformio').config
-local pio = require('platformio.utils.pio')
+
+M.on_stdout_handler = nil
 
 ------------------------------------------------------
 function M.strsplit(inputstr, del)
@@ -141,7 +142,7 @@ function M.ToggleTerminal(command, direction)
     title = 'Pio Monitor: [In normal mode press: q or :q to hide; :q! to quit; :PioTermList to list terminals]'
     pioOpts.display_name = 'piomon:' .. orig_window
     pioOpts.id = 98
-    pioOpts.on_stdout = nil
+    pioOpts.on_stdout = nil -- INFO: on_stdout
   else -- INFO: if previous cli terminal already opened ==> reopen
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
@@ -164,8 +165,12 @@ function M.ToggleTerminal(command, direction)
     pioOpts.id = 99
 
     -- INFO: on_stdout
-    -- on_stdout = stdout_callback,
-    pioOpts.on_stdout = pio.stdoutFilter
+    pioOpts.on_stdout = function(t, job, data)
+      -- Only run if pio.lua has successfully "plugged in" the handler
+      if M.on_stdout_handler then
+        M.on_stdout_handler(t, job, data)
+      end
+    end
   end
   pioOpts.direction = direction
   ------------------------------------------------------
@@ -313,11 +318,12 @@ function M.ToggleTerminal(command, direction)
     prev.term:close()
   end
   terminal:toggle()
-  vim.defer_fn(function()
-    if command and command ~= '' then
-      send(terminal, command)
-    end
-  end, 50) -- 50ms delay, adjust as needed sgget
+  -- vim.defer_fn(function()
+  --   if command and command ~= '' then
+  --     send(terminal, command)
+  --   end
+  -- end, 50) -- 50ms delay, adjust as needed sgget
+  return terminal
 end
 
 return M

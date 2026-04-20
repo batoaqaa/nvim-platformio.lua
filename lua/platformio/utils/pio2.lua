@@ -5,6 +5,10 @@ M.selected_framework = ''
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
+local term = require('platformio.utils.term')
+-- term.on_stdout_handler = nil
+
+M.is_processing = false
 ------------------------------------------------------
 -- stylua: ignore
 function M.compile_commandsFix()
@@ -184,7 +188,6 @@ end
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands sequencer
 
-M.is_processing = false
 M.queue = {}
 local pio_buffer = '' -- Persistent stream buffer
 
@@ -203,21 +206,17 @@ function M.stdoutFilter(_, _, data)
 
     for status in pio_buffer:gmatch('_DONE_:(%a+)') do
       if status then
-        -- if status == 'PASS' then
-        --   pio_buffer = data[#data]
-        --   vim.schedule(function() M.process_queue() end)
-        -- elseif status == 'FAIL' then
-        -- end
         if status == 'PASS' then
           -- 4. Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
-          local task = table.remove(M.queue, 1)
-          if task then vim.schedule(task) end
-        elseif status == 'LAST' then
-          _G.metadata.isBusy = false
-          M.queue = {} -- Clear queue on any other status
-          pio_buffer = ''
-          vim.schedule(function() vim.notify('PIO Sequence: Finished', 4) end)
+          M.process_queue()
+          -- local task = table.remove(M.queue, 1)
+          -- if task then vim.schedule(task) end
+        -- elseif status == 'LAST' then
+        --   _G.metadata.isBusy = false
+        --   M.queue = {} -- Clear queue on any other status
+        --   pio_buffer = ''
+        --   vim.schedule(function() vim.notify('PIO Sequence: Finished', 4) end)
         elseif status == 'FAIL' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
@@ -230,6 +229,9 @@ function M.stdoutFilter(_, _, data)
   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
 end
 
+-- _G.metadata.isBusy = true
+term.on_stdout_handler = M.stdoutFilter
+local pio_terminal = term.ToggleTerminal('', 'float')
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
 --- stylua: ignore
@@ -238,76 +240,80 @@ M.run_sequence = function(tasks)
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  --
-  local pass = 'echo _DONE_":"PASS'
-  local last = 'echo _DONE_":"LAST'
-  local fail = 'echo _DONE_":"FAIL'
-  --
-  for _, task in ipairs(tasks) do
-    table.insert(M.queue, task.cb)
-    local part = string.format('%s && %s', task.cmd, pass)
-    if full_cmd == '' then
-      full_cmd = part
-    else
-      full_cmd = full_cmd .. ' && ' .. part
-    end -- Chain multiple commands
-  end
-  full_cmd = full_cmd .. ' && ' .. last .. ' || ' .. fail
-  local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
-  _G.metadata.isBusy = true
-  ToggleTerminal(full_cmd, 'float')
 
-  -- for _, task in ipairs(M.tasks) do
-  --   if task.cmd then
-  --     -- It's a shell task: wrap it with the pass/fail sentinels
-  --     local wrapped_cmd = string.format('%s && %s || %s', task.cmd, pass, fail)
-  --
-  --     table.insert(M.queue, {
-  --       cmd = wrapped_cmd,
-  --       cb = task.cb,
-  --     })
+  local pass = 'echo _DONE_":"PASS'
+  -- local last = 'echo _DONE_":"LAST'
+  local fail = 'echo _DONE_":"FAIL'
+
+  for _, row in ipairs(tasks) do
+    -- Build the wrapped command string
+    local wrapped_cmd = string.format('%s && %s || %s', row.cmd, pass, fail)
+    table.insert(M.queue, {
+      cmd = wrapped_cmd,
+      cb = row.cb,
+    })
+  end
+
+  -- for _, task in ipairs(tasks) do
+  --   table.insert(M.queue, task.cb)
+  --   local part = string.format('%s && %s', task.cmd, pass)
+  --   if full_cmd == '' then
+  --     full_cmd = part
   --   else
-  --     -- It's a Lua-only task: pass it through exactly as it is
-  --     table.insert(M.queue, task)
-  --   end
+  --     full_cmd = full_cmd .. ' && ' .. part
+  --   end -- Chain multiple commands
   -- end
-  -- M.process_queue()
+  -- full_cmd = full_cmd .. ' && ' .. last .. ' || ' .. failure
+  -- local term = require('platformio.utils.term').ToggleTerminal
+  -- _G.metadata.isBusy = true
+  -- term(full_cmd, 'float')
 end
 
-------------------------------------------------------------------
--- 3. Queue Controller
--- function M.process_queue()
---   local task = table.remove(M.queue, 1)
---
---   if not task then
---     M.is_processing = false
---     if M.current_cb then
---       M.current_cb()
---     end -- Final callback
---     return
---   end
---
---   M.is_processing = true
---
---   if task.cmd then
---     M.run_shell_job(task.cmd, task.cb)
---   elseif type(task.cb) == 'function' then
---     vim.schedule(function()
---       task.cb()
---       -- Lua tasks need to manually move the queue
---       M.process_queue()
---     end)
---   end
--- end
+-- 2. Shell Runner: Sends text to the live shell
+function M.run_shell_job(cmd, on_exit_callback)
+  -- Ensure terminal is open and process is alive
+  if not pio_terminal then
+    return
+  end
+  if not pio_terminal:is_open() then
+    pio_terminal:open()
+  end
 
--- 4. Entry Point
-function M.setup_project(board, framework)
-  M.queue = {
-    { cmd = 'pio project init --board ' .. board },
-    { cmd = 'pio run -t compiledb' },
-    { cb = M.compile_commandsFix },
-  }
-  M.process_queue()
+  -- Wrap the command:
+  -- 1. Run the actual command
+  -- 2. Run the callback logic (optional)
+  -- 3. Print the sentinel so the Lua listener knows we're done
+  -- local full_cmd = string.format('%s && echo %s', cmd, sentinel)
+
+  -- Store callback for the listener if needed
+  M.current_cb = on_exit_callback
+
+  -- Send the text + Enter key
+  pio_terminal:send(cmd)
+end
+-- 3. Queue Controller
+function M.process_queue()
+  local task = table.remove(M.queue, 1)
+
+  if not task then
+    M.is_processing = false
+    if M.current_cb then
+      M.current_cb()
+    end -- Final callback
+    return
+  end
+
+  M.is_processing = true
+
+  if task.cmd then
+    M.run_shell_job(task.cmd, task.cb)
+  elseif type(task.cb) == 'function' then
+    vim.schedule(function()
+      task.cb()
+      -- Lua tasks need to manually move the queue
+      M.process_queue()
+    end)
+  end
 end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
