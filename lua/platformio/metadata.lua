@@ -7,7 +7,7 @@ _G.get_pio_status = function()
   return ''
 end
 -- Move the %#PioStatus# and %* outside of the curly braces
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
 
 -- The Statusline Getter (used by the UI)
 -- function M.get_pio_status()
@@ -75,7 +75,8 @@ _G.metadata = setmetatable({}, {
         vim.o.laststatus = 3
 
         -- Ensure your custom layout is the final word
-        vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
+        vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
+        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
       end
       -- if key == 'active_env' then
       --   vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
