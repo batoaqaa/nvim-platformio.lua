@@ -324,14 +324,14 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
--- INFO: refreshes the statusline whenever you enter a C/C++ file
-vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
-  pattern = { 'c', 'cpp', 'objc', 'objcpp' },
-  callback = function()
-    -- Assuming your module is required as 'pio'
-    require('platformio.metadata').refresh_statusline()
-  end,
-})
+-- -- INFO: refreshes the statusline whenever you enter a C/C++ file
+-- vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
+--   pattern = { 'c', 'cpp', 'objc', 'objcpp' },
+--   callback = function()
+--     -- Assuming your module is required as 'pio'
+--     require('platformio.metadata').refresh_statusline()
+--   end,
+-- })
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
