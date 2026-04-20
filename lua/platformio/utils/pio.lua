@@ -4,8 +4,8 @@ M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
-local ToggleTerminal = require('platformio.utils.term')
-ToggleTerminal.on_stdout_handler = nil
+local term = require('platformio.utils.term')
+term.on_stdout_handler = nil
 
 M.is_processing = false
 ------------------------------------------------------
@@ -229,8 +229,8 @@ function M.stdoutFilter(_, _, data)
 end
 
 -- _G.metadata.isBusy = true
-ToggleTerminal.on_stdout_handler = M.stdoutFilter
-local pio_terminal = ToggleTerminal.ToggleTerminal('', 'float')
+term.on_stdout_handler = M.stdoutFilter
+local pio_terminal = term.ToggleTerminal('', 'float')
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
 --- stylua: ignore
@@ -263,9 +263,9 @@ M.run_sequence = function(tasks)
   --   end -- Chain multiple commands
   -- end
   -- full_cmd = full_cmd .. ' && ' .. last .. ' || ' .. failure
-  -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+  -- local term = require('platformio.utils.term').ToggleTerminal
   -- _G.metadata.isBusy = true
-  -- ToggleTerminal(full_cmd, 'float')
+  -- term(full_cmd, 'float')
 end
 
 -- 2. Shell Runner: Sends text to the live shell

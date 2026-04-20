@@ -141,7 +141,7 @@ function M.ToggleTerminal(command, direction)
     title = 'Pio Monitor: [In normal mode press: q or :q to hide; :q! to quit; :PioTermList to list terminals]'
     pioOpts.display_name = 'piomon:' .. orig_window
     pioOpts.id = 98
-    pioOpts.on_stdout = nil
+    pioOpts.on_stdout = nil -- INFO: on_stdout
   else -- INFO: if previous cli terminal already opened ==> reopen
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
@@ -164,7 +164,6 @@ function M.ToggleTerminal(command, direction)
     pioOpts.id = 99
 
     -- INFO: on_stdout
-    -- on_stdout = stdout_callback,
     pioOpts.on_stdout = function(t, job, data)
       -- Only run if pio.lua has successfully "plugged in" the handler
       if M.on_stdout_handler then
