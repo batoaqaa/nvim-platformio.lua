@@ -65,7 +65,12 @@ _G.get_pio_status = function()
   return vim.b.pio_env or ''
 end
 -- Use %! to execute a Lua function that returns your string
-vim.o.statusline = '%f %m %r %= %#PioStatus#%!v:lua.get_pio_status()%* %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%!v:lua.get_pio_status()%* %y %p%% %l:%c'
+
+-- We use %{ } for evaluation and v:lua to call your module-based function.
+-- This bypasses the strict character limits of the %! prefix.
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{%v:lua.require("platformio.metadata").get_pio_status()%}%* %y %p%% %l:%c'
+
 -- Standard Statusline layout
 -- %#PioStatus# applies your custom color
 -- %{get(b:,"pio_env","")} safely reads the buffer variable
