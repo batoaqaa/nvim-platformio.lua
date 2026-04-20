@@ -14,7 +14,7 @@ local misc = require('platformio.utils.misc')
 -- 'platformio.utils.term' and 'platformio.utils.pio'
 local term = require('platformio.utils.term')
 local pio = require('platformio.utils.pio')
-term.stdout_callback = pio.stdout
+term.stdout_callback = pio.stdout()
 pio.term = term.ToggleTerminal
 
 -- Pioinit
