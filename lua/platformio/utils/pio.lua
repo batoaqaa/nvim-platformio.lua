@@ -18,7 +18,7 @@ function M.compile_commandsFix()
 
   -- 1. Build Path Map (Scan toolchain)
   local path_map = {}
-  local toolchain_bin = (_G.metadata and _G.metadata.toolchain or "") .. '/bin/*'
+  local toolchain_bin = (_G.metadata and _G.metadata.toolchain_root or "") .. '/bin/*'
   for _, full_path in ipairs(vim.fn.glob(toolchain_bin, false, true)) do
     local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
     path_map[name] = full_path
@@ -70,7 +70,7 @@ end
 --   local path_map = {}
 --
 --   local pio_binaries = _G.metadata.query_driver or "/bin/*"
---   -- local pio_binaries = (_G.metadata.toolchain or "") .. '/bin/*'
+--   -- local pio_binaries = (_G.metadata.toolchain_root or "") .. '/bin/*'
 --   for _, full_path in ipairs(vim.fn.glob(pio_binaries, false, true)) do
 --     local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
 --     path_map[name] = full_path
@@ -127,7 +127,7 @@ end
 --   local pio_home = _G.metadata.core_dir --os.getenv('PLATFORMIO_CORE_DIR') --or os.getenv('USERPROFILE')
 --   if pio_home then
 --     -- Recursively find all binaries in PIO packages
---     local pio_packages = _G.metadata.toolchain .. '/bin/*' --M.get_pio_dir('packages') .. '/*/bin/*'
+--     local pio_packages = _G.metadata.toolchain_root .. '/bin/*' --M.get_pio_dir('packages') .. '/*/bin/*'
 --     local found_binaries = vim.fn.glob(pio_packages, false, true)
 --
 --     for _, full_path in ipairs(found_binaries) do
