@@ -129,21 +129,50 @@ function M.compile_commandsFix()
   -- end
   --
   -- 3. Save with Python formatting
+
+
   if modified then
-    local json_str = vim.json.encode(data)
-    local formatted = vim.fn.system('python -m json.tool', json_str)
+    -- 1. Encode with 2-space indentation (Pure Lua)
+    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
 
-    if vim.v.shell_error == 0 then
-      -- Atomic write back to disk
-      -- vim.fn.writefile(vim.split(formatted, "\n"), filename)
-      -- Change this line in your working code:
-      vim.fn.writefile(vim.split(formatted, "\n"), filename, 's')
+    if ok and json_str then
+      -- 2. Force a LITERAL split on \n. 
+      -- The { plain = true } is the secret—it prevents regex 
+      -- and ensures every newline creates a new table element.
+      local lines = vim.split(json_str, "\n", { plain = true })
 
-      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+      -- 3. Use writefile with the 's' flag
+      -- On Windows, writefile automatically converts this table 
+      -- into CRLF (\r\n) line endings on disk.
+      local status = vim.fn.writefile(lines, filename, 's')
+
+      if status == 0 then
+        -- 4. Force Neovim to refresh its view of the file
+        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+        vim.notify('compiledb: fixed via Native Lua', vim.log.levels.INFO)
+      end
     else
-      vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
+      vim.notify('compiledb: Lua encoding failed', vim.log.levels.ERROR)
     end
   end
+
+
+
+  -- if modified then
+  --   local json_str = vim.json.encode(data)
+  --   local formatted = vim.fn.system('python -m json.tool', json_str)
+  --
+  --   if vim.v.shell_error == 0 then
+  --     -- Atomic write back to disk
+  --     -- vim.fn.writefile(vim.split(formatted, "\n"), filename)
+  --     -- Change this line in your working code:
+  --     vim.fn.writefile(vim.split(formatted, "\n"), filename, 's')
+  --
+  --     vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+  --   else
+  --     vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
+  --   end
+  -- end
   lsp_restart('clangd')
   _G.metadata.isBusy = false
   -- M.process_queue()
