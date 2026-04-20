@@ -46,21 +46,17 @@ vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 function M.refresh_statusline()
   -- Check if metadata exists and has an active environment
-  -- local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
-  --
-  -- if env then
-  --   -- Set the buffer-local variable
-  --   vim.b.pio_env = string.format(' [ %s ] ', env)
-  -- else
-  --   vim.b.pio_env = '' -- Clear it if not in a PIO project
-  -- end
+  local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
 
-  -- Always return a string, even if empty
-  if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
-    return string.format(' [ %s ] ', _G.metadata.active_env)
+  if env then
+    -- Set the buffer-local variable
+    vim.b.pio_env = string.format(' [ %s ] ', env)
+  else
+    vim.b.pio_env = '' -- Clear it if not in a PIO project
   end
-  return ''
+
   -- Force an immediate visual refresh of the status bar
+  vim.cmd('redrawstatus')
 end
 
 -- We define this globally so v:lua can see it
@@ -73,11 +69,11 @@ end
 
 -- We use %{ } for evaluation and v:lua to call your module-based function.
 -- This bypasses the strict character limits of the %! prefix.
--- vim.o.statusline = '%f %m %r %= %#PioStatus#%{%v:lua.require(\"platformio.metadata\").refresh_statusline()%}%* %y %p%% %l:%c'
+vim.o.statusline = "%f %m %r %= %#PioStatus#%{%v:lua.require('platformio.metadata').refresh_statusline()%}%* %y %p%% %l:%c"
 
 -- We use luaeval to call your function.
 -- The single quotes around the function call are essential.
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').refresh_statusline()")} %y %p%% %l:%c'
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').get_pio_status()")} %y %p%% %l:%c'
 
 -- Standard Statusline layout
 -- %#PioStatus# applies your custom color
