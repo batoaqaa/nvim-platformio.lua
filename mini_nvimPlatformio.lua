@@ -329,7 +329,7 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
   pattern = { 'c', 'cpp', 'objc', 'objcpp' },
   callback = function()
     -- Assuming your module is required as 'pio'
-    require('platformio.metadata()').refresh_statusline()
+    require('platformio.metadata').refresh_statusline()
   end,
 })
 ----------------------------------------------------------------------------------------
