@@ -14,7 +14,7 @@ local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 
 local _raw_metadata = {
-  is_busy = false,
+  isBusy = false,
   envs = {},
   active_env = '',
   default_envs = {},
