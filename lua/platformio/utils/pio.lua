@@ -4,7 +4,11 @@ M.selected_framework = ''
 
 -- to fix require loop, this value is set in plugin/platformio
 M.term = nil
+
 M.stdout_callback = nil
+M.stdout = function()
+  return M.stdout_callback
+end
 
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
