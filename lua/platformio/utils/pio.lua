@@ -45,38 +45,38 @@ function M.compile_commandsFix()
   end
 
   -- PHASE 3: Save and Refresh
-  if modified > 0 then
-    -- 1. Native Lua encoding (indented 2 spaces)
-    local _, json_str = pcall(vim.json.encode, data, { indent = "  " })
-
-    if ok and json_str then
-      -- 2. Convert string to a table of lines (required by writefile)
-      local lines = vim.split(json_str, '\n')
-
-      -- 3. Atomic write to disk
-      -- 's' flag forces a system sync to ensure data is physically written
-      local status = vim.fn.writefile(lines, filename, 's')
-
-      if status == 0 then
-        vim.notify('compiledb: fixed and saved safely', vim.log.levels.INFO)
-      else
-        vim.notify('compiledb: failed to write file', vim.log.levels.ERROR)
-      end
-    end
-  end
-  -- 3. Save with Python formatting
-  -- if modified then
-  --   local json_str = vim.json.encode(data)
-  --   local formatted = vim.fn.system('python -m json.tool', json_str)
+  -- if modified > 0 then
+  --   -- 1. Native Lua encoding (indented 2 spaces)
+  --   local _, json_str = pcall(vim.json.encode, data, { indent = "  " })
   --
-  --   if vim.v.shell_error == 0 then
-  --     -- Atomic write back to disk
-  --     vim.fn.writefile(vim.split(formatted, "\n"), filename)
-  --     vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
-  --   else
-  --     vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
+  --   if ok and json_str then
+  --     -- 2. Convert string to a table of lines (required by writefile)
+  --     local lines = vim.split(json_str, '\n')
+  --
+  --     -- 3. Atomic write to disk
+  --     -- 's' flag forces a system sync to ensure data is physically written
+  --     local status = vim.fn.writefile(lines, filename, 's')
+  --
+  --     if status == 0 then
+  --       vim.notify('compiledb: fixed and saved safely', vim.log.levels.INFO)
+  --     else
+  --       vim.notify('compiledb: failed to write file', vim.log.levels.ERROR)
+  --     end
   --   end
   -- end
+  -- 3. Save with Python formatting
+  if modified then
+    local json_str = vim.json.encode(data)
+    local formatted = vim.fn.system('python -m json.tool', json_str)
+
+    if vim.v.shell_error == 0 then
+      -- Atomic write back to disk
+      vim.fn.writefile(vim.split(formatted, "\n"), filename)
+      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    else
+      vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
+    end
+  end
   lsp_restart('clangd')
   _G.metadata.isBusy = false
 end
