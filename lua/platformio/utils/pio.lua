@@ -87,38 +87,18 @@ function M.compile_commandsFix()
 
   -- PHASE 3: Save and Refresh
 
+
+
   if modified then
-    -- 1. Encode with 2-space indentation
-    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
-
-    if ok and json_str then
-      -- 2. FORCE SPLIT: This ensures every \n becomes a new table element
-      -- We use '\n' explicitly as the delimiter to break the long string
-      local lines = vim.split(json_str, "\n", { plain = true })
-      -- vim.fn.writefile on Windows automatically converts the table 
-      -- elements into CRLF lines when writing to disk.
-      local status = vim.fn.writefile(lines, filename, 's')
-
-      if status == 0 then
-        -- 4. Force buffer reload to see the changes immediately
-        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-        vim.notify('PIO: JSON formatted and saved (Windows Fix)', 2)
+    local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    if ok_enc then
+      local f = io.open(filename, "w")
+      if f then
+        f:write(json_str)
+        f:close()
       end
     end
   end
-
-
-
-  -- if modified then
-  --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
-  --   if ok_enc then
-  --     local f = io.open(filename, "w")
-  --     if f then
-  --       f:write(json_str)
-  --       f:close()
-  --     end
-  --   end
-  -- end
 
   -- if modified then
   --   local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
