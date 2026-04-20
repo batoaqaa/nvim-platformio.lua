@@ -55,7 +55,8 @@ else
 end
 -- Define a custom highlight group
 -- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#A6E22E', bold = true })
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+-- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#e0af68', bold = true })
 
 ----------------------------------------------------------------------------------------
 -- INFO: Set diagnostic config
