@@ -46,22 +46,47 @@ function M.compile_commandsFix()
 
   -- PHASE 3: Save and Refresh
   if modified then
-    -- 1. Native Lua encoding (indented 2 spaces)
-    local _, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    -- -- 1. Native Lua encoding (indented 2 spaces)
+    -- local _, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    --
+    -- if ok and json_str then
+    --   -- 2. Convert string to a table of lines (required by writefile)
+    --   local lines = vim.split(json_str, '\n')
+    --
+    --   -- 3. Atomic write to disk
+    --   -- 's' flag forces a system sync to ensure data is physically written
+    --   local status = vim.fn.writefile(lines, filename, 's')
+    --
+    --   if status == 0 then
+    --     vim.notify('compiledb: fixed and saved safely', vim.log.levels.INFO)
+    --   else
+    --     vim.notify('compiledb: failed to write file', vim.log.levels.ERROR)
+    --   end
+    -- end
 
-    if ok and json_str then
-      -- 2. Convert string to a table of lines (required by writefile)
-      local lines = vim.split(json_str, '\n')
+    local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    if not jok or not json_str then 
+      vim.notify("PIO: JSON Encoding failed", 4)
+      return M.process_queue() -- Don't get stuck
+    end
 
-      -- 3. Atomic write to disk
-      -- 's' flag forces a system sync to ensure data is physically written
-      local status = vim.fn.writefile(lines, filename, 's')
+    local lines = vim.split(json_str, '\n')
 
-      if status == 0 then
-        vim.notify('compiledb: fixed and saved safely', vim.log.levels.INFO)
-      else
-        vim.notify('compiledb: failed to write file', vim.log.levels.ERROR)
-      end
+    -- 1. Check if the directory is actually writable (Safety Check)
+    local dir = vim.fn.fnamemodify(filename, ":h")
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.notify("PIO: Directory does not exist: " .. dir, 4)
+      return M.process_queue()
+    end
+
+    -- 2. Use pcall to prevent the function from "exiting" on error
+    local write_ok, status = pcall(vim.fn.writefile, lines, filename, 's')
+
+    if write_ok and status == 0 then
+      vim.notify('compiledb: fixed and saved', 2)
+    else
+      local err_msg = not write_ok and status or "Write error (check permissions)"
+      vim.notify('PIO Save Failed: ' .. err_msg, 4)
     end
   end
   -- 3. Save with Python formatting
