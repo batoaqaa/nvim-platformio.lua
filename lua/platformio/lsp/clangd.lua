@@ -115,17 +115,6 @@ function _G.get_clangd_config()
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
       q_driver =  _G.metadata.query_driver                                             -- use with "--query-driver=%s"
-      -- q_driver = '--query-driver=' .. _G.metadata.query_driver                      -- use with %q
-      -- q_driver = string.format([['--query-driver=%s']],  _G.metadata.query_driver)  -- use with %s
-      -- q_driver = ''                                                                 -- use with %s ,not to use --query-driver
-
-      -- 2.1 Add it to the PATH for this Neovim session
-      -- local pio_toolchain = _G.metadata.toolchain .. '/bin'
-      -- local current_path = vim.env.PATH
-      -- if not current_path:find(pio_toolchain, 1, true) then
-      --     local sep = (vim.fn.has("win32") == 1 and ";" or ":")
-      --     vim.env.PATH = pio_toolchain .. sep .. current_path
-      -- end
     end
   end
 

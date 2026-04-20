@@ -11,7 +11,7 @@
 --     query_driver = '',
 --     cc_compiler = '',
 --     triplet = '',
---     toolchain = '',
+--     toolchain_root = '',
 --     sysroot = '',
 --     fallbackFlags = {},
 --   }

@@ -44,7 +44,7 @@ local M = {}
 --   if vim.fn.isdirectory(sysroot) == 1 then
 --     _G.metadata.triplet = triplet
 --     _G.metadata.sysroot = sysroot
---     _G.metadata.toolchain = toolchain_root
+--     _G.metadata.toolchain_root = toolchain_root
 --     _G.metadata.query_driver = query_driver
 --     return {
 --       triplet = triplet,
@@ -67,7 +67,7 @@ function M.lsp_restart(name)
   --   _G.metadata.triplet = data.triplet
   --   _G.metadata.sysroot = data.sysroot
   --   _G.metadata.query_driver = data.query_driver
-  --   _G.metadata.toolchain = data.toolchain_root
+  --   _G.metadata.toolchain_root = data.toolchain_root
   -- end
 
   local clangConfig = _G.get_clangd_config()

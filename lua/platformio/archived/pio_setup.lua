@@ -430,7 +430,7 @@
 --                   _G.metadata.triplet = data.triplet
 --                   _G.metadata.sysroot = data.sysroot
 --                   _G.metadata.query_driver = data.query_driver
---                   _G.metadata.toolchain = data.toolchain_root
+--                   _G.metadata.toolchain_root = data.toolchain_root
 --                 end
 --                 -- boilerplate_gen([[.clangd_init_options]], vim.g.platformioRootDir)
 --                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)

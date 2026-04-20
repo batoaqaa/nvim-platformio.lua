@@ -49,7 +49,7 @@ function M.get_sysroot_triplet(cc_compiler)
   if vim.fn.isdirectory(sysroot) == 1 then
     _G.metadata.triplet = triplet
     _G.metadata.sysroot = sysroot
-    _G.metadata.toolchain = toolchain_root
+    _G.metadata.toolchain_root = toolchain_root
     _G.metadata.query_driver = query_driver
     return {
       triplet = triplet,
