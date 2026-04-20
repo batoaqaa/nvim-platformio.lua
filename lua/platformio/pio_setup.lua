@@ -5,6 +5,61 @@ local lsp_restart = require('platformio.lsp.tools').lsp_restart
 local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
 
 -- local debounce_timer = vim.uv.new_timer()
+-- INFO:
+-- =============================================================================
+-- UNIVERSAL TOOLCHAIN DETECTION
+-- =============================================================================
+--- stylua: ignore
+function M.get_sysroot_triplet(cc_compiler)
+  local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
+
+  -- Early exit if path is nil or not a directory
+  if not bin_path or vim.fn.isdirectory(bin_path) == 0 then
+    return nil
+  end
+
+  -- Normalize backslashes to forward slashes for cross-platform consistency
+  bin_path = bin_path:gsub('\\', '/')
+  local files = vim.fn.readdir(bin_path)
+  local triplet = nil
+
+  -- Loop through files to find the compiler and extract the triplet
+  for _, name in ipairs(files) do
+    -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
+    local match = name:match('^(.*)%-g[c%+][c%+]')
+    if match then
+      triplet = match
+      break
+    end
+  end
+
+  -- Return nil if no compiler was found in the bin directory
+  if not triplet then
+    return nil
+  end
+
+  -- toolchain_root is the parent of the 'bin' folder
+  local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+  -- sysroot folder is expected to have the same name as the triplet
+  local sysroot = toolchain_root .. '/' .. triplet
+  local query_driver = bin_path .. '/' .. triplet .. '-*'
+
+  -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+  -- Only return data if the sysroot folder actually exists on disk
+  if vim.fn.isdirectory(sysroot) == 1 then
+    _G.metadata.triplet = triplet
+    _G.metadata.sysroot = sysroot
+    _G.metadata.toolchain = toolchain_root
+    _G.metadata.query_driver = query_driver
+    return {
+      triplet = triplet,
+      sysroot = sysroot,
+      toolchain_root = toolchain_root,
+      query_driver = query_driver,
+    }
+  end
+  return nil
+end
 
 
 -- INFO: 1. The Core PIO Manager & Generic Extractor
@@ -103,6 +158,7 @@ M.pio_manager = (function()
                 _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
                 _G.metadata.fallbackFlags = fallbackFlags
 
+                pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
                 -- print(vim.inspect(_G.metadata))
                 -- if callback then
                 --   vim.schedule(function()
