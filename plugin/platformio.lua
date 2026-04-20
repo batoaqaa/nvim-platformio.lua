@@ -9,10 +9,12 @@
 local piolsserial = require('platformio.piolsserial')
 local misc = require('platformio.utils.misc')
 
+-- INFO: Dependency Injection: Plug the logic into the terminal
+-- these 4 lines used to fix require loop between
+-- 'platformio.utils.term' and 'platformio.utils.pio'
 local term = require('platformio.utils.term')
 local pio = require('platformio.utils.pio')
---Dependency Injection: Plug the logic into the terminal
-term.stdout_callback = pio.stdoutFilter
+term.stdout_callback = pio.stdoutcallback
 pio.term = term.ToggleTerminal
 
 -- Pioinit

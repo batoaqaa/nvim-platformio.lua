@@ -2,7 +2,10 @@ local M = {}
 
 M.selected_framework = ''
 
+-- to fix require loop, this value is set in plugin/platformio
 M.term = nil
+M.stdout_callback = nil
+
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
@@ -195,7 +198,7 @@ local pio_buffer = '' -- Persistent stream buffer
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands stdout filter
 -- stylua: ignore
-function M.stdoutFilter(_, _, data)
+function M.stdoutcallback(_, _, data)
   if #M.queue == 0 then return end
 
   -- 1. attach partial buffer from previous data last line to 1st line
@@ -237,7 +240,7 @@ end
 
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
--- stylua: ignore
+--- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
   M.queue = {}
@@ -250,20 +253,31 @@ M.run_sequence = function(tasks)
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
     local part = string.format('%s %s', task.cmd, pass)
-    if full_cmd == '' then full_cmd = part
-    else full_cmd = full_cmd .. ' && ' .. part end
+    if full_cmd == '' then
+      full_cmd = part
+    else
+      full_cmd = full_cmd .. ' && ' .. part
+    end
   end
   full_cmd = full_cmd .. done .. fail
-  table.insert(M.queue, function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end)
-  table.insert(M.queue, function () vim.notify('Pioinit: Failed', vim.log.levels.INFO) end)
+
+  table.insert(M.queue, function()
+    vim.notify('Pioinit: Done', vim.log.levels.INFO)
+    M.stdout_callback = nil
+  end)
+
+  table.insert(M.queue, function()
+    vim.notify('Pioinit: Failed', vim.log.levels.INFO)
+  end)
+
   -- full_cmd = full_cmd .. ' || ' .. fail
   _G.metadata.isBusy = true
   -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   -- ToggleTerminal(full_cmd, 'float')
-  -- if M.term then 
-    M.term(full_cmd, 'float')
+  -- if M.term then
+  M.stdout_callback = M.stdoutcallback()
+  M.term(full_cmd, 'float')
   -- end
-
 end
 
 -- {
