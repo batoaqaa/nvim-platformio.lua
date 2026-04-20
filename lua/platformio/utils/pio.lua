@@ -93,7 +93,8 @@ function M.compile_commandsFix()
       return M.process_queue() -- Don't get stuck
     end
 
-    local lines = vim.split(json_str, '\n')
+    -- local lines = vim.split(json_str, '\n')
+    local lines = vim.split(json_str, "\n", { trimempty = true })
 
     -- 1. Check if the directory is actually writable (Safety Check)
     local dir = vim.fn.fnamemodify(filename, ":h")

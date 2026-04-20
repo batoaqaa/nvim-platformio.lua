@@ -56,8 +56,13 @@ end
 -- Define a custom highlight group
 -- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#A6E22E', bold = true })
 -- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#e0af68', bold = true })
-
+-- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#e0af68', bold = true })
+-- fg = text color, bg = background color
+vim.api.nvim_set_hl(0, 'PioStatus', {
+  fg = '#1a1b26', -- Dark text
+  bg = '#7aa2f7', -- Blue background
+  bold = true,
+})
 ----------------------------------------------------------------------------------------
 -- INFO: Set diagnostic config
 vim.diagnostic.config({
