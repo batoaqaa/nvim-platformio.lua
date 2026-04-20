@@ -70,10 +70,10 @@ local function pick_library(json_data)
           --   cmd = 'pio run -t compiledb',
           --   cb = pio.handleDb,
           -- },
-          {
-            cmd = 'echo _CMMNDS_":"LAST',
-            cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
-          },
+          -- {
+          --   cmd = 'echo _CMMNDS_":"LAST',
+          --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
+          -- },
         })
       end)
       return true

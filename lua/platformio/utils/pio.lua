@@ -216,14 +216,15 @@ function M.stdoutFilter(_, _, data)
           local task = table.remove(M.queue, 1)
           if task then vim.schedule(task) end
         elseif status == 'DONE' then
-          -- _G.metadata.isBusy = false
           M.queue = {} -- Clear queue on any other status
           pio_buffer = ''
-          vim.schedule(function() vim.notify('PIO Sequence: Finished', 4) end)
+          local task = table.remove(M.queue, 1)
+          if task then vim.schedule(task) end
         elseif status == 'FAIL' then
           M.queue = {} -- Clear queue on any other status (failure)
           pio_buffer = ''
-          vim.schedule(function() vim.notify('PIO Sequence: Aborted', 4) end)
+          local task = table.remove(M.queue, 1)
+          if task then vim.schedule(task) end
         end
         break
       end
@@ -240,28 +241,28 @@ M.run_sequence = function(tasks)
   M.queue = {}
   pio_buffer = ''
   local full_cmd = ''
-  -- local done = 'echo _CMMNDS_":"DONE'
+  local done = ' && echo _CMMNDS_":"DONE'
   local pass = ' && echo _CMMNDS_":"PASS'
   local fail = ' || echo _CMMNDS_":"FAIL'
   --
-  local total_tasks = #tasks
-  for i, task in ipairs(tasks) do
+  for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
-
-    local part = ''
-    if i == total_tasks then part = task.cmd or ''
-    else part = string.format('%s && %s', task.cmd, pass) end
-
-    if full_cmd == '' then full_cmd = part
-    else full_cmd = full_cmd .. ' && ' .. part end
+    local part = string.format('%s %s', task.cmd, pass)
+    full_cmd = full_cmd .. part
   end
-  -- full_cmd = full_cmd .. ' && ' .. done .. ' || ' .. fail
-  full_cmd = full_cmd .. ' || ' .. fail
+  full_cmd = full_cmd .. done .. fail
+  table.insert(M.queue, function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end)
+  table.insert(M.queue, function () vim.notify('Pioinit: Failed', vim.log.levels.INFO) end)
+  -- full_cmd = full_cmd .. ' || ' .. fail
   local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   _G.metadata.isBusy = true
   ToggleTerminal(full_cmd, 'float')
 end
 
+-- {
+--   cmd = 'echo _CMMNDS_":"DONE',
+--   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
+-- },
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()

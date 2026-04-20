@@ -68,10 +68,10 @@ local function pick_framework(board_details)
             cmd = 'pio run -t compiledb',
             cb = pio.handleDb,
           },
-          {
-            cmd = 'echo _CMMNDS_":"DONE',
-            cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
-          },
+          -- {
+          --   cmd = 'echo _CMMNDS_":"DONE',
+          --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
+          -- },
         })
       end)
       return true
