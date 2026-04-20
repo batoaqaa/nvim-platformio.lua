@@ -302,15 +302,6 @@ end
 --   end
 -- end
 
--- 4. Entry Point
-function M.setup_project(board, framework)
-  M.queue = {
-    { cmd = 'pio project init --board ' .. board },
-    { cmd = 'pio run -t compiledb' },
-    { cb = M.compile_commandsFix },
-  }
-  M.process_queue()
-end
 ------------------------------------------------------
 -- Handle after 'pio run -t compiledb' execution
 function M.handleDb()

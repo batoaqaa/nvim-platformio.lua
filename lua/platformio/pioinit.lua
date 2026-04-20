@@ -69,7 +69,7 @@ local function pick_framework(board_details)
             cb = pio.handleDb,
           },
           {
-            cmd = 'echo _CMMNDS_":"LAST',
+            cmd = 'echo _CMMNDS_":"DONE',
             cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
           },
         })
