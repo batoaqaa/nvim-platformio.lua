@@ -242,13 +242,14 @@ M.run_sequence = function(tasks)
   pio_buffer = ''
   local full_cmd = ''
   local done = ' && echo _CMMNDS_":"DONE'
-  local pass = ' && echo _CMMNDS_":"PASS && '
+  local pass = ' && echo _CMMNDS_":"PASS'
   local fail = ' || echo _CMMNDS_":"FAIL'
   --
   for _, task in ipairs(tasks) do
     table.insert(M.queue, task.cb)
     local part = string.format('%s %s', task.cmd, pass)
-    full_cmd = full_cmd .. part
+    if full_cmd == '' then full_cmd = part
+    else full_cmd = full_cmd .. ' && ' .. part end
   end
   full_cmd = full_cmd .. done .. fail
   table.insert(M.queue, function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end)
