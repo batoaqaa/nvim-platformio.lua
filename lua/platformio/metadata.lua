@@ -46,17 +46,21 @@ vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 
 function M.refresh_statusline()
   -- Check if metadata exists and has an active environment
-  local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
+  -- local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
+  --
+  -- if env then
+  --   -- Set the buffer-local variable
+  --   vim.b.pio_env = string.format(' [ %s ] ', env)
+  -- else
+  --   vim.b.pio_env = '' -- Clear it if not in a PIO project
+  -- end
 
-  if env then
-    -- Set the buffer-local variable
-    vim.b.pio_env = string.format(' [ %s ] ', env)
-  else
-    vim.b.pio_env = '' -- Clear it if not in a PIO project
+  -- Always return a string, even if empty
+  if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
+    return string.format(' [ %s ] ', _G.metadata.active_env)
   end
-
+  return ''
   -- Force an immediate visual refresh of the status bar
-  vim.cmd('redrawstatus')
 end
 
 -- We define this globally so v:lua can see it
