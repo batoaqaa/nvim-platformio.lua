@@ -89,16 +89,16 @@ function M.compile_commandsFix()
 
 
 
-  if modified then
-    local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
-    if ok_enc then
-      local f = io.open(filename, "w")
-      if f then
-        f:write(json_str)
-        f:close()
-      end
-    end
-  end
+  -- if modified then
+  --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
+  --   if ok_enc then
+  --     local f = io.open(filename, "w")
+  --     if f then
+  --       f:write(json_str)
+  --       f:close()
+  --     end
+  --   end
+  -- end
 
   -- if modified then
   --   local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
@@ -129,18 +129,18 @@ function M.compile_commandsFix()
   -- end
   --
   -- 3. Save with Python formatting
-  -- if modified then
-  --   local json_str = vim.json.encode(data)
-  --   local formatted = vim.fn.system('python -m json.tool', json_str)
-  --
-  --   if vim.v.shell_error == 0 then
-  --     -- Atomic write back to disk
-  --     vim.fn.writefile(vim.split(formatted, "\n"), filename)
-  --     vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
-  --   else
-  --     vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
-  --   end
-  -- end
+  if modified then
+    local json_str = vim.json.encode(data)
+    local formatted = vim.fn.system('python -m json.tool', json_str)
+
+    if vim.v.shell_error == 0 then
+      -- Atomic write back to disk
+      vim.fn.writefile(vim.split(formatted, "\n"), filename)
+      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    else
+      vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
+    end
+  end
   lsp_restart('clangd')
   _G.metadata.isBusy = false
   -- M.process_queue()
