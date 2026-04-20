@@ -260,7 +260,7 @@ M.run_sequence = function(tasks)
   _G.metadata.isBusy = true
   -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
   -- ToggleTerminal(full_cmd, 'float')
-  M.term.ToggleTerminal(full_cmd, 'float')
+  if M.term then M.term.ToggleTerminal(full_cmd, 'float') end
 
 end
 
