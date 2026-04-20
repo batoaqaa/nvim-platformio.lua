@@ -12,8 +12,8 @@ local M = {}
 -- -- Add this to your init.lua or statusline config
 -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
 --
--- -- Optional: Add a nice color for the environment name
--- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+-- Optional: Add a nice color for the environment name
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 --
 -- function M.refresh_statusline()
 --   local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
@@ -38,7 +38,8 @@ end
 vim.o.laststatus = 3
 
 -- 3. Use v:lua to call your function
-vim.o.statusline = '%!v:lua.MyStatusLine()'
+-- vim.o.statusline = '%!v:lua.MyStatusLine()'
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.MyStatusLine()}%* %y %p%% %l:%c'
 
 -------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
