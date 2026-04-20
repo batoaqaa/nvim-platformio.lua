@@ -130,31 +130,46 @@ function M.compile_commandsFix()
   --
   -- 3. Save with Python formatting
 
-
   if modified then
-    -- 1. Encode with 2-space indentation (Pure Lua)
-    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    -- 1. Encode to a single string with 2-space indentation
+    local ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
 
     if ok and json_str then
-      -- 2. Force a LITERAL split on \n. 
-      -- The { plain = true } is the secret—it prevents regex 
-      -- and ensures every newline creates a new table element.
-      local lines = vim.split(json_str, "\n", { plain = true })
+      -- 2. Split into a table of lines (CRITICAL for Windows formatting)
+      local lines = vim.split(json_str, '\n', { plain = true })
 
-      -- 3. Use writefile with the 's' flag
-      -- On Windows, writefile automatically converts this table 
-      -- into CRLF (\r\n) line endings on disk.
-      local status = vim.fn.writefile(lines, filename, 's')
-
-      if status == 0 then
-        -- 4. Force Neovim to refresh its view of the file
-        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-        vim.notify('compiledb: fixed via Native Lua', vim.log.levels.INFO)
+      -- 3. Write to disk (writefile handles OS line endings automatically)
+      if vim.fn.writefile(lines, filename, 's') == 0 then
+        vim.cmd('checktime ' .. vim.fn.fnameescape(filename))
+        vim.notify('compiledb: fixed (native lua)', 2)
       end
-    else
-      vim.notify('compiledb: Lua encoding failed', vim.log.levels.ERROR)
     end
   end
+
+  -- if modified then
+  --   -- 1. Encode with 2-space indentation (Pure Lua)
+  --   local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+  --
+  --   if ok and json_str then
+  --     -- 2. Force a LITERAL split on \n. 
+  --     -- The { plain = true } is the secret—it prevents regex 
+  --     -- and ensures every newline creates a new table element.
+  --     local lines = vim.split(json_str, "\n", { plain = true })
+  --
+  --     -- 3. Use writefile with the 's' flag
+  --     -- On Windows, writefile automatically converts this table 
+  --     -- into CRLF (\r\n) line endings on disk.
+  --     local status = vim.fn.writefile(lines, filename, 's')
+  --
+  --     if status == 0 then
+  --       -- 4. Force Neovim to refresh its view of the file
+  --       vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+  --       vim.notify('compiledb: fixed via Native Lua', vim.log.levels.INFO)
+  --     end
+  --   else
+  --     vim.notify('compiledb: Lua encoding failed', vim.log.levels.ERROR)
+  --   end
+  -- end
 
 
 
