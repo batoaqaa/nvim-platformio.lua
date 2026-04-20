@@ -1,7 +1,7 @@
 -- -- 1. Initialize Global Table immediately (Prevents nil errors)
 -- _G.metadata = _G.metadata
 --   or {
---     is_busy = false,
+--     isBusy = false,
 --     envs = {},
 --     active_env = '',
 --     default_envs = {},

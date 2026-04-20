@@ -69,7 +69,7 @@ end)
 local mok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mok then
   mason_lspconfig.setup({
-    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls' },
+    ensure_installed = { 'clangd', 'lua_ls', 'pyrefly', 'yamlls', 'jsonls' },
     automatic_enable = true, -- this will automatically enable LSP servers after lsp.config
   })
 end
@@ -133,6 +133,19 @@ end
 -- Apply and Enable
 vim.lsp.config('clangd', _G.get_clangd_config())
 vim.lsp.enable('clangd')
+
+----------------------------------------------------------------------------------------
+-- INFO: configure jsonls lsp server
+-----------------------------------------------------------------------------------------
+local jsonls = {
+  -- lazy-load schemastore when needed
+  cmd = { 'vscode-json-language-server', '--stdio' },
+  filetypes = { 'json', 'jsonc' },
+  init_options = { provideFormatter = true },
+  root_makers = { '.git' },
+}
+-- Apply and Enable
+vim.lsp.config('jsonls', jsonls)
 
 ----------------------------------------------------------------------------------------
 -- INFO: configure clangd lsp server

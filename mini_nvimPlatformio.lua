@@ -128,15 +128,6 @@ keymap('n', '<leader>bd', function()
 
   -- Delete the buffer we started with (using pcall to ignore "No buffers deleted" errors)
   pcall(vim.api.nvim_buf_delete, bufnr, { force = false })
-
-  -- if #bufs <= 1 then
-  --   -- If it's the last buffer, create a new empty one first
-  --   -- This prevents focus from jumping to NvimTree
-  --   vim.cmd('enew | bd #')
-  -- else
-  --   -- Otherwise, go to the previous buffer and delete the old one
-  --   vim.cmd('bp | bd #')
-  -- end
 end, { desc = '[D]elete Buffer' })
 
 keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
