@@ -1,14 +1,32 @@
 local M = {}
 
-_G.get_pio_status = function()
-  if _G.metadata and _G.metadata.active_env ~= '' then
-    return ' [   ' .. _G.metadata.active_env .. '] '
-  end
-  return ''
-end
--- Move the %#PioStatus# and %* outside of the curly braces
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua._G.get_pio_status()}%* %y %p%% %l:%c'
+-- _G.get_pio_status = function()
+--   if _G.metadata and _G.metadata.active_env ~= '' then
+--     return ' [   ' .. _G.metadata.active_env .. '] '
+--   end
+--   return ''
+-- end
+-- -- Move the %#PioStatus# and %* outside of the curly braces
+-- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
 
+-- Add this to your init.lua or statusline config
+vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
+
+-- Optional: Add a nice color for the environment name
+vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+
+function M.refresh_statusline()
+  local env = (_G.metadata and _G.metadata.active_env ~= '') and _G.metadata.active_env or nil
+
+  if env then
+    -- We set the variable for the CURRENT buffer
+    vim.b.pio_env = string.format(' [ %s ] ', env)
+  else
+    vim.b.pio_env = ''
+  end
+end
+
+-------------------------------------------------------------------------------------------------------
 -- 1. Internal State & Defaults
 local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
