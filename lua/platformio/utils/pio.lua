@@ -165,25 +165,32 @@ function M.compile_commandsFix() --M.dbPathsFix()
   end
 
   local modified = false
-  if entry.command then
+  for _, entry in ipairs(data) do
+    -- Standard normalization
+    if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
+    if entry.file then entry.file = misc.normalizePath(entry.file) end
+    if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
+
+    if entry.command then
       -- Extract compiler and everything after it
       local compiler, args = entry.command:match("^%s*(%S+)(.*)")
-      
+
       if compiler then
         local is_absolute = compiler:sub(1, 1) == '/' or compiler:match('^%a:')
-        
+
         if not is_absolute then
           local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-          
+
           if path_map[short_name] then
             -- Use normalizePath on the new path
             local full_compiler_path = misc.normalizePath(path_map[short_name])
-            
+
             -- Quote the path if it contains spaces
             if full_compiler_path:find(" ") then
               full_compiler_path = '"' .. full_compiler_path .. '"'
             end
-            
+
+            print(string.format('ful_compiler_path = %s', full_compiler_path))
             entry.command = full_compiler_path .. args
             modified = true
           end
