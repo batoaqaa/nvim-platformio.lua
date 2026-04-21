@@ -164,39 +164,66 @@ function M.compile_commandsFix() --M.dbPathsFix()
     path_map[name] = full_path
   end
 
-  -- 2. Update Entries
   local modified = false
-  for _, entry in ipairs(data) do
-    if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
-    if entry.file then entry.file = misc.normalizePath(entry.file) end
-    if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
-    --
-    if entry.command then
-      -- local first_token = cmd:match('^%S+') -- Get first word before space
+  if entry.command then
+      -- Extract compiler and everything after it
       local compiler, args = entry.command:match("^%s*(%S+)(.*)")
-
-      -- Check if it's already a short name (not an absolute path)
-      if compiler and not (compiler:sub(1, 1) == '/' or compiler:match('^%a:')) then
-        -- get the file name without .exe
-        -- local short_name = compiler:gsub('%.exe$', '')
-        local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-        if path_map[short_name] then -- if there is full path for this file
-          -- Swap compiler with full path safely
-          local full_compiler_path = path_map[short_name] --misc.normalizePath(path_map[short_name])
-          --Quore the path if it contains spaces
-          if full_compiler_path.find(" ") then
-            full_compiler_path = '"' .. full_compiler_path .. '"'
+      
+      if compiler then
+        local is_absolute = compiler:sub(1, 1) == '/' or compiler:match('^%a:')
+        
+        if not is_absolute then
+          local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+          
+          if path_map[short_name] then
+            -- Use normalizePath on the new path
+            local full_compiler_path = misc.normalizePath(path_map[short_name])
+            
+            -- Quote the path if it contains spaces
+            if full_compiler_path:find(" ") then
+              full_compiler_path = '"' .. full_compiler_path .. '"'
+            end
+            
+            entry.command = full_compiler_path .. args
+            modified = true
           end
-          print(string.format('compiler = %s', compiler))
-          -- local argsFormated = misc.normalizeFlags(args)
-          -- entry.command = full_compiler_path .. argsFormated
-          entry.command = full_compiler_path .. args
-          modified = true
         end
       end
     end
   end
-  -- 3. Save with Formatting
+  -- 2. Update Entries
+  -- local modified = false
+  -- for _, entry in ipairs(data) do
+  --   if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
+  --   if entry.file then entry.file = misc.normalizePath(entry.file) end
+  --   if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
+  --   --
+  --   if entry.command then
+  --     -- local first_token = cmd:match('^%S+') -- Get first word before space
+  --     local compiler, args = entry.command:match("^%s*(%S+)(.*)")
+  --
+  --     -- Check if it's already a short name (not an absolute path)
+  --     if compiler and not (compiler:sub(1, 1) == '/' or compiler:match('^%a:')) then
+  --       -- get the file name without .exe
+  --       -- local short_name = compiler:gsub('%.exe$', '')
+  --       local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+  --       if path_map[short_name] then -- if there is full path for this file
+  --         -- Swap compiler with full path safely
+  --         local full_compiler_path = path_map[short_name] --misc.normalizePath(path_map[short_name])
+  --         --Quore the path if it contains spaces
+  --         if full_compiler_path.find(" ") then
+  --           full_compiler_path = '"' .. full_compiler_path .. '"'
+  --         end
+  --         print(string.format('compiler = %s', compiler))
+  --         -- local argsFormated = misc.normalizeFlags(args)
+  --         -- entry.command = full_compiler_path .. argsFormated
+  --         entry.command = full_compiler_path .. args
+  --         modified = true
+  --       end
+  --     end
+  --   end
+  -- end
+  -- -- 3. Save with Formatting
   if modified then
     local start_time = vim.loop.hrtime()
 
