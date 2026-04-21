@@ -12,7 +12,70 @@ local term = require('platformio.utils.term')
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
+-- iterrative loop
+-- stylua: ignore
+local function jsonFormat(root_data)
+  local buffer = {}
+  -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
+  local stack = { { val = root_data, lvl = 0, stage = 'start' } }
+
+  local function get_indent(lvl) return string.rep('  ', lvl) end
+
+  while #stack > 0 do
+    local curr = stack[#stack]
+    local val, lvl = curr.val, curr.lvl
+    local indent = get_indent(lvl)
+
+    if type(val) == 'table' then
+      local is_array = (#val > 0 or next(val) == nil)
+
+      if curr.stage == 'start' then
+        table.insert(buffer, (is_array and '[' or '{') .. '\n')
+        curr.stage = 'items'
+        curr.keys = {}
+        -- Collect keys to iterate deterministically
+        if is_array then
+          for i = #val, 1, -1 do table.insert(curr.keys, i) end
+        else
+          for k, _ in pairs(val) do table.insert(curr.keys, k) end
+        end
+        curr.index = #curr.keys
+      elseif curr.stage == 'items' then
+        if curr.index > 0 then
+          local key = curr.keys[curr.index]
+          local item = val[key]
+
+          -- Add comma if not the first item
+          if curr.index < #curr.keys then table.insert(buffer, ',\n') end
+
+          table.insert(buffer, get_indent(lvl + 1))
+          if not is_array then table.insert(buffer, '"' .. tostring(key) .. '": ') end
+
+          curr.index = curr.index - 1
+          -- Push next item to stack
+          table.insert(stack, { val = item, lvl = lvl + 1, stage = 'start' })
+        else
+          -- No more items, close the block
+          table.insert(buffer, '\n' .. indent .. (is_array and ']' or '}'))
+          table.remove(stack)
+        end
+      end
+    else
+      -- Primitive values (String, Number, Bool)
+      local output = ''
+      if type(val) == 'string' then
+        output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+      else output = tostring(val) end
+      table.insert(buffer, output)
+      table.remove(stack)
+    end
+  end
+  return table.concat(buffer)
+end
+
+
 ------------------------------------------------------
+-- regex 100ms
 -- stylua: ignore
 local function pretty_json(data)
   -- 1. Get a guaranteed valid JSON string from Neovim's core
@@ -44,6 +107,7 @@ local function pretty_json(data)
 end
 ------------------------------------------------------
 
+-- recursion 50ms
 -- stylua: ignore
 local function pretty_print(data) -- 48ms
   local insert = table.insert
@@ -113,7 +177,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    local jok, formatted = pcall(pretty_json, data)
+    local jok, formatted = pcall(jsonFormat, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
       return
