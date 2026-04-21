@@ -13,6 +13,39 @@ local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 ------------------------------------------------------
+local function format_json(data)
+  -- 1. Get a guaranteed valid JSON string from Neovim's core
+  local json = vim.json.encode(data)
+
+  -- 2. Use regex to inject newlines and indentation
+  -- This is much faster than manual recursion in Lua
+  local indent = '  '
+  local level = 0
+
+  -- Add newlines after { [ , and before } ]
+  json = json:gsub('([%[%{%],])', '%1\n')
+  json = json:gsub('([%]}])', '\n%1')
+
+  local lines = {}
+  for line in json:gmatch('[^\n]+') do
+    line = line:gsub('^%s+', '') -- trim existing whitespace
+
+    -- Decrease level if line starts with closing bracket
+    if line:match('^[%]}]') then
+      level = level - 1
+    end
+
+    table.insert(lines, string.rep(indent, level) .. line)
+
+    -- Increase level if line ends with opening bracket
+    if line:match('[%[{]$') then
+      level = level + 1
+    end
+  end
+
+  return table.concat(lines, '\n')
+end
+------------------------------------------------------
 
 -- stylua: ignore
 local function pretty_print(data)
@@ -85,8 +118,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
   -- 3. Save with Formatting
   if modified then
     local start_time = vim.loop.hrtime()
-    local json_str = vim.json.encode(data)
-    local pretty = pretty_print(json_str)
+    -- local json_str = vim.json.encode(data)
+    local pretty = pretty_print(data)
 
     local f = io.open(filename, 'w')
     if f then
