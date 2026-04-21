@@ -14,10 +14,14 @@ local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 -- iterrative loop 48ms
 -- stylua: ignore
-local function jsonFormat(root_data)
+local function jsonFormat(wroot_data)
   local buffer = {}
+
+  -- Force input into a table if it's just a single string
+  local patterns = type(wroot_data) == "table" and wroot_data or { wroot_data }
+
   -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
-  local stack = { { val = root_data, lvl = 0, stage = 'start' } }
+  local stack = { { val = patterns, lvl = 0, stage = 'start' } }
 
   local function get_indent(lvl) return string.rep('  ', lvl) end
 
@@ -111,7 +115,8 @@ end
 
 -- recursion 50ms
 -- stylua: ignore
-local function pretty_print(data) -- 48ms
+-- local function pretty_print(data) -- 48ms
+function M.pretty_print(data) -- 48ms
   local insert = table.insert
   local buffer = {}
   local function format_item(item, current_level)

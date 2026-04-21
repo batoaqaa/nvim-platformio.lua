@@ -5,6 +5,36 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+function M.normalizeFlags(input)
+  local path_map = {}
+
+  -- Force input into a table if it's just a single string
+  local patterns = type(input) == 'table' and input or { input }
+
+  for _, pattern in ipairs(patterns) do
+    -- Expand ~ or environment variables
+    local expanded = vim.fn.expand(pattern)
+
+    -- glob returns a table of matching files
+    local matches = vim.fn.glob(expanded, false, true)
+
+    for _, full_path in ipairs(matches) do
+      if vim.fn.isdirectory(full_path) == 0 then
+        -- Normalize slashes and extract filename key
+        local clean_path = full_path:gsub('\\', '/')
+        local name = clean_path:match('([^/]+)$'):gsub('%.exe$', '')
+
+        path_map[name] = clean_path
+      end
+    end
+  end
+
+  return path_map
+end
+
+
+
+
 ------------------------------------------------------
 --[[ 
 --INFO:
@@ -34,32 +64,32 @@ Cleans and repairs compiler flags in a command string.
 -- stylua: ignore
 --- @param cmd string: The raw command string (e.g., from compile_commands.json)
 --- @return string: The cleaned command string
-function M.normalizeFlags(cmd)
-  if not cmd or cmd == '' then return '' end
-
-  --INFO: 1. Identify flags that look like paths.
-  -- Pattern explanation:
-  --   %-      : Matches a literal hyphen (the start of a flag)
-  --   %S*     : Matches zero or more non-space characters
-  --   \\      : Matches a literal backslash (identifies it as a Windows path)
-  --   %S*     : Matches the rest of the non-space characters in that flag
-  local cleaned_cmd = cmd:gsub('(%-%S-\\S*)', function(flag)
-    --INFO: 2. Normalize Slashes
-    -- Replaces any number of backslashes (single \ or JSON-escaped \\) with one forward slash.
-    -- Forward slashes are safer and more portable for compilers like GCC/Clang.
-    flag = flag:gsub('[\\]+', '/')
-
-    -- INFO:3. Heal PlatformIO "Smashed" Paths
-    -- Fixes the bug where PlatformIO expansions repeat the user home directory.
-    -- Example: /Users/name/.platformiopackages/toolchain -> /.platformio/packages/toolchain
-    flag = flag:gsub('/Users/[^/]+%.platformio/packages', '/.platformio/packages')
-
-    return flag
-  end)
-
-  -- Return only the result string (discarding the replacement count)
-  return cleaned_cmd
-end
+-- function M.normalizeFlags(cmd)
+--   if not cmd or cmd == '' then return '' end
+--
+--   --INFO: 1. Identify flags that look like paths.
+--   -- Pattern explanation:
+--   --   %-      : Matches a literal hyphen (the start of a flag)
+--   --   %S*     : Matches zero or more non-space characters
+--   --   \\      : Matches a literal backslash (identifies it as a Windows path)
+--   --   %S*     : Matches the rest of the non-space characters in that flag
+--   local cleaned_cmd = cmd:gsub('(%-%S-\\S*)', function(flag)
+--     --INFO: 2. Normalize Slashes
+--     -- Replaces any number of backslashes (single \ or JSON-escaped \\) with one forward slash.
+--     -- Forward slashes are safer and more portable for compilers like GCC/Clang.
+--     flag = flag:gsub('[\\]+', '/')
+--
+--     -- INFO:3. Heal PlatformIO "Smashed" Paths
+--     -- Fixes the bug where PlatformIO expansions repeat the user home directory.
+--     -- Example: /Users/name/.platformiopackages/toolchain -> /.platformio/packages/toolchain
+--     flag = flag:gsub('/Users/[^/]+%.platformio/packages', '/.platformio/packages')
+--
+--     return flag
+--   end)
+--
+--   -- Return only the result string (discarding the replacement count)
+--   return cleaned_cmd
+-- end
 
 ------------------------------------------------------
 function M.normalizePath(path)

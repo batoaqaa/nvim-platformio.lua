@@ -28,7 +28,7 @@ function M.get_sysroot_triplet(cc_compiler)
     -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
     local match = name:match('^(.*)%-g[c%+][c%+]')
     if match then
-      triplet = match
+      triplet = misc.normalizePath(match)
       break
     end
   end
@@ -39,10 +39,10 @@ function M.get_sysroot_triplet(cc_compiler)
   end
 
   -- toolchain_root is the parent of the 'bin' folder
-  local toolchain_root = vim.fn.fnamemodify(bin_path, ':h')
+  local toolchain_root = misc.normalizePath(vim.fn.fnamemodify(bin_path, ':h'))
   -- sysroot folder is expected to have the same name as the triplet
-  local sysroot = toolchain_root .. '/' .. triplet
-  local query_driver = bin_path .. '/' .. triplet .. '-*'
+  local sysroot = misc.normalizePath(toolchain_root .. '/' .. triplet)
+  local query_driver = misc.normalizePath(bin_path .. '/' .. triplet .. '-*')
 
   -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
   -- Only return data if the sysroot folder actually exists on disk
@@ -156,7 +156,7 @@ M.pio_manager = (function()
                 -- get [cc_compiler]and [falbackFlags]
                 -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
                 _G.metadata.cc_compiler = misc.normalizePath(data.cc_path) or ''
-                _G.metadata.fallbackFlags = fallbackFlags
+                _G.metadata.fallbackFlags = misc.normalizeFlags(fallbackFlags)
 
                 pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
                 -- print(vim.inspect(_G.metadata))
@@ -225,7 +225,7 @@ M.pio_manager = (function()
                 local key, val = kv[1], kv[2]
                 if key ~= nil then
                   -- if _G.metadata[key] ~= nil then
-                  _G.metadata[key] = val
+                  _G.metadata[key] = misc.normalizePath(val)
                 end
               end
             -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
@@ -262,7 +262,8 @@ M.pio_manager = (function()
           end
           -- 6. Normalize Slashes for Windows
           -- _G.metadata[kv.ini] = misc.normalize_path(result) --core_dir:gsub('\\', '/'):gsub('//+', '/')
-          _G.metadata[kv.ini] = result:gsub('\\', '/'):gsub('//+', '/')
+          -- _G.metadata[kv.ini] = result:gsub('\\', '/'):gsub('//+', '/')
+          _G.metadata[kv.ini] = misc.normalizePath(result)
         end
         -- return _G.metadata[map[type].ini]
         -- end
