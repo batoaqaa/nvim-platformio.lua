@@ -14,11 +14,11 @@ local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 -- iterrative loop 48ms
 -- stylua: ignore
-local function jsonFormat(wroot_data)
+function M.jsonFormat(root_data)
   local buffer = {}
 
   -- Force input into a table if it's just a single string
-  local patterns = type(wroot_data) == "table" and wroot_data or { wroot_data }
+  local patterns = type(root_data) == "table" and root_data or { root_data }
 
   -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
   local stack = { { val = patterns, lvl = 0, stage = 'start' } }
@@ -199,21 +199,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
       end
     end
   end
-  -- for _, entry in ipairs(data) do
-  --   local cmd = entry.command or ''
-  --   local first_token = cmd:match('^%S+') -- Get first word before space
-  --
-  --   if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
-  --     local short_name = first_token:gsub('%.exe$', '')
-  --     if path_map[short_name] then
-  --       -- Swap first token with full path safely
-  --       entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#first_token + 1)
-  --       -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
-  --       modified = true
-  --     end
-  --   end
-  -- end
-
   -- 3. Save with Formatting
   if modified then
     local start_time = vim.loop.hrtime()
@@ -239,10 +224,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
     _G.metadata.isBusy = false
   end
 end
-
-
-
-
 
 
 -- stylua: ignore

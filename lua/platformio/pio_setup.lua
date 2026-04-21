@@ -2,7 +2,8 @@ M = {}
 
 local misc = require('platformio.utils.misc')
 -- local lsp_restart = require('platformio.lsp.tools').lsp_restart
-local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+local boilerplate = require('platformio.boilerplate')
+local boilerplate_gen = boilerplate.boilerplate_gen
 
 -- local debounce_timer = vim.uv.new_timer()
 -- INFO:
@@ -225,7 +226,7 @@ M.pio_manager = (function()
                 local key, val = kv[1], kv[2]
                 if key ~= nil then
                   -- if _G.metadata[key] ~= nil then
-                  _G.metadata[key] = misc.normalizePath(val)
+                  _G.metadata[key] =  (val and val ~= '') and  misc.normalizePath(val) or val
                 end
               end
             -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
@@ -528,6 +529,7 @@ function M.init()
     -----------------------------------------------------------------------------------------
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    boilerplate.core_dir = _G.metadata.core_dir
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
     boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)

@@ -119,14 +119,14 @@ function _G.get_clangd_config()
   end
 
   -- 3. Format your template string
-  local clangd_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  local formatted_str = string.format(clangd_config, q_driver, f_flags, new_root_dir)
+  local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
+  local formatted_str = string.format(table_config, q_driver, f_flags, new_root_dir)
 
   -- 4. Load the config table
-  local cok, table_config = pcall(function() return load('return ' .. formatted_str)() end)
+  local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)
 
-  if cok and table_config then
-    return table_config
+  if cok and clangd_config then
+    return clangd_config
   end
 end
 

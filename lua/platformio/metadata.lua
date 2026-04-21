@@ -1,5 +1,6 @@
 local M = {}
 
+local pio = require('platformio.utils.pio')
 local frames = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
 local frame_idx = 1
 
@@ -91,7 +92,7 @@ _G.metadata = setmetatable({}, {
         pcall(function()
           if _raw_metadata.dbTrigger then
             vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
-            local dbFix = require('platformio.utils.pio').compile_commandsFix
+            local dbFix = pio.compile_commandsFix
             dbFix()
             _raw_metadata.dbTrigger = false
           else
@@ -127,7 +128,7 @@ function M.save_project_config(quiet)
   if current_hash ~= last_saved_hash then
     local file = io.open(config_path, 'w')
     if file then
-      file:write(current_data)
+      file:write(pio.jsonFormat(current_data))
       file:close()
       last_saved_hash = current_hash
       if not quiet then
