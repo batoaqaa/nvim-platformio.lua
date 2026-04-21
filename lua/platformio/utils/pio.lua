@@ -45,7 +45,7 @@ end
 ------------------------------------------------------
 
 -- stylua: ignore
-local function pretty_print(data)
+local function pretty_print(data) -- 48ms
   local insert = table.insert
   local buffer = {}
   local function format_item(item, current_level)
@@ -113,7 +113,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    local jok, formatted = pcall(pretty_print, data)
+    local jok, formatted = pcall(pretty_json, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
       return
