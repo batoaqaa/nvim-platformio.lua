@@ -13,285 +13,170 @@ local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 ------------------------------------------------------
+
 -- stylua: ignore
--- 1. Optimized Cross-Platform Path Fixer
--- function M.compile_commandsFix()
---   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
---   if vim.fn.filereadable(filename) == 0 then M.process_queue() return end
---
---   local ok, data = pcall(vim.json.decode, table.concat(vim.fn.readfile(filename), "\n"))
---   if not ok or type(data) ~= 'table' then M.process_queue() return end
---
---   local path_map = {}
---   local toolchain = _G.metadata and _G.metadata.toolchain_root or ""
---   if toolchain ~= "" then
---     local bin_glob = vim.fs.joinpath(toolchain, "bin", "*")
---     for _, full_path in ipairs(vim.fn.glob(bin_glob, false, true)) do
---       local name = full_path:match('([^' .. sep .. ']+)$'):gsub('%.exe$', '')
---       path_map[name] = full_path
---     end
---   end
---
---   local modified = false
---   for _, entry in ipairs(data) do
---     local cmd = entry.command or ""
---     local first_token = cmd:match("^%S+")
---     if first_token and not (first_token:sub(1,1) == '/' or first_token:match('^%a:')) then
---       local name = first_token:gsub('%.exe$', '')
---       if path_map[name] then
---         entry.command = path_map[name] .. cmd:sub(#first_token + 1)
---         modified = true
---       end
---     end
---   end
---
---   if modified then
---     local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
---     if ok_enc then
---       vim.fn.writefile(vim.split(json_str, "\n"), filename, 's')
---     end
---   end
+local function pretty_print(data)
+  local insert = table.insert
+  local buffer = {}
+  local function format_item(item, current_level)
+    local indent = string.rep('  ', current_level)
+    local next_indent = string.rep('  ', current_level + 1)
+    if type(item) == 'table' then
+      local is_array = #item > 0
+      local opener = is_array and '[' or '{'
+      local closer = is_array and ']' or '}'
+      insert(buffer, opener .. '\n')
+      local first = true
+      for k, v in pairs(item) do
+        if not first then insert(buffer, ',\n') end
+        insert(buffer, next_indent)
+        if not is_array then insert(buffer, '"' .. k .. '": ') end
+        format_item(v, current_level + 1)
+        first = false
+      end
+      insert(buffer, '\n' .. indent .. closer)
+    elseif type(item) == 'string' then
+      -- Basic escaping for the string content
+      insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
+    else insert(buffer, tostring(item)) end
+  end
+  format_item(data, 0)
+  return table.concat(buffer)
+end
 
-
-function M.compile_commandsFix()
-  local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
-  if vim.fn.filereadable(filename) == 0 then return end
-
-  -- 1. Read and Decode (Atomic read)
-  local content = table.concat(vim.fn.readfile(filename), "\n")
-  local ok, data = pcall(vim.json.decode, content)
-  if not ok or type(data) ~= 'table' then return end
-
-  -- 2. Build Path Map (Dynamic OS Separator)
-  local sep = package.config:sub(1,1)
-  local path_map = {}
-  local toolchain = (_G.metadata and _G.metadata.toolchain_root or "")
-
-  if toolchain ~= "" then
-    local bin_glob = vim.fs.joinpath(toolchain, "bin", "*")
-    for _, full_path in ipairs(vim.fn.glob(bin_glob, false, true)) do
-      -- Correct regex for both / and \
-      local name = full_path:match("([^" .. sep .. "/]+)$"):gsub("%.exe$", "")
-      path_map[name] = full_path
-    end
+function M.compile_commandsFix() --M.dbPathsFix()
+  local filename = vim.uv.cwd() .. '/compile_commands.json'
+  local content = vim.fn.readfile(filename)
+  if #content == 0 then
+    return
   end
 
-  -- 3. Update Entries
+  local ok, data = pcall(vim.json.decode, table.concat(content, '\n'))
+  if not ok or type(data) ~= 'table' then
+    return
+  end
+
+  -- 1. Build Path Map (Scan toolchain)
+  local path_map = {}
+
+  local pio_binaries = _G.metadata.query_driver or '/bin/*'
+  -- local pio_binaries = (_G.metadata.toolchain_root or "") .. '/bin/*'
+  for _, full_path in ipairs(vim.fn.glob(pio_binaries, false, true)) do
+    local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+    path_map[name] = full_path
+  end
+
+  -- 2. Update Entries
   local modified = false
   for _, entry in ipairs(data) do
-    local cmd = entry.command or ""
-    local first_token = cmd:match("^%S+")
+    local cmd = entry.command or ''
+    local first_token = cmd:match('^%S+') -- Get first word before space
 
-    if first_token then
-      -- Check if it's already absolute (starts with / or C:)
-      local is_abs = first_token:sub(1,1) == '/' or first_token:match("^%a:")
-      if not is_abs then
-        local name = first_token:gsub("%.exe$", "")
-        if path_map[name] then
-          entry.command = path_map[name] .. cmd:sub(#first_token + 1)
-          modified = true
-        end
+    if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
+      local short_name = first_token:gsub('%.exe$', '')
+      if path_map[short_name] then
+        -- Swap first token with full path safely
+        entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+        modified = true
       end
     end
   end
 
-  -- 4. Save with Windows-Safe Formatting
-  -- if modified then
-  --   -- 'indent' creates the newlines, 'sort_keys' makes it predictable
-  --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  ", sort_keys = true })
-  --
-  --   if ok_enc then
-  --     -- CRITICAL: Split into a Table of strings. 
-  --     -- This forces vim.fn.writefile to use CRLF (\r\n) on Windows.
-  --     local lines = vim.split(json_str, "\n", { plain = true })
-  --
-  --     -- Atomic write with 's' (sync) flag
-  --     vim.fn.writefile(lines, filename, 's')
-  --
-  --     -- Force reload of the buffer to see changes
-  --     vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-  --     vim.notify("PIO: paths fixed and file formatted", 2)
-  --   end
-  -- end
-
-
+  -- 3. Save with Formatting
   if modified then
-    -- 1. Encode with 2-space indentation (This creates \n characters in the string)
-    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+    local start_time = vim.loop.hrtime()
+    local json_str = vim.json.encode(data)
+    local pretty = pretty_print(json_str)
 
-    if ok and json_str then
-      -- 2. FORCE SPLIT: Turn the one long string into a List of lines
-      -- The { plain = true } ensures we split on the literal \n
-      local lines = vim.split(json_str, "\n", { plain = true })
+    local f = io.open(filename, 'w')
+    if f then
+      f:write(pretty)
+      f:close()
 
-      -- 3. Use writefile:
-      -- Linux: joins table with \n
-      -- Windows: joins table with \r\n (Fixing your single-line issue!)
-      local status = vim.fn.writefile(lines, filename, 's')
-
-      if status == 0 then
-        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-        vim.notify("PIO: Fixed paths and line endings", 2)
-      end
+      local end_time = vim.loop.hrtime()
+      local duration = (end_time - start_time) / 1e6
+      print(string.format('Saved %s in %.2fms', filename, duration))
+      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+      lsp_restart('clangd')
+      _G.metadata.isBusy = false
     end
+    -- -- Use python to format, then write file
+    -- local formatted = vim.fn.system('python -m json.tool', json_str)
+    -- if vim.v.shell_error == 0 then
+    --   vim.fn.writefile(vim.split(formatted, '\n'), filename)
+    --   vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    -- end
   end
-
-
-
-
-  lsp_restart('clangd')
-  _G.metadata.isBusy = false
-  -- M.process_queue()
 end
 
 
+
+
+
+
+-- stylua: ignore
 -- function M.compile_commandsFix()
 --   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
 --   if vim.fn.filereadable(filename) == 0 then return end
 --
---   -- Atomic read using built-in Vim function
+--   -- 1. Read and Decode (Atomic read)
 --   local content = table.concat(vim.fn.readfile(filename), "\n")
 --   local ok, data = pcall(vim.json.decode, content)
 --   if not ok or type(data) ~= 'table' then return end
 --
---   -- 1. Build Path Map (Scan toolchain)
+--   -- 2. Build Path Map (Dynamic OS Separator)
+--   local sep = package.config:sub(1,1)
 --   local path_map = {}
---   local toolchain_bin = (_G.metadata and _G.metadata.toolchain_root or "") .. '/bin/*'
---   for _, full_path in ipairs(vim.fn.glob(toolchain_bin, false, true)) do
---     local name = full_path:match('([^/\\\\]+)$'):gsub('%.exe$', '')
---     path_map[name] = full_path
+--   local toolchain = (_G.metadata and _G.metadata.toolchain_root or "")
+--
+--   if toolchain ~= "" then
+--     local bin_glob = vim.fs.joinpath(toolchain, "bin", "*")
+--     for _, full_path in ipairs(vim.fn.glob(bin_glob, false, true)) do
+--       -- Correct regex for both / and \
+--       local name = full_path:match("([^" .. sep .. "/]+)$"):gsub("%.exe$", "")
+--       path_map[name] = full_path
+--     end
 --   end
 --
---   -- 2. Update Entries efficiently with string matching
+--   -- 3. Update Entries
 --   local modified = false
 --   for _, entry in ipairs(data) do
 --     local cmd = entry.command or ""
---     local first_token = cmd:match("^%S+") -- Grab only the compiler driver
+--     local first_token = cmd:match("^%S+")
 --
---     -- Fix if it's a relative path (doesn't start with / or Drive letter)
---     if first_token and not (first_token:sub(1,1) == '/' or first_token:match('^%a:')) then
---       local short_name = first_token:gsub('%.exe$', '')
---       if path_map[short_name] then
---         -- Replace only the first token to preserve arguments
---         entry.command = vim.fs.joinpath(path_map[short_name], cmd:sub(#first_token + 1))
---         modified = true
+--     if first_token then
+--       -- Check if it's already absolute (starts with / or C:)
+--       local is_abs = first_token:sub(1,1) == '/' or first_token:match("^%a:")
+--       if not is_abs then
+--         local name = first_token:gsub("%.exe$", "")
+--         if path_map[name] then
+--           entry.command = path_map[name] .. cmd:sub(#first_token + 1)
+--           modified = true
+--         end
 --       end
 --     end
 --   end
---
---   -- PHASE 3: Save and Refresh
---
---
---
---   -- if modified then
---   --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  " })
---   --   if ok_enc then
---   --     local f = io.open(filename, "w")
---   --     if f then
---   --       f:write(json_str)
---   --       f:close()
---   --     end
---   --   end
---   -- end
---
---   -- if modified then
---   --   local jok, json_str = pcall(vim.json.encode, data, { indent = "  " })
---   --   if not jok or not json_str then
---   --     vim.notify("PIO: JSON Encoding failed", 4)
---   --     return M.process_queue() -- Don't get stuck
---   --   end
---   --
---   --   -- local lines = vim.split(json_str, '\n')
---   --   local lines = vim.split(json_str, "\n", { trimempty = true })
---   --
---   --   -- 1. Check if the directory is actually writable (Safety Check)
---   --   local dir = vim.fn.fnamemodify(filename, ":h")
---   --   if vim.fn.isdirectory(dir) == 0 then
---   --     vim.notify("PIO: Directory does not exist: " .. dir, 4)
---   --     return M.process_queue()
---   --   end
---   --
---   --   -- 2. Use pcall to prevent the function from "exiting" on error
---   --   local write_ok, status = pcall(vim.fn.writefile, lines, filename, 's')
---   --
---   --   if write_ok and status == 0 then
---   --     vim.notify('compiledb: fixed and saved', 2)
---   --   else
---   --     local err_msg = not write_ok and status or "Write error (check permissions)"
---   --     vim.notify('PIO Save Failed: ' .. err_msg, 4)
---   --   end
---   -- end
---   --
---   -- 3. Save with Python formatting
---
---
 --
 --   if modified then
---     -- 1. Encode with indentation and sorted keys (Neovim 0.10+)
---     -- This mimics the "python -m json.tool" output exactly.
---     local ok, json_str = pcall(vim.json.encode, data, { indent = "    ", sort_keys = true })
+--     -- 1. Encode with 2-space indentation (This creates \n characters in the string)
+--     local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
 --
 --     if ok and json_str then
---       -- 2. Force split into a proper table for writefile
+--       -- 2. FORCE SPLIT: Turn the one long string into a List of lines
+--       -- The { plain = true } ensures we split on the literal \n
 --       local lines = vim.split(json_str, "\n", { plain = true })
 --
---       -- 3. Atomic write with 's' (sync) and force CRLF line endings
---       -- Setting the fileformat to 'dos' ensures Windows-style line endings.
---       vim.api.nvim_command("setlocal fileformat=dos")
---       local status = vim.fn.writefile(lines, filename, "s")
+--       -- 3. Use writefile:
+--       -- Linux: joins table with \n
+--       -- Windows: joins table with \r\n (Fixing your single-line issue!)
+--       local status = vim.fn.writefile(lines, filename, 's')
 --
 --       if status == 0 then
---         -- 4. Essential: Force a buffer reload
---         -- This fixes the "still shows as one line" visual bug in Neovim.
 --         vim.cmd("checktime " .. vim.fn.fnameescape(filename))
---         vim.notify("PIO: JSON saved with Windows line endings", 2)
+--         vim.notify("PIO: Fixed paths and line endings", 2)
 --       end
 --     end
 --   end
---
---
---   -- if modified then
---   --   -- 1. Encode with 2-space indentation (Pure Lua)
---   --   local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
---   --
---   --   if ok and json_str then
---   --     -- 2. Force a LITERAL split on \n. 
---   --     -- The { plain = true } is the secret—it prevents regex 
---   --     -- and ensures every newline creates a new table element.
---   --     local lines = vim.split(json_str, "\n", { plain = true })
---   --
---   --     -- 3. Use writefile with the 's' flag
---   --     -- On Windows, writefile automatically converts this table 
---   --     -- into CRLF (\r\n) line endings on disk.
---   --     local status = vim.fn.writefile(lines, filename, 's')
---   --
---   --     if status == 0 then
---   --       -- 4. Force Neovim to refresh its view of the file
---   --       vim.cmd("checktime " .. vim.fn.fnameescape(filename))
---   --       vim.notify('compiledb: fixed via Native Lua', vim.log.levels.INFO)
---   --     end
---   --   else
---   --     vim.notify('compiledb: Lua encoding failed', vim.log.levels.ERROR)
---   --   end
---   -- end
---
---
---
---   -- if modified then
---   --   local json_str = vim.json.encode(data)
---   --   local formatted = vim.fn.system('python -m json.tool', json_str)
---   --
---   --   if vim.v.shell_error == 0 then
---   --     -- Atomic write back to disk
---   --     -- vim.fn.writefile(vim.split(formatted, "\n"), filename)
---   --     -- Change this line in your working code:
---   --     vim.fn.writefile(vim.split(formatted, "\n"), filename, 's')
---   --
---   --     vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
---   --   else
---   --     vim.notify('compiledb: paths fix failed', vim.log.levels.ERROR)
---   --   end
---   -- end
 --   lsp_restart('clangd')
 --   _G.metadata.isBusy = false
 --   -- M.process_queue()
