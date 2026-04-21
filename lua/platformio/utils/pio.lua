@@ -16,12 +16,6 @@ local lsp_restart = require('platformio.lsp.tools').lsp_restart
 -- stylua: ignore
 local function jsonFormat(root_data)
   local buffer = {}
-
-
--- Replace all backslashes with forward slashes
--- The pattern "[\\]+" matches one or more literal backslashes
-  -- local formated_data = root_data:gsub("[\\]+", "/")
-
   -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
   local stack = { { val = root_data, lvl = 0, stage = 'start' } }
 
@@ -71,7 +65,8 @@ local function jsonFormat(root_data)
       local output = ''
       if type(val) == 'string' then
         -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
-        output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
+        -- output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
+        output = '"' .. val:gsub('"', '\\"') .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
