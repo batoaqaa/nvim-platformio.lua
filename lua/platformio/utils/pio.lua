@@ -177,21 +177,22 @@ function M.compile_commandsFix() --M.dbPathsFix()
 
       -- Check if it's already a short name (not an absolute path)
       if compiler and not (compiler:sub(1, 1) == '/' or compiler:match('^%a:')) then
-        print(string.format('compiler = %s', compiler))
         -- get the file name without .exe
         -- local short_name = compiler:gsub('%.exe$', '')
-        -- local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-        -- if path_map[short_name] then -- if there is full path for this file
-        --   -- Swap compiler with full path safely
-        --   local full_compiler_path = misc.normalizePath(path_map[short_name])
-        --   --Quore the path if it contains spaces
-        --   if full_compiler_path.find(" ") then
-        --     full_compiler_path = '"' .. full_compiler_path .. '"'
-        --   end
-        --   local argsFormated = misc.normalizeFlags(args)
-        --   entry.command = full_compiler_path .. argsFormated
-        --   modified = true
-        -- end
+        local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+        if path_map[short_name] then -- if there is full path for this file
+          -- Swap compiler with full path safely
+          local full_compiler_path = misc.normalizePath(path_map[short_name])
+          --Quore the path if it contains spaces
+          if full_compiler_path.find(" ") then
+            full_compiler_path = '"' .. full_compiler_path .. '"'
+            print(string.format('compiler = %s', compiler))
+          end
+          -- local argsFormated = misc.normalizeFlags(args)
+          -- entry.command = full_compiler_path .. argsFormated
+          entry.command = full_compiler_path .. args
+          modified = true
+        end
       end
     end
   end
