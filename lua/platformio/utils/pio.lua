@@ -13,7 +13,7 @@ local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 ------------------------------------------------------
-local function format_json(data)
+local function format_json_fast(data)
   -- 1. Get a guaranteed valid JSON string from Neovim's core
   local json = vim.json.encode(data)
 
@@ -118,21 +118,36 @@ function M.compile_commandsFix() --M.dbPathsFix()
   -- 3. Save with Formatting
   if modified then
     local start_time = vim.loop.hrtime()
-    -- local json_str = vim.json.encode(data)
-    local pretty = pretty_print(data)
+
+    -- -- local json_str = vim.json.encode(data)
+    -- local pretty = pretty_print(data)
+    --
+    -- local f = io.open(filename, 'w')
+    -- if f then
+    --   f:write(pretty)
+    --   f:close()
+    --
+
+    local ok, formatted = pcall(format_json_fast, data)
+    if not ok then
+      print('Formatting failed: ' .. formatted)
+      return
+    end
 
     local f = io.open(filename, 'w')
     if f then
-      f:write(pretty)
+      f:write(formatted)
       f:close()
-
-      local end_time = vim.loop.hrtime()
-      local duration = (end_time - start_time) / 1e6
-      print(string.format('Saved %s in %.2fms', filename, duration))
-      vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
-      lsp_restart('clangd')
-      _G.metadata.isBusy = false
+      print('Fixed and formatted ' .. filename)
     end
+
+    local end_time = vim.loop.hrtime()
+    local duration = (end_time - start_time) / 1e6
+    print(string.format('Saved %s in %.2fms', filename, duration))
+    vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    lsp_restart('clangd')
+    _G.metadata.isBusy = false
+    -- end
     -- -- Use python to format, then write file
     -- local formatted = vim.fn.system('python -m json.tool', json_str)
     -- if vim.v.shell_error == 0 then
