@@ -128,7 +128,7 @@ function M.save_project_config(quiet)
   if current_hash ~= last_saved_hash then
     local file = io.open(config_path, 'w')
     if file then
-      file:write(pio.jsonFormat(current_data))
+      file:write(pio.pretty_print(current_data))
       file:close()
       last_saved_hash = current_hash
       if not quiet then

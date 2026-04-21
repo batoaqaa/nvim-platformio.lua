@@ -117,6 +117,8 @@ end
 -- stylua: ignore
 -- local function pretty_print(data) -- 48ms
 function M.pretty_print(data) -- 48ms
+  -- Force input into a table if it's just a single string
+  local patterns = type(data) == "table" and data or { data }
   local insert = table.insert
   local buffer = {}
   local function format_item(item, current_level)
@@ -141,7 +143,7 @@ function M.pretty_print(data) -- 48ms
       insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
     else insert(buffer, tostring(item)) end
   end
-  format_item(data, 0)
+  format_item(patterns, 0)
   return table.concat(buffer)
 end
 
@@ -191,7 +193,9 @@ function M.compile_commandsFix() --M.dbPathsFix()
             end
 
             print(string.format('ful_compiler_path = %s', full_compiler_path))
-            entry.command = full_compiler_path .. args
+            local argsFormated = misc.normalizeFlags(args)
+            entry.command = full_compiler_path .. argsFormated
+            -- entry.command = full_compiler_path .. args
             modified = true
           end
         end
@@ -234,7 +238,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    local jok, formatted = pcall(M.jsonFormat, data)
+    -- local jok, formatted = pcall(M.jsonFormat, data)
+    local jok, formatted = pcall(M.pretty_print, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
       return
