@@ -20,10 +20,10 @@ local function jsonFormat(root_data)
 
 -- Replace all backslashes with forward slashes
 -- The pattern "[\\]+" matches one or more literal backslashes
-  local formated_data = root_data:gsub("[\\]+", "/")
+  -- local formated_data = root_data:gsub("[\\]+", "/")
 
   -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
-  local stack = { { val = formated_data, lvl = 0, stage = 'start' } }
+  local stack = { { val = root_data, lvl = 0, stage = 'start' } }
 
   local function get_indent(lvl) return string.rep('  ', lvl) end
 
@@ -70,7 +70,8 @@ local function jsonFormat(root_data)
       -- Primitive values (String, Number, Bool)
       local output = ''
       if type(val) == 'string' then
-        output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+        -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+        output = '"' .. val:gsub('\\\\', '/'):gsub('\\', '/'):gsub('"', '\\"') .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
