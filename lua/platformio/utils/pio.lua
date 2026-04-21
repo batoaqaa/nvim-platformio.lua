@@ -65,8 +65,8 @@ local function jsonFormat(root_data)
       local output = ''
       if type(val) == 'string' then
         -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
-        -- output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
-        output = '"' .. val:gsub('"', '\\"') .. '"'
+        output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
+        -- output = '"' .. val:gsub('"', '\\"') .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
