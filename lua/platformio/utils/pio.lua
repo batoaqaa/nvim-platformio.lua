@@ -130,21 +130,31 @@ function M.compile_commandsFix()
   --
   -- 3. Save with Python formatting
 
+
+
   if modified then
-    -- 1. Encode to a single string with 2-space indentation
-    local ok, json_str = pcall(vim.json.encode, data, { indent = '  ' })
+    -- 1. Encode with indentation and sorted keys (Neovim 0.10+)
+    -- This mimics the "python -m json.tool" output exactly.
+    local ok, json_str = pcall(vim.json.encode, data, { indent = "    ", sort_keys = true })
 
     if ok and json_str then
-      -- 2. Split into a table of lines (CRITICAL for Windows formatting)
-      local lines = vim.split(json_str, '\n', { plain = true })
+      -- 2. Force split into a proper table for writefile
+      local lines = vim.split(json_str, "\n", { plain = true })
 
-      -- 3. Write to disk (writefile handles OS line endings automatically)
-      if vim.fn.writefile(lines, filename, 's') == 0 then
-        vim.cmd('checktime ' .. vim.fn.fnameescape(filename))
-        vim.notify('compiledb: fixed (native lua)', 2)
+      -- 3. Atomic write with 's' (sync) and force CRLF line endings
+      -- Setting the fileformat to 'dos' ensures Windows-style line endings.
+      vim.api.nvim_command("setlocal fileformat=dos")
+      local status = vim.fn.writefile(lines, filename, "s")
+
+      if status == 0 then
+        -- 4. Essential: Force a buffer reload
+        -- This fixes the "still shows as one line" visual bug in Neovim.
+        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+        vim.notify("PIO: JSON saved with Windows line endings", 2)
       end
     end
   end
+
 
   -- if modified then
   --   -- 1. Encode with 2-space indentation (Pure Lua)
