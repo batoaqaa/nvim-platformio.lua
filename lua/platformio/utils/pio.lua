@@ -116,22 +116,22 @@ function M.compile_commandsFix()
 
 
   if modified then
-    -- 1. Encode with 2-space indentation (Pure Lua)
+    -- 1. Encode with 2-space indentation (This creates \n characters in the string)
     local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
 
     if ok and json_str then
-      -- 2. CRITICAL: Split the string into a list of lines
-      -- This ensures writefile sees multiple lines instead of one long block
+      -- 2. FORCE SPLIT: Turn the one long string into a List of lines
+      -- The { plain = true } ensures we split on the literal \n
       local lines = vim.split(json_str, "\n", { plain = true })
 
-      -- 3. Atomic write with 's' (sync) flag
-      -- On Windows, this will automatically write \r\n for each line
-      local status = vim.fn.writefile(lines, filename, "s")
+      -- 3. Use writefile:
+      -- Linux: joins table with \n
+      -- Windows: joins table with \r\n (Fixing your single-line issue!)
+      local status = vim.fn.writefile(lines, filename, 's')
 
       if status == 0 then
-        -- 4. Force Neovim to refresh its internal view of the file
         vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-        vim.notify("PIO: JSON saved with multiple lines (Windows Fix)", 2)
+        vim.notify("PIO: Fixed paths and line endings", 2)
       end
     end
   end
