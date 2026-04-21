@@ -162,19 +162,50 @@ function M.compile_commandsFix() --M.dbPathsFix()
   -- 2. Update Entries
   local modified = false
   for _, entry in ipairs(data) do
-    local cmd = entry.command or ''
-    local first_token = cmd:match('^%S+') -- Get first word before space
 
-    if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
-      local short_name = first_token:gsub('%.exe$', '')
-      if path_map[short_name] then
-        -- Swap first token with full path safely
-        entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#first_token + 1)
-        -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
-        modified = true
+    if entry.directory then
+      entry.directory = misc.normalizePath(entry.directory)
+    end
+    if entry.file then
+      entry.file = misc.normalizePath(entry.file)
+    end
+    if entry.arguments then
+      entry.arguments = misc.normalizeFlags(entry.arguments)
+    end
+    --
+    if entry.command then
+      -- local first_token = cmd:match('^%S+') -- Get first word before space
+      local compiler, args = entry.command:match("^%s*(%S+)(.*)")
+      -- Check if it's already a short name (not an absolute path)
+      if compiler and not (compiler():sub(1, 1) == '/' or compiler():match('^%a:')) then
+        -- get the file name from the relative path
+        local short_name = compiler:gsub('%.exe$', '')
+        if path_map[short_name] then -- if there is full path for this file
+          -- Swap compiler with full path safely
+          compiler = misc.normalizePath(path_map[short_name])
+          args = misc.normalizeFlags(args)
+          entry.command = compiler .. args
+          -- entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#compiler + 1)
+          -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+          modified = true
+        end
       end
     end
   end
+  -- for _, entry in ipairs(data) do
+  --   local cmd = entry.command or ''
+  --   local first_token = cmd:match('^%S+') -- Get first word before space
+  --
+  --   if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
+  --     local short_name = first_token:gsub('%.exe$', '')
+  --     if path_map[short_name] then
+  --       -- Swap first token with full path safely
+  --       entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#first_token + 1)
+  --       -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+  --       modified = true
+  --     end
+  --   end
+  -- end
 
   -- 3. Save with Formatting
   if modified then

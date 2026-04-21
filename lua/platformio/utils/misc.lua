@@ -6,7 +6,63 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
 ------------------------------------------------------
-function M.normalize_path(path)
+--[[ 
+--INFO:
+Targets Windows paths, normalizes slashes, and fixes smashed PlatformIO paths.
+Cleans and repairs compiler flags in a command string.
+{ "-I", "-L", "-isystem", "-T", "-include" }
+
+1. Library Paths
+    -L: Specifies directories to search for library files (.a, .lib, .so).
+        Example: -L"C:\Users\lib"
+        -L"C:/Users/lib"
+    -l (lowercase L): While usually just a name (like -lmath), it can sometimes be a direct path to a specific file.
+2. Header Inclusion (Advanced)
+    -isystem: Similar to -I, but treats the directory as a "system" header (suppresses warnings). PlatformIO uses this heavily for framework headers (Arduino/ESP-IDF).
+    -include: Forces the compiler to include a specific file before anything else.
+        Example: -include "C:\project\config.h"
+    -iquote: Directories for headers wrapped in double quotes "".
+3. Output and Debugging
+    -o: The output path for the compiled object file or binary.
+    -fdebug-prefix-map=: Used to make builds reproducible by mapping absolute paths to relative ones in the debug symbols.
+4. Linker and Frameworks
+    -T: Path to a linker script (very common in embedded/PlatformIO for memory mapping).
+        Example: -T"C:\project\ld\esp32.ld"
+    -F: (macOS/iOS) Path to search for frameworks.
+]]
+--INFO: 
+-- stylua: ignore
+--- @param cmd string: The raw command string (e.g., from compile_commands.json)
+--- @return string: The cleaned command string
+function M.normalizeFlags(cmd)
+  if not cmd or cmd == '' then return '' end
+
+  --INFO: 1. Identify flags that look like paths.
+  -- Pattern explanation:
+  --   %-      : Matches a literal hyphen (the start of a flag)
+  --   %S*     : Matches zero or more non-space characters
+  --   \\      : Matches a literal backslash (identifies it as a Windows path)
+  --   %S*     : Matches the rest of the non-space characters in that flag
+  local cleaned_cmd = cmd:gsub('(%-%S-\\S*)', function(flag)
+    --INFO: 2. Normalize Slashes
+    -- Replaces any number of backslashes (single \ or JSON-escaped \\) with one forward slash.
+    -- Forward slashes are safer and more portable for compilers like GCC/Clang.
+    flag = flag:gsub('[\\]+', '/')
+
+    -- INFO:3. Heal PlatformIO "Smashed" Paths
+    -- Fixes the bug where PlatformIO expansions repeat the user home directory.
+    -- Example: /Users/name/.platformiopackages/toolchain -> /.platformio/packages/toolchain
+    flag = flag:gsub('/Users/[^/]+%.platformio/packages', '/.platformio/packages')
+
+    return flag
+  end)
+
+  -- Return only the result string (discarding the replacement count)
+  return cleaned_cmd
+end
+
+------------------------------------------------------
+function M.normalizePath(path)
   -- return path:gsub('[\\]+', '/'):gsub('[//]+', '/')
   return path:gsub('[\\/]+', '/')
 end

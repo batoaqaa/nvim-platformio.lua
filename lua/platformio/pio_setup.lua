@@ -155,7 +155,7 @@ M.pio_manager = (function()
 
                 -- get [cc_compiler]and [falbackFlags]
                 -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
-                _G.metadata.cc_compiler = misc.normalize_path(data.cc_path) or ''
+                _G.metadata.cc_compiler = misc.normalizePath(data.cc_path) or ''
                 _G.metadata.fallbackFlags = fallbackFlags
 
                 pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
