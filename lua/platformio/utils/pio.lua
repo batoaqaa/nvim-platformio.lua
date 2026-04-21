@@ -96,23 +96,49 @@ function M.compile_commandsFix()
   end
 
   -- 4. Save with Windows-Safe Formatting
-  if modified then
-    -- 'indent' creates the newlines, 'sort_keys' makes it predictable
-    local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  ", sort_keys = true })
+  -- if modified then
+  --   -- 'indent' creates the newlines, 'sort_keys' makes it predictable
+  --   local ok_enc, json_str = pcall(vim.json.encode, data, { indent = "  ", sort_keys = true })
+  --
+  --   if ok_enc then
+  --     -- CRITICAL: Split into a Table of strings. 
+  --     -- This forces vim.fn.writefile to use CRLF (\r\n) on Windows.
+  --     local lines = vim.split(json_str, "\n", { plain = true })
+  --
+  --     -- Atomic write with 's' (sync) flag
+  --     vim.fn.writefile(lines, filename, 's')
+  --
+  --     -- Force reload of the buffer to see changes
+  --     vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+  --     vim.notify("PIO: paths fixed and file formatted", 2)
+  --   end
+  -- end
 
-    if ok_enc then
-      -- CRITICAL: Split into a Table of strings. 
-      -- This forces vim.fn.writefile to use CRLF (\r\n) on Windows.
+
+  if modified then
+    -- 1. Encode with 2-space indentation (Pure Lua)
+    local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
+
+    if ok and json_str then
+      -- 2. CRITICAL: Split the string into a list of lines
+      -- This ensures writefile sees multiple lines instead of one long block
       local lines = vim.split(json_str, "\n", { plain = true })
 
-      -- Atomic write with 's' (sync) flag
-      vim.fn.writefile(lines, filename, 's')
+      -- 3. Atomic write with 's' (sync) flag
+      -- On Windows, this will automatically write \r\n for each line
+      local status = vim.fn.writefile(lines, filename, "s")
 
-      -- Force reload of the buffer to see changes
-      vim.cmd("checktime " .. vim.fn.fnameescape(filename))
-      vim.notify("PIO: paths fixed and file formatted", 2)
+      if status == 0 then
+        -- 4. Force Neovim to refresh its internal view of the file
+        vim.cmd("checktime " .. vim.fn.fnameescape(filename))
+        vim.notify("PIO: JSON saved with multiple lines (Windows Fix)", 2)
+      end
     end
   end
+
+
+
+
   lsp_restart('clangd')
   _G.metadata.isBusy = false
   -- M.process_queue()
