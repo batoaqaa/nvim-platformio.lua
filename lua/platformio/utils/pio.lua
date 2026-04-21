@@ -176,9 +176,11 @@ function M.compile_commandsFix() --M.dbPathsFix()
     if entry.command then
       -- local first_token = cmd:match('^%S+') -- Get first word before space
       local compiler, args = entry.command:match("^%s*(%S+)(.*)")
+      print(string.format('compiler = %s', compiler))
+
       -- Check if it's already a short name (not an absolute path)
-      if compiler and not (compiler():sub(1, 1) == '/' or compiler():match('^%a:')) then
-        -- get the file name from the relative path
+      if compiler and not (compiler:sub(1, 1) == '/' or compiler:match('^%a:')) then
+        -- get the file name without .exe
         local short_name = compiler:gsub('%.exe$', '')
         if path_map[short_name] then -- if there is full path for this file
           -- Swap compiler with full path safely
