@@ -167,8 +167,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
       local short_name = first_token:gsub('%.exe$', '')
       if path_map[short_name] then
         -- Swap first token with full path safely
+        entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#first_token + 1)
         -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
-        entry.command = vim.fs.joinpath(path_map[short_name], cmd:sub(#first_token + 1))
         modified = true
       end
     end
