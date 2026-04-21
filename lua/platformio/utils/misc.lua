@@ -7,7 +7,7 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 ------------------------------------------------------
 function M.normalize_path(path)
-  return path:gsub('\\', '/'):gsub('//+', '/')
+  return path:gsub('[\\]+', '/'):gsub('[//]+', '/')
 end
 
 ------------------------------------------------------

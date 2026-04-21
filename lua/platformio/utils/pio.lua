@@ -70,8 +70,9 @@ local function jsonFormat(root_data)
       -- Primitive values (String, Number, Bool)
       local output = ''
       if type(val) == 'string' then
+        output = '"' .. val:gsub('"', '\\"') .. '"'
         -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
-        output = '"' .. val:gsub('\\\\', '/'):gsub('\\', '/'):gsub('"', '\\"') .. '"'
+        -- output = '"' .. val:gsub('\\\\', '/'):gsub('\\', '/'):gsub('"', '\\"') .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
@@ -167,16 +168,21 @@ function M.compile_commandsFix() --M.dbPathsFix()
   -- 2. Update Entries
   local modified = false
   for _, entry in ipairs(data) do
-    local cmd = entry.command or ''
-    local first_token = cmd:match('^%S+') -- Get first word before space
+    if entry.command then
+      local compiler, args = entry.command:match("^%s*(%S+)(.*)")
+      -- local first_token = cmd:match('^%S+') -- Get first word before space
 
-    if first_token and not (first_token:sub(1, 1) == '/' or first_token:match('^%a:')) then
-      local short_name = first_token:gsub('%.exe$', '')
-      if path_map[short_name] then
-        -- Swap first token with full path safely
-        entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#first_token + 1)
-        -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
-        modified = true
+      if compiler and not (compiler():sub(1, 1) == '/' or compiler():match('^%a:')) then
+        local cmd = entry.command or ''
+        local short_name = compiler:gsub('%.exe$', '')
+        if path_map[short_name] then
+          -- Swap compiler with full path safely
+          compiler = misc.normalize_path(path_map[short_name])
+          entry.command = compiler .. args
+          -- entry.command = misc.normalize_path(path_map[short_name]) .. cmd:sub(#compiler + 1)
+          -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+          modified = true
+        end
       end
     end
   end
