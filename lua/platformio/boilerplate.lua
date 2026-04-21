@@ -49,8 +49,9 @@ extra_scripts =
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
 
 build_flags =
-    -I${platformio.packages_dir}/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
-    -D COMPILATIONDB_INCLUDE_TOOLCHAIN
+  -I${sysenv.HOMEPATH}/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
+;  -I${platformio.packages_dir}/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
+  -D COMPILATIONDB_INCLUDE_TOOLCHAIN
 ]],
   content = function(self)
     -- local pio = require('platformio.utils.pio')
