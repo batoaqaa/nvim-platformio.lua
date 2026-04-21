@@ -167,16 +167,9 @@ function M.compile_commandsFix() --M.dbPathsFix()
   -- 2. Update Entries
   local modified = false
   for _, entry in ipairs(data) do
-
-    if entry.directory then
-      entry.directory = misc.normalizePath(entry.directory)
-    end
-    if entry.file then
-      entry.file = misc.normalizePath(entry.file)
-    end
-    if entry.arguments then
-      entry.arguments = misc.normalizeFlags(entry.arguments)
-    end
+    if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
+    if entry.file then entry.file = misc.normalizePath(entry.file) end
+    if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
     --
     if entry.command then
       -- local first_token = cmd:match('^%S+') -- Get first word before space
@@ -187,18 +180,18 @@ function M.compile_commandsFix() --M.dbPathsFix()
         print(string.format('compiler = %s', compiler))
         -- get the file name without .exe
         -- local short_name = compiler:gsub('%.exe$', '')
-        local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-        if path_map[short_name] then -- if there is full path for this file
-          -- Swap compiler with full path safely
-          local full_compiler_path = misc.normalizePath(path_map[short_name])
-          --Quore the path if it contains spaces
-          if full_compiler_path.find(" ") then
-            full_compiler_path = '"' .. full_compiler_path .. '"'
-          end
-          local argsFormated = misc.normalizeFlags(args)
-          entry.command = full_compiler_path .. argsFormated
-          modified = true
-        end
+        -- local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
+        -- if path_map[short_name] then -- if there is full path for this file
+        --   -- Swap compiler with full path safely
+        --   local full_compiler_path = misc.normalizePath(path_map[short_name])
+        --   --Quore the path if it contains spaces
+        --   if full_compiler_path.find(" ") then
+        --     full_compiler_path = '"' .. full_compiler_path .. '"'
+        --   end
+        --   local argsFormated = misc.normalizeFlags(args)
+        --   entry.command = full_compiler_path .. argsFormated
+        --   modified = true
+        -- end
       end
     end
   end
