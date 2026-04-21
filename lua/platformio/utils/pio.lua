@@ -13,7 +13,8 @@ local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
 ------------------------------------------------------
-local function format_json_fast(data)
+-- stylua: ignore
+local function pretty_json(data)
   -- 1. Get a guaranteed valid JSON string from Neovim's core
   local json = vim.json.encode(data)
 
@@ -31,16 +32,12 @@ local function format_json_fast(data)
     line = line:gsub('^%s+', '') -- trim existing whitespace
 
     -- Decrease level if line starts with closing bracket
-    if line:match('^[%]}]') then
-      level = level - 1
-    end
+    if line:match('^[%]}]') then level = level - 1 end
 
     table.insert(lines, string.rep(indent, level) .. line)
 
     -- Increase level if line ends with opening bracket
-    if line:match('[%[{]$') then
-      level = level + 1
-    end
+    if line:match('[%[{]$') then level = level + 1 end
   end
 
   return table.concat(lines, '\n')
@@ -77,17 +74,14 @@ local function pretty_print(data)
   return table.concat(buffer)
 end
 
+-- stylua: ignore
 function M.compile_commandsFix() --M.dbPathsFix()
-  local filename = vim.uv.cwd() .. '/compile_commands.json'
+  local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
   local content = vim.fn.readfile(filename)
-  if #content == 0 then
-    return
-  end
+  if #content == 0 then return end
 
   local ok, data = pcall(vim.json.decode, table.concat(content, '\n'))
-  if not ok or type(data) ~= 'table' then
-    return
-  end
+  if not ok or type(data) ~= 'table' then return end
 
   -- 1. Build Path Map (Scan toolchain)
   local path_map = {}
@@ -119,17 +113,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    -- -- local json_str = vim.json.encode(data)
-    -- local pretty = pretty_print(data)
-    --
-    -- local f = io.open(filename, 'w')
-    -- if f then
-    --   f:write(pretty)
-    --   f:close()
-    --
-
-    local ok, formatted = pcall(format_json_fast, data)
-    if not ok then
+    local jok, formatted = pcall(pretty_print, data)
+    if not jok then
       print('Formatting failed: ' .. formatted)
       return
     end
@@ -147,13 +132,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
     vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
     lsp_restart('clangd')
     _G.metadata.isBusy = false
-    -- end
-    -- -- Use python to format, then write file
-    -- local formatted = vim.fn.system('python -m json.tool', json_str)
-    -- if vim.v.shell_error == 0 then
-    --   vim.fn.writefile(vim.split(formatted, '\n'), filename)
-    --   vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
-    -- end
   end
 end
 

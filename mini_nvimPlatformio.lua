@@ -98,6 +98,9 @@ local keymap = function(mode, lhs, rhs, opts)
   vim.keymap.set(mode, lhs, rhs, options)
 end
 
+--To toggle line wrapping in Neovim
+keymap('n', '<leader>w', ':set wrap!<CR>', { desc = 'Toggle wrap' })
+
 keymap('n', 'gll', function()
   vim.cmd.edit(vim.lsp.log.get_filename())
 end, { desc = 'open LSP [l]og' })
