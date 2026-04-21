@@ -12,7 +12,7 @@ local term = require('platformio.utils.term')
 local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
--- iterrative loop
+-- iterrative loop 48ms
 -- stylua: ignore
 local function jsonFormat(root_data)
   local buffer = {}
@@ -167,7 +167,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
       local short_name = first_token:gsub('%.exe$', '')
       if path_map[short_name] then
         -- Swap first token with full path safely
-        entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+        -- entry.command = path_map[short_name] .. cmd:sub(#first_token + 1)
+        entry.command = vim.fs.joinpath(path_map[short_name], cmd:sub(#first_token + 1))
         modified = true
       end
     end
