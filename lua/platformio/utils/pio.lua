@@ -203,7 +203,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    local jok, formatted = pcall(jsonFormat, data)
+    local jok, formatted = pcall(M.jsonFormat, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
       return

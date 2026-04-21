@@ -226,7 +226,7 @@ M.pio_manager = (function()
                 local key, val = kv[1], kv[2]
                 if key ~= nil then
                   -- if _G.metadata[key] ~= nil then
-                  _G.metadata[key] =  (val ~= nil and val ~= '') and  misc.normalizePath(val) or val
+_G.metadata[key] =  ((type(val) == 'table' and next(val) ~= nil) or (type(val) == "string" and val ~= '')) and  misc.normalizePath(val) or val
                 end
               end
             -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
