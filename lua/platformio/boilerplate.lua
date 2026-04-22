@@ -49,9 +49,12 @@ extra_scripts =
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
 
-;build_flags =
-;  -I${sysenv.HOMEPATH}/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
-;  -I${platformio.packages_dir}/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
+build_flags =
+    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
+    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf
+    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include
+    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed
+    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include
 ;  -D COMPILATIONDB_INCLUDE_TOOLCHAIN
 ]],
   content = function(self)
