@@ -205,25 +205,34 @@ local plugins = {
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
     config = function()
+      require('bufferline').setup({
+        options = {
+          mode = 'buffers', -- set to "tabs" to only show standard vim tabs
+          separator_style = 'thin', -- options: "slant" | "slope" | "thick" | "thin"
+          always_show_bufferline = true,
+          show_buffer_close_icons = true,
+          show_close_icon = true,
+          color_icons = true,
+
+          -- Add this if you use NvimTree or Neo-tree to prevent overlap
+          offsets = {
+            {
+              filetype = 'NvimTree',
+              text = 'File Explorer',
+              text_align = 'left',
+              separator = true,
+            },
+          },
+        },
+      })
       require('bufferline').setup({})
     end,
-    options = {
-      -- mode = 'buffers', -- set to "tabs" to only show tabpages instead
-      offsets = {
-        {
-          filetype = 'NvimTree',
-          text = 'File Explorer',
-          text_align = 'left', -- options: "left", "center", "right"
-          separator = true,
-        },
-      },
-    },
     -- config = true,
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
   {
     'nvim-tree/nvim-tree.lua',
-    version = '*',
+    -- version = '*',
     lazy = false,
     dependencies = 'nvim-tree/nvim-web-devicons',
     config = function()
