@@ -587,6 +587,7 @@ function M.init()
     -----------------------------------------------------------------------------------------
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
+    print(vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     boilerplate.core_dir = _G.metadata.core_dir
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
