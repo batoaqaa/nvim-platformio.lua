@@ -174,7 +174,7 @@ CompileFlags:
     - "-D__cplusplus=201703L" # Manually define the C++ macro
   Remove:
     - "-target"
-    - "riscv32-esp-els"
+    - "riscv32-esp-elf"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
