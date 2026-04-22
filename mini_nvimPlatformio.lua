@@ -53,16 +53,11 @@ else
   vim.opt.shellquote = ''
   vim.opt.shellxquote = ''
 end
--- Define a custom highlight group
--- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#A6E22E', bold = true })
--- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
--- vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#e0af68', bold = true })
--- fg = text color, bg = background color
-vim.api.nvim_set_hl(0, 'PioStatus', {
-  fg = '#e0af68', -- Dark text
-  bg = '#11111b',
-  bold = true,
-})
+-- vim.api.nvim_set_hl(0, 'PioStatus', {
+--   fg = '#e0af68', -- Dark text
+--   bg = '#11111b',
+--   bold = true,
+-- })
 ----------------------------------------------------------------------------------------
 -- INFO: Set diagnostic config
 vim.diagnostic.config({
@@ -121,7 +116,6 @@ keymap('n', '<C-Right>', ':vertical resize +2<CR>')
 keymap('n', '<leader>bb', ':bprevious<CR>', { desc = '[B]efore Buffer' })
 keymap('n', '<leader>ba', ':bnext<CR>', { desc = '[A]fter Buffer' })
 keymap('n', '<leader>bs', ':ball<CR>', { desc = '[S]how AllOpened Buffers' })
-keymap('n', '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', { desc = 'Toggle Pin' })
 
 -- keymap('n', '<leader>bd', '<Cmd>bdelete<CR>', { desc = '[D]elete Buffer' })
 keymap('n', '<leader>bd', function()
@@ -140,16 +134,16 @@ keymap('n', '<leader>bd', function()
   pcall(vim.api.nvim_buf_delete, bufnr, { force = false })
 end, { desc = '[D]elete Buffer' })
 
-keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
-keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
-keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
-keymap('n', '<leader>bl', '<Cmd>BufferLineCloseLeft<CR>', { desc = 'Delete Buffers to the Left' })
-keymap('n', '<S-h>', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
-keymap('n', '<S-l>', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
-keymap('n', '[b', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
-keymap('n', ']b', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
-keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
-keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
+-- keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
+-- keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
+-- keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
+-- keymap('n', '<leader>bl', '<Cmd>BufferLineCloseLeft<CR>', { desc = 'Delete Buffers to the Left' })
+-- keymap('n', '<S-h>', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
+-- keymap('n', '<S-l>', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
+-- keymap('n', '[b', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
+-- keymap('n', ']b', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
+-- keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
+-- keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
 
 keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
 keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
@@ -200,32 +194,65 @@ local plugins = {
       },
     },
   },
-  {
-    'akinsho/bufferline.nvim',
-    dependencies = 'nvim-tree/nvim-web-devicons',
-    config = function()
-      require('bufferline').setup({
-        options = {
-          mode = 'buffers', -- set to "tabs" to only show standard vim tabs
-          separator_style = 'thin', -- options: "slant" | "slope" | "thick" | "thin"
-          always_show_bufferline = true,
-          show_buffer_close_icons = true,
-          show_close_icon = true,
-          color_icons = true,
 
-          -- Add this if you use NvimTree or Neo-tree to prevent overlap
-          offsets = {
-            {
-              filetype = 'NvimTree',
-              text = 'File Explorer',
-              text_align = 'left',
-              separator = true,
+  -- Recommended: Minimal statusline/tabline
+  {
+    'nvim-lualine/lualine.nvim',
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+      config = function()
+        require('lualine').setup({
+          options = {
+            globalstatus = true, -- Single statusline for all windows
+          },
+          -- This replaces the visual part of bufferline
+          tabline = {
+            lualine_a = {
+              {
+                'buffers',
+                show_filename_only = true,
+                hide_filename_extension = false,
+                show_modified_status = true,
+                mode = 0, -- 0: Shows buffer name
+                max_length = vim.o.columns,
+                filetype_names = {
+                  NvimTree = 'Explorer',
+                  TelescopePrompt = 'Telescope',
+                },
+              },
             },
           },
-        },
-      })
-      require('bufferline').setup({})
-    end,
+        })
+      end,
+    },
+  },
+
+  {
+    -- 'akinsho/bufferline.nvim',
+    -- dependencies = 'nvim-tree/nvim-web-devicons',
+    -- config = function()
+    --   require('bufferline').setup({
+    --     options = {
+    --       mode = 'buffers', -- set to "tabs" to only show standard vim tabs
+    --       separator_style = 'thin', -- options: "slant" | "slope" | "thick" | "thin"
+    --       always_show_bufferline = true,
+    --       show_buffer_close_icons = true,
+    --       show_close_icon = true,
+    --       color_icons = true,
+    --
+    --       -- Add this if you use NvimTree or Neo-tree to prevent overlap
+    --       offsets = {
+    --         {
+    --           filetype = 'NvimTree',
+    --           text = 'File Explorer',
+    --           text_align = 'left',
+    --           separator = true,
+    --         },
+    --       },
+    --     },
+    --   })
+    --   require('bufferline').setup({})
+    -- end,
     -- config = true,
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
@@ -288,6 +315,11 @@ local plugins = {
     dependencies = {
       { 'akinsho/toggleterm.nvim' },
       { 'nvim-telescope/telescope.nvim' },
+      -- {
+      --   'nvim-telescope/telescope.nvim',
+      --   tag = '0.1.8',
+      --   dependencies = { 'nvim-lua/plenary.nvim' },
+      -- },
       { 'nvim-telescope/telescope-ui-select.nvim' },
       { 'nvim-lua/plenary.nvim' },
       { 'folke/which-key.nvim' },
@@ -303,6 +335,32 @@ local plugins = {
   },
 }
 ----------------------------------------------------------------------------------------
+
+-- 1. Import the actions module (This is the missing part!)
+local actions = require('telescope.actions')
+require('telescope').setup({
+  defaults = {
+    mappings = {
+      i = {
+        ['<C-d>'] = actions.delete_buffer, -- Delete buffer in insert mode
+      },
+      n = {
+        ['dd'] = actions.delete_buffer, -- Delete buffer in normal mode
+      },
+    },
+  },
+  pickers = {
+    buffers = {
+      show_all_buffers = true,
+      sort_lastused = true,
+      theme = 'dropdown', -- Compact look
+      previewer = false, -- Disable preview for a faster feel
+    },
+  },
+})
+
+-- Keymap to open the buffer list
+vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
 
 ----------------------------------------------------------------------------------------
 -- INFO: Install/config plugins
@@ -342,21 +400,6 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
--- INFO: refreshes the statusline whenever you enter a C/C++ file
--- vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
---   pattern = { 'c', 'cpp', 'objc', 'objcpp', 'h', 'hpp' },
---   callback = function()
---     -- Assuming your module is required as 'pio'
---     if _G.metadata then
---       -- 1. Run your refresh logic
---       require('platformio.metadata').refresh_statusline()
---
---       -- 2. Force an immediate visual repaint of the status bar
---       -- This is the 'secret sauce' for %{ } expressions
---       vim.cmd('redrawstatus')
---     end
---   end,
--- })
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
