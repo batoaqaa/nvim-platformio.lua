@@ -167,6 +167,9 @@ Index:
   External:
     File: .clangd_index
 CompileFlags:
+  Add:
+    - "-xc++"
+    - "-std=c++17"
   Remove:
     - "-target"
     - "riscv32-esp-els"
