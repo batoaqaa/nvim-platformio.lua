@@ -8,7 +8,17 @@
 
 local piolsserial = require('platformio.piolsserial')
 local pio = require('platformio.utils.pio')
-vim.misc = require('platformio.utils.misc')
+
+-- - Only requires the module the FIRST time you actually try to use vim.pf
+setmetatable(vim, {
+  __index = function(t, k)
+    if k == 'misc' then
+      t.misc = require('platformio.utils.misc')
+      return t.misc
+    end
+  end,
+})
+-- vim.misc = require('platformio.utils.misc')
 
 -- Statusline: Using luaeval for best cross-platform stability
 vim.o.laststatus = 3
