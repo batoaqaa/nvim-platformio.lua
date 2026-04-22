@@ -162,6 +162,10 @@ boilerplate['.clangd'] = {
   read = false,
   -- template = [[
   content = [[
+Index:
+  background: Build
+  External:
+    File: .clangd_index
 CompileFlags:
   Remove:
     - "-target"
