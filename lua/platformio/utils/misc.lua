@@ -142,7 +142,7 @@ function M.set_platformioRootDir()
 end
 
 function M.cd_pioini()
-  M.set_platformioRootDir()
+  -- M.set_platformioRootDir()
   vim.cmd('cd ' .. vim.g.platformioRootDir)
 end
 

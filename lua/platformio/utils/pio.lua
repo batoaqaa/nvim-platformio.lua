@@ -385,6 +385,9 @@ end
 
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands Sequencer
+-- Semicolon (;): Runs the next command regardless of whether the first one succeeded.
+-- Success Operator (&&): Runs the second command only if the first succeeds.
+-- Fail Operator (||): Runs if any of the previous commands fail
 --- stylua: ignore
 M.run_sequence = function(tasks)
   -- Reset local state for new run
