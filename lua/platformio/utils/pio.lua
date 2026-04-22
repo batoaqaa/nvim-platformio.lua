@@ -173,7 +173,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
     if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
     if entry.file then entry.file = misc.normalizePath(entry.file) end
     if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
-    if entry.output then entry.output = misc.normalizeFlags(entry.output) end
+    if entry.output then entry.output = misc.normalizePath(entry.output) end
 
     if entry.command then
       -- Extract compiler and everything after it
