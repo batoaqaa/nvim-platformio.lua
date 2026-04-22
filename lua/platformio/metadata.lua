@@ -66,7 +66,7 @@ _G.metadata = setmetatable({}, {
 
     -- Trigger background actions
     vim.schedule(function()
-      M.save_project_config(true)
+      -- M.save_project_config(true)
       if key == 'toolchain_root' then
         vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         pcall(function()
