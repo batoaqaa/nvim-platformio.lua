@@ -56,8 +56,9 @@ end
 local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 
+--INFO:
 -- 1. Internal State & Defaults
-local _raw_metadata = {
+local _pio_metadata = {
   isBusy = false,
   envs = {},
   active_env = '',
@@ -76,12 +77,12 @@ local _raw_metadata = {
 -- 2. The Reactive Proxy Wrapper
 -- Any write to _G.metadata.key = val triggers this logic
 _G.metadata = setmetatable({}, {
-  __index = _raw_metadata,
+  __index = _pio_metadata,
   __newindex = function(_, key, value)
-    if _raw_metadata[key] == value then
+    if _pio_metadata[key] == value then
       return
     end -- Performance check
-    _raw_metadata[key] = value
+    _pio_metadata[key] = value
 
     -- Trigger background actions
     vim.schedule(function()
@@ -89,11 +90,11 @@ _G.metadata = setmetatable({}, {
       if key == 'toolchain_root' then
         vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         pcall(function()
-          if _raw_metadata.dbTrigger then
+          if _pio_metadata.dbTrigger then
             vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
             local dbFix = pio.compile_commandsFix
             dbFix()
-            _raw_metadata.dbTrigger = false
+            _pio_metadata.dbTrigger = false
           else
             local LspRestart = require('platformio.utils.lsp').lsp_restart
             LspRestart('clangd')
@@ -103,34 +104,30 @@ _G.metadata = setmetatable({}, {
       elseif key == 'active_env' then
         -- Force global statusline so it doesn't get pushed around by Trouble or splits
         vim.o.laststatus = 3
-
-        -- Using luaeval with escaped quotes is the "bulletproof" Linux method
-        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("_G.get_pio_status()")}%* %y %p%% %l:%c'
-
-        -- Ensure your custom layout is the final word
-        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
-        -- vim.o.statusline = '%f %m %r %= %#PioStatus#%{get(b:,"pio_env","")}%* %y %p%% %l:%c'
       end
     end)
   end,
 })
 
+--INFO:
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
   if vim.fn.filereadable('platformio.ini') == 0 then
     return
   end
-  -- local current_data = pio.pretty_json(_raw_metadata)
-  local ok, current_data = pcall(vim.json.encode, _raw_metadata)
+  -- local json_data = pio.pretty_json(_pio_metadata)
+  local ok, json_data = pcall(vim.json.encode, _pio_metadata)
   if not ok then
-    print('Error encoding JSON: ' .. current_data)
+    print('Error encoding JSON: ' .. json_data)
     return
   end
+  local pretty_json = vim.misc.async_shell_cmd
+  local current_hash = vim.fn.sha256(json_data)
 
-  local current_hash = vim.fn.sha256(current_data)
-
+  --   file:write(pio.jsonFormat(json_data))
   if current_hash ~= last_saved_hash then
-    local status = vim.fn.writefile({ current_data }, config_path)
+    -- local status = vim.fn.writefile({ json_data }, config_path)
+    local status, _ = vim.misc.writeFile({ json_data }, config_path)
     if status == 0 then
       last_saved_hash = current_hash
       if not quiet then
@@ -139,66 +136,44 @@ function M.save_project_config(quiet)
     else
       vim.notify('Could not open file for writing')
     end
-    -- local file = io.open(config_path, 'w')
-    -- if file then
-    --   -- file:write(pio.pretty_json(current_data))
-    --   -- file:write(pio.pretty_print(current_data))
-    --   file:write(pio.jsonFormat(current_data))
-    --   file:close()
-    --   last_saved_hash = current_hash
-    --   if not quiet then
-    --     vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
-    --   end
-    -- end
   end
 end
 
-function M.save_table_to_json(data, filepath)
-  -- 1. Convert Lua table to JSON string
-  local ok, json_string = pcall(vim.json.encode, data)
-  if not ok then
-    print('Error encoding JSON: ' .. json_string)
-    return
-  end
-  local status
-  vim.fn.writefile({ json_string }, filepath)
-  if status == 0 then
-    vim.notify('Saved to ' .. filepath, 2)
-  else
-    vim.notify('Could not open file for writing')
-  end
-
-  -- 2. Open file for writing ("w" mode overwrites)
-  -- local f = io.open(filepath, "w")
-  -- if f then
-  --   f:write(json_string)
-  --   f:close()
-  --   print("Saved to " .. filepath)
-  -- else
-  --   print("Could not open file for writing")
-  -- end
-end
+--INFO:
 -- 4. Load Logic (Populates proxy safely)
 function M.load_project_config()
-  if vim.fn.filereadable(config_path) == 1 then
-    local file = io.open(config_path, 'r')
-    if file then
-      local content = file:read('*a')
-      file:close()
-      local ok, decoded = pcall(vim.json.decode, content)
-      if ok and type(decoded) == 'table' then
-        -- We update _raw_metadata directly to avoid triggering
-        -- 50+ notifications/restarts during the initial load loop
-        for k, v in pairs(decoded) do
-          _raw_metadata[k] = v
-        end
-        last_saved_hash = vim.fn.sha256(content)
-        return
+  -- if vim.fn.filereadable(config_path) == 1 then
+  --   local file = io.open(config_path, 'r')
+  --   if file then
+  --     local content = file:read('*a')
+  --     file:close()
+  --     local ok, decoded = pcall(vim.json.decode, content)
+  --     if ok and type(decoded) == 'table' then
+  --       -- We update _pio_metadata directly to avoid triggering
+  --       -- 50+ notifications/restarts during the initial load loop
+  --       for k, v in pairs(decoded) do
+  --         _pio_metadata[k] = v
+  --       end
+  --       last_saved_hash = vim.fn.sha256(content)
+  --       return
+  --     end
+  --   end
+  -- end
+  local json_data = vim.misc.readFile(config_path)
+  if json_data then
+    local ok, table_data = pcall(vim.json.decode, json_data)
+    if ok and type(table_data) == 'table' then
+      -- We update _pio_metadata directly to avoid triggering
+      -- 50+ notifications/restarts during the initial load loop
+      for k, v in pairs(table_data) do
+        _pio_metadata[k] = v
       end
+      last_saved_hash = vim.fn.sha256(json_data)
+      return
     end
   end
   -- If no file, initialize hash with defaults
-  last_saved_hash = vim.fn.sha256(vim.json.encode(_raw_metadata))
+  last_saved_hash = vim.fn.sha256(vim.json.encode(_pio_metadata))
 end
 
 -- 5. Helper for ToggleTerm / Commands

@@ -1,4 +1,5 @@
 local M = {}
+local misc = vim.misc
 
 -- local sep = package.config:sub(1, 1) -- Dynamic OS separator (\ or /)
 M.selected_framework = ''
@@ -9,143 +10,7 @@ local pio_buffer = '' -- Persistent stream buffer
 -- to fix require loop, this value is set in plugin/platformio
 
 local term = require('platformio.utils.term')
-local misc = require('platformio.utils.misc')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
-
--- iterrative loop 48ms
--- stylua: ignore
-function M.jsonFormat(root_data)
-  local buffer = {}
-
-  -- Force input into a table if it's just a single string
-  local patterns = type(root_data) == "table" and root_data or { root_data }
-
-  -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
-  local stack = { { val = patterns, lvl = 0, stage = 'start' } }
-
-  local function get_indent(lvl) return string.rep('  ', lvl) end
-
-  while #stack > 0 do
-    local curr = stack[#stack]
-    local val, lvl = curr.val, curr.lvl
-    local indent = get_indent(lvl)
-
-    if type(val) == 'table' then
-      local is_array = (#val > 0 or next(val) == nil)
-
-      if curr.stage == 'start' then
-        table.insert(buffer, (is_array and '[' or '{') .. '\n')
-        curr.stage = 'items'
-        curr.keys = {}
-        -- Collect keys to iterate deterministically
-        if is_array then
-          for i = #val, 1, -1 do table.insert(curr.keys, i) end
-        else
-          for k, _ in pairs(val) do table.insert(curr.keys, k) end
-        end
-        curr.index = #curr.keys
-      elseif curr.stage == 'items' then
-        if curr.index > 0 then
-          local key = curr.keys[curr.index]
-          local item = val[key]
-
-          -- Add comma if not the first item
-          if curr.index < #curr.keys then table.insert(buffer, ',\n') end
-
-          table.insert(buffer, get_indent(lvl + 1))
-          if not is_array then table.insert(buffer, '"' .. tostring(key) .. '": ') end
-
-          curr.index = curr.index - 1
-          -- Push next item to stack
-          table.insert(stack, { val = item, lvl = lvl + 1, stage = 'start' })
-        else
-          -- No more items, close the block
-          table.insert(buffer, '\n' .. indent .. (is_array and ']' or '}'))
-          table.remove(stack)
-        end
-      end
-    else
-      -- Primitive values (String, Number, Bool)
-      local output = ''
-      if type(val) == 'string' then
-        -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
-        output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
-        -- output = '"' .. val:gsub('"', '\\"') .. '"'
-      else output = tostring(val) end
-      table.insert(buffer, output)
-      table.remove(stack)
-    end
-  end
-  return table.concat(buffer)
-end
-
-
-------------------------------------------------------
--- regex 100ms
--- stylua: ignore
-function M.pretty_json(data)
-  -- 1. Get a guaranteed valid JSON string from Neovim's core
-  local json = vim.json.encode(data)
-
-  -- 2. Use regex to inject newlines and indentation
-  -- This is much faster than manual recursion in Lua
-  local indent = '  '
-  local level = 0
-
-  -- Add newlines after { [ , and before } ]
-  json = json:gsub('([%[%{%],])', '%1\n')
-  json = json:gsub('([%]}])', '\n%1')
-
-  local lines = {}
-  for line in json:gmatch('[^\n]+') do
-    line = line:gsub('^%s+', '') -- trim existing whitespace
-
-    -- Decrease level if line starts with closing bracket
-    if line:match('^[%]}]') then level = level - 1 end
-
-    table.insert(lines, string.rep(indent, level) .. line)
-
-    -- Increase level if line ends with opening bracket
-    if line:match('[%[{]$') then level = level + 1 end
-  end
-
-  return table.concat(lines, '\n')
-end
-------------------------------------------------------
-
--- recursion 50ms
--- stylua: ignore
--- local function pretty_print(data) -- 48ms
-function M.pretty_print(data) -- 48ms
-  -- Force input into a table if it's just a single string
-  local patterns = type(data) == "table" and data or { data }
-  local insert = table.insert
-  local buffer = {}
-  local function format_item(item, current_level)
-    local indent = string.rep('  ', current_level)
-    local next_indent = string.rep('  ', current_level + 1)
-    if type(item) == 'table' then
-      local is_array = #item > 0
-      local opener = is_array and '[' or '{'
-      local closer = is_array and ']' or '}'
-      insert(buffer, opener .. '\n')
-      local first = true
-      for k, v in pairs(item) do
-        if not first then insert(buffer, ',\n') end
-        insert(buffer, next_indent)
-        if not is_array then insert(buffer, '"' .. k .. '": ') end
-        format_item(v, current_level + 1)
-        first = false
-      end
-      insert(buffer, '\n' .. indent .. closer)
-    elseif type(item) == 'string' then
-      -- Basic escaping for the string content
-      insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
-    else insert(buffer, tostring(item)) end
-  end
-  format_item(patterns, 0)
-  return table.concat(buffer)
-end
 
 -- stylua: ignore
 function M.compile_commandsFix() --M.dbPathsFix()
@@ -243,7 +108,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    local jok, formatted = pcall(M.jsonFormat, data)
+    local jok, formatted = pcall(vim.misc.jsonFormat, data)
     -- local jok, formatted = pcall(M.pretty_print, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
