@@ -87,7 +87,6 @@ boilerplate['.clangd_config'] = {
     "--fallback-style=llvm",
     "--log=error",
     "--pch-storage=memory",
-    "--check-gcc-install",
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
