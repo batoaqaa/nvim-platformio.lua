@@ -194,8 +194,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
 
             print(string.format('ful_compiler_path = %s', full_compiler_path))
             local argsFormated = misc.normalizeFlags(args)
-            entry.command = full_compiler_path .. argsFormated
-            -- entry.command = full_compiler_path .. args
+            -- entry.command = full_compiler_path .. argsFormated
+            entry.command = full_compiler_path .. args
             modified = true
           end
         end
@@ -238,8 +238,8 @@ function M.compile_commandsFix() --M.dbPathsFix()
   if modified then
     local start_time = vim.loop.hrtime()
 
-    -- local jok, formatted = pcall(M.jsonFormat, data)
-    local jok, formatted = pcall(M.pretty_print, data)
+    local jok, formatted = pcall(M.jsonFormat, data)
+    -- local jok, formatted = pcall(M.pretty_print, data)
     if not jok then
       print('Formatting failed: ' .. formatted)
       return
