@@ -209,9 +209,15 @@ Diagnostics:
       - "hicpp-vararg"
       - "modernize-*"
 Index:
-  background: Build
+  Background: Build
   External:
     File: .clangd_index
+CompileFlags:
+  Add:
+  Add: 
+    - "-xc++"
+    - "-std=c++17"
+    - "-D__cplusplus=201703L" # Manually define the C++ macro
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
