@@ -7,15 +7,15 @@
 -- -1: Zero or one argument (like ?, explicitly).
 
 -- - Only requires the module the FIRST time you actually try to use vim.pf
-setmetatable(vim, {
-  __index = function(t, k)
-    if k == 'misc' then
-      t.misc = require('platformio.utils.misc')
-      return t.misc
-    end
-  end,
-})
--- vim.misc = require('platformio.utils.misc')
+-- setmetatable(vim, {
+--   __index = function(t, k)
+--     if k == 'misc' then
+--       t.misc = require('platformio.utils.misc')
+--       return t.misc
+--     end
+--   end,
+-- })
+vim.misc = require('platformio.utils.misc')
 local piolsserial = require('platformio.piolsserial')
 local pio = require('platformio.utils.pio')
 
