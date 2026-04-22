@@ -23,35 +23,6 @@ function M.get_pio_status()
   end
   return string.format(' [ %s ] ', active)
 end
--- _G.get_pio_status = function()
---   -- Add a manual check for the metatable if it exists
---   local val = _G.metadata and _G.metadata.active_env
---   if val and val ~= '' then
---     return ' [   ' .. val .. '] '
---   end
---   return ''
--- end
--- _G.get_pio_status = function()
---   if _G.metadata and _G.metadata.active_env ~= '' then
---     return ' [   ' .. _G.metadata.active_env .. '] '
---   end
---   return ''
--- end
--- Move the %#PioStatus# and %* outside of the curly braces
--- vim.o.statusline = '%f %m %r %= %#PioStatus#%{v:lua.get_pio_status()}%* %y %p%% %l:%c'
-
--- The Statusline Getter (used by the UI)
--- function M.get_pio_status()
---   -- Using pcall ensures that if 'require' or 'metadata' fails,
---   -- the statusline just shows nothing instead of throwing an error.
---   local ok, status = pcall(function()
---     if _G.metadata and _G.metadata.active_env and _G.metadata.active_env ~= '' then
---       return string.format(' [ %s ] ', _G.metadata.active_env)
---     end
---     return ''
---   end)
---   return ok and status or ''
--- end
 -------------------------------------------------------------------------------------------------------
 local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
@@ -68,6 +39,15 @@ local _pio_metadata = {
   platforms_dir = '',
   query_driver = '',
   cc_compiler = '',
+  includes_build = {},
+  includes_comaptlib = {},
+  includes_toolchain = {},
+  cc_path = '',
+  cc_flags = {},
+  cxx_path = '',
+  cxx_flags = {},
+  gdb_path = '',
+  defines = {},
   triplet = '',
   toolchain_root = '',
   sysroot = '',

@@ -251,11 +251,11 @@ Cleans and repairs compiler flags in a command string.
     -F: (macOS/iOS) Path to search for frameworks.
 ]]
 -- stylua: ignore
---- @param cmd string: The raw command string (e.g., from compile_commands.json)
+--- @param flags string: The raw command string (e.g., from compile_commands.json)
 --- @return string: The cleaned command string
 --INFO:
-function M.normalizeFlags(cmd)
-  if not cmd or cmd == '' then
+function M.normalizeFlags(flags)
+  if not flags or flags == '' then
     return ''
   end
 
@@ -265,7 +265,7 @@ function M.normalizeFlags(cmd)
   --   %S*     : Matches zero or more non-space characters
   --   \\      : Matches a literal backslash (identifies it as a Windows path)
   --   %S*     : Matches the rest of the non-space characters in that flag
-  local cleaned_cmd = cmd:gsub('(%-%S-\\S*)', function(flag)
+  local cleaned_cmd = flags:gsub('(%-%S-\\S*)', function(flag)
     --2. Normalize Slashes
     -- Replaces any number of backslashes (single \ or JSON-escaped \\) with one forward slash.
     -- Forward slashes are safer and more portable for compilers like GCC/Clang.

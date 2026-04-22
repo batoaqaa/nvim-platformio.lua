@@ -62,15 +62,16 @@ function M.get_sysroot_triplet(cc_compiler)
   return nil
 end
 
-
 -- INFO: 1. The Core PIO Manager & Generic Extractor
--- stylua: ignore
+--- stylua: ignore
 M.pio_manager = (function()
   local cache = nil -- Stores the decoded platformio.ini JSON structure
   -- INFO:
   local function find_in_data(data, section_name, key_name)
     -- Safety check: Ensure data is a valid table from a successful JSON decode
-    if type(data) ~= 'table' then return nil end
+    if type(data) ~= 'table' then
+      return nil
+    end
 
     for _, section in ipairs(data) do
       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
@@ -97,7 +98,6 @@ M.pio_manager = (function()
   end
 
   -- INFO: ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
-  --- stylua: ignore
   local function refresh(callback)
     vim.schedule(function()
       vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO)
@@ -127,46 +127,104 @@ M.pio_manager = (function()
             if ok and raw_data then
               local _, data = next(raw_data)
               if data then
-                local fallbackFlags = {}
-                -- 1. Process Includes
-                if data.includes then
-                  for category, paths in pairs(data.includes) do
-                    -- If it's a toolchain path, use -isystem to suppress warnings
-                    -- and tell clangd these are standard libraries
-                    if category == 'toolchain' then
-                      local flag = '-isystem'
-                      for _, path in ipairs(paths) do
-                        -- table.insert(fallbackFlags, string.format('%q', flag))
-                        -- table.insert(fallbackFlags, string.format('%q', path:gsub('\\', '/')))
-                        table.insert(fallbackFlags, string.format('%q', flag .. path:gsub('\\', '/')))
+                -- 1. Process cc_compiler
+                if data.cc_path then
+                  _G.metadata.query_driver = ''
+                  _G.metadata.includes_build = {}
+                  _G.metadata.includes_comaptlib = {}
+                  _G.metadata.includes_toolchain = {}
+                  _G.metadata.cc_flags = {}
+                  _G.metadata.cxx_path = ''
+                  _G.metadata.cxx_flags = {}
+                  _G.metadata.gdb_path = ''
+                  _G.metadata.defines = {}
+                  _G.metadata.triplet = ''
+                  _G.metadata.toolchain_root = ''
+                  _G.metadata.sysroot = ''
+                  _G.metadata.cc_compiler = misc.normalizePath(data.cc_path) or ''
+                  _G.metadata.cc_path = misc.normalizePath(data.cc_path) or ''
+
+                  -- 2. Process cc_flags
+                  if data.cc_flags then
+                    local cc_flags = {}
+                    for _, flag in ipairs(data.cc_flags) do
+                      table.insert(cc_flags, string.format('%q', flag))
+                    end
+                    _G.metadata.cc_flags = cc_flags
+                  end
+
+                  -- 3. Process cxx_compiler
+                  if data.cxx_path then
+                    _G.metadata.cxx_path = misc.normalizePath(data.cxx_path) or ''
+                  end
+
+                  -- 4. Process cxx_flags
+                  if data.cxx_flags then
+                    local cxx_flags = {}
+                    for _, flag in ipairs(data.cxx_flags) do
+                      table.insert(cxx_flags, string.format('%q', flag))
+                    end
+                    _G.metadata.cxx_flags = cxx_flags
+                  end
+
+                  -- 5. Process gdb_path
+                  if data.gdb_path then
+                    _G.metadata.gdb_path = misc.normalizePath(data.gdb_path) or ''
+                  end
+
+                  -- 6. Process Defines
+                  if data.defines then
+                    local defines = {}
+                    for _, define in ipairs(data.defines) do
+                      table.insert(defines, string.format('%q', define))
+                    end
+                    _G.metadata.defines = defines
+                  end
+
+                  -- 7. Process Includes
+                  if data.includes then
+                    for category, paths in pairs(data.includes) do
+                      -- 7.1 Process Includes_build
+                      if category == 'build' then
+                        local includes_build = {}
+                        local flag = '-I'
+                        for _, path in ipairs(paths) do
+                          table.insert(includes_build, string.format('%q', flag .. misc.normalizePath(path)))
+                        end
+                        _G.metadata.includes_build = includes_build
+                      end
+
+                      -- 7.2 Process includes_toolchain
+                      if category == 'toolchain' then
+                        local includes_toolchain = {}
+                        local flag = '-isystem'
+                        for _, path in ipairs(paths) do
+                          table.insert(includes_toolchain, string.format('%q', flag .. misc.normalizePath(path)))
+                        end
+                        _G.metadata.includes_toolchain = includes_toolchain
+                      end
+
+                      -- 7.3 Process includes_compatlib
+                      if category == 'compatlib' then
+                        local includes_compatlib = {}
+                        local flag = '-isystem'
+                        for _, path in ipairs(paths) do
+                          table.insert(includes_compatlib, string.format('%q', flag .. misc.normalizePath(path)))
+                        end
+                        _G.metadata.includes_build = includes_compatlib
                       end
                     end
-                    -- local flag = (category == 'toolchain') and '-isystem' or '-I'
-                    -- for _, path in ipairs(paths) do
-                    --   table.insert(fallbackFlags, flag .. path)
-                    -- end
                   end
-                end
-                -- 2. Process Defines
-                if data.defines then
-                  for _, define in ipairs(data.defines) do
-                    table.insert(fallbackFlags, string.format('%q', '-D' .. define))
-                  end
-                end
 
-                -- get [cc_compiler]and [falbackFlags]
-                -- _G.metadata.query_driver = misc.normalize_path(env.cc_compiler:match('(.*[/\\])') .. '*') or '**'
-                _G.metadata.cc_compiler = misc.normalizePath(data.cc_path) or ''
-                _G.metadata.fallbackFlags = misc.normalizeFlags(fallbackFlags)
-
-                pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
-                -- print(vim.inspect(_G.metadata))
-                -- if callback then
-                --   vim.schedule(function()
-                --     vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
-                --     callback()
-                --   end)
-                -- end
+                  pcall(M.get_sysroot_triplet, _G.metadata.cc_compiler)
+                  -- print(vim.inspect(_G.metadata))
+                  -- if callback then
+                  --   vim.schedule(function()
+                  --     vim.notify('PIO: Fetching metadata successful', vim.log.levels.INFO)
+                  --     callback()
+                  --   end)
+                  -- end
+                end
               end
             else
               vim.schedule(function()
@@ -226,7 +284,7 @@ M.pio_manager = (function()
                 local key, val = kv[1], kv[2]
                 if key ~= nil then
                   -- if _G.metadata[key] ~= nil then
-_G.metadata[key] =  ((type(val) == 'table' and next(val) ~= nil) or (type(val) == "string" and val ~= '')) and  misc.normalizePath(val) or val
+                  _G.metadata[key] = ((type(val) == 'table' and next(val) ~= nil) or (type(val) == 'string' and val ~= '')) and misc.normalizePath(val) or val
                 end
               end
             -- 2. Extract all hardware [envs] like [env:seeed_xiao_esp32c3], skipping generic [env]
