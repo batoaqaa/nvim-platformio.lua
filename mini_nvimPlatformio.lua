@@ -53,6 +53,7 @@ else
   vim.opt.shellquote = ''
   vim.opt.shellxquote = ''
 end
+vim.hl = vim.highlight
 vim.api.nvim_set_hl(0, 'PioStatus', {
   fg = '#e0af68', -- Dark text
   bg = '#11111b',
