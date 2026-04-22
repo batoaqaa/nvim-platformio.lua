@@ -53,10 +53,10 @@ end
 --   return ok and status or ''
 -- end
 -------------------------------------------------------------------------------------------------------
--- 1. Internal State & Defaults
 local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 
+-- 1. Internal State & Defaults
 local _raw_metadata = {
   isBusy = false,
   envs = {},
@@ -73,7 +73,6 @@ local _raw_metadata = {
   fallbackFlags = {},
   dbTrigger = false,
 }
-
 -- 2. The Reactive Proxy Wrapper
 -- Any write to _G.metadata.key = val triggers this logic
 _G.metadata = setmetatable({}, {
@@ -118,16 +117,16 @@ _G.metadata = setmetatable({}, {
 
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
-  if vim.fn.filereadable(config_path) == 0 then
+  if vim.fn.filereadable('platformio.ini') == 0 then
     return
   end
-
   -- local current_data = pio.pretty_json(_raw_metadata)
   local ok, current_data = pcall(vim.json.encode, _raw_metadata)
   if not ok then
     print('Error encoding JSON: ' .. current_data)
     return
   end
+
   local current_hash = vim.fn.sha256(current_data)
 
   if current_hash ~= last_saved_hash then
