@@ -6,9 +6,6 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
-local piolsserial = require('platformio.piolsserial')
-local pio = require('platformio.utils.pio')
-
 -- - Only requires the module the FIRST time you actually try to use vim.pf
 setmetatable(vim, {
   __index = function(t, k)
@@ -19,6 +16,8 @@ setmetatable(vim, {
   end,
 })
 -- vim.misc = require('platformio.utils.misc')
+local piolsserial = require('platformio.piolsserial')
+local pio = require('platformio.utils.pio')
 
 -- Statusline: Using luaeval for best cross-platform stability
 vim.o.laststatus = 3
