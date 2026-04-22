@@ -126,6 +126,7 @@ function _G.get_clangd_config()
   local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)
 
   if cok and clangd_config then
+    print(clangd_config)
     return clangd_config
   end
 end
