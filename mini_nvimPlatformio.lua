@@ -336,36 +336,6 @@ local plugins = {
 }
 ----------------------------------------------------------------------------------------
 
-local tok, telescope = pcall(require, 'telescope')
-if tok then
-  -- 1. Import the actions module (This is the missing part!)
-  local actions = require('telescope.actions')
-  local telescope = require('telescope')
-  -- print("here" .. vim.inspect(pioConfig))
-  telescope.setup({
-    defaults = {
-      mappings = {
-        i = {
-          ['<C-d>'] = actions.delete_buffer, -- Delete buffer in insert mode
-        },
-        n = {
-          ['dd'] = actions.delete_buffer, -- Delete buffer in normal mode
-        },
-      },
-    },
-    pickers = {
-      buffers = {
-        show_all_buffers = true,
-        sort_lastused = true,
-        theme = 'dropdown', -- Compact look
-        previewer = false, -- Disable preview for a faster feel
-      },
-    },
-  })
-end
--- Keymap to open the buffer list
-vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
-
 ----------------------------------------------------------------------------------------
 -- INFO: Install/config plugins
 require('lazy').setup(plugins, {
@@ -473,6 +443,35 @@ end
 ----------------------------------------------------------------------------------------
 -- INFO: configure nvim-platformio and load
 -----------------------------------------------------------------------------------------
+local tok, telescope = pcall(require, 'telescope')
+if tok then
+  -- 1. Import the actions module (This is the missing part!)
+  local actions = require('telescope.actions')
+  -- local telescope = require('telescope')
+  -- print("here" .. vim.inspect(pioConfig))
+  telescope.setup({
+    defaults = {
+      mappings = {
+        i = {
+          ['<C-d>'] = actions.delete_buffer, -- Delete buffer in insert mode
+        },
+        n = {
+          ['dd'] = actions.delete_buffer, -- Delete buffer in normal mode
+        },
+      },
+    },
+    pickers = {
+      buffers = {
+        show_all_buffers = true,
+        sort_lastused = true,
+        theme = 'dropdown', -- Compact look
+        previewer = false, -- Disable preview for a faster feel
+      },
+    },
+  })
+end
+-- Keymap to open the buffer list
+vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
 local pioConfig = {
   lspClangd = {
     -- enabled = false,
