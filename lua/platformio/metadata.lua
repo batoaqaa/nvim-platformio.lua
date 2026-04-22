@@ -118,7 +118,7 @@ _G.metadata = setmetatable({}, {
 
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
-  if vim.fn.filereadable('platformio.ini') == 0 then
+  if vim.fn.filereadable(config_path) == 0 then
     return
   end
 
@@ -128,8 +128,9 @@ function M.save_project_config(quiet)
   if current_hash ~= last_saved_hash then
     local file = io.open(config_path, 'w')
     if file then
+      file:write(pio.pretty_json(current_data))
       -- file:write(pio.pretty_print(current_data))
-      file:write(pio.jsonFormat(current_data))
+      -- file:write(pio.jsonFormat(current_data))
       file:close()
       last_saved_hash = current_hash
       if not quiet then

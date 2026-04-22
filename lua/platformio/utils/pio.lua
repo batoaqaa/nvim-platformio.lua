@@ -83,7 +83,7 @@ end
 ------------------------------------------------------
 -- regex 100ms
 -- stylua: ignore
-local function pretty_json(data)
+function M.pretty_json(data)
   -- 1. Get a guaranteed valid JSON string from Neovim's core
   local json = vim.json.encode(data)
 
