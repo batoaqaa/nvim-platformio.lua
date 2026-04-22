@@ -122,25 +122,63 @@ function M.save_project_config(quiet)
     return
   end
 
-  local current_data = pio.pretty_json(_raw_metadata)
-  -- local current_data = vim.json.encode(_raw_metadata)
+  -- local current_data = pio.pretty_json(_raw_metadata)
+  local ok, current_data = pcall(vim.json.encode, _raw_metadata)
+  if not ok then
+    print('Error encoding JSON: ' .. current_data)
+    return
+  end
   local current_hash = vim.fn.sha256(current_data)
 
   if current_hash ~= last_saved_hash then
-    local file = io.open(config_path, 'w')
-    if file then
-      -- file:write(pio.pretty_json(current_data))
-      -- file:write(pio.pretty_print(current_data))
-      file:write(pio.jsonFormat(current_data))
-      file:close()
+    local status = vim.fn.writefile({ current_data }, config_path)
+    if status == 0 then
       last_saved_hash = current_hash
       if not quiet then
         vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
       end
+    else
+      vim.notify('Could not open file for writing')
     end
+    -- local file = io.open(config_path, 'w')
+    -- if file then
+    --   -- file:write(pio.pretty_json(current_data))
+    --   -- file:write(pio.pretty_print(current_data))
+    --   file:write(pio.jsonFormat(current_data))
+    --   file:close()
+    --   last_saved_hash = current_hash
+    --   if not quiet then
+    --     vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --   end
+    -- end
   end
 end
 
+function M.save_table_to_json(data, filepath)
+  -- 1. Convert Lua table to JSON string
+  local ok, json_string = pcall(vim.json.encode, data)
+  if not ok then
+    print('Error encoding JSON: ' .. json_string)
+    return
+  end
+  local status
+  vim.fn.writefile({ json_string }, filepath)
+  if status == 0 then
+    vim.notify('Saved to ' .. filepath, 2)
+  else
+    vim.notify('Could not open file for writing')
+  end
+
+  -- 2. Open file for writing ("w" mode overwrites)
+  -- local f = io.open(filepath, "w")
+  -- if f then
+  --   f:write(json_string)
+  --   f:close()
+  --   print("Saved to " .. filepath)
+  -- else
+  --   print("Could not open file for writing")
+  -- end
+end
 -- 4. Load Logic (Populates proxy safely)
 function M.load_project_config()
   if vim.fn.filereadable(config_path) == 1 then
