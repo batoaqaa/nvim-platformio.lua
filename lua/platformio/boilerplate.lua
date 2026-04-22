@@ -168,8 +168,10 @@ Index:
     File: .clangd_index
 CompileFlags:
   Add:
+  Add: 
     - "-xc++"
     - "-std=c++17"
+    - "-D__cplusplus=201703L" # Manually define the C++ macro
   Remove:
     - "-target"
     - "riscv32-esp-els"
