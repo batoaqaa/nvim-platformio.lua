@@ -122,15 +122,16 @@ function M.save_project_config(quiet)
     return
   end
 
-  local current_data = vim.json.encode(_raw_metadata)
+  local current_data = pio.pretty_json(_raw_metadata)
+  -- local current_data = vim.json.encode(_raw_metadata)
   local current_hash = vim.fn.sha256(current_data)
 
   if current_hash ~= last_saved_hash then
     local file = io.open(config_path, 'w')
     if file then
-      file:write(pio.pretty_json(current_data))
+      -- file:write(pio.pretty_json(current_data))
       -- file:write(pio.pretty_print(current_data))
-      -- file:write(pio.jsonFormat(current_data))
+      file:write(pio.jsonFormat(current_data))
       file:close()
       last_saved_hash = current_hash
       if not quiet then
