@@ -53,11 +53,11 @@ else
   vim.opt.shellquote = ''
   vim.opt.shellxquote = ''
 end
--- vim.api.nvim_set_hl(0, 'PioStatus', {
---   fg = '#e0af68', -- Dark text
---   bg = '#11111b',
---   bold = true,
--- })
+vim.api.nvim_set_hl(0, 'PioStatus', {
+  fg = '#e0af68', -- Dark text
+  bg = '#11111b',
+  bold = true,
+})
 ----------------------------------------------------------------------------------------
 -- INFO: Set diagnostic config
 vim.diagnostic.config({
