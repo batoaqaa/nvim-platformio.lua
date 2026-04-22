@@ -162,16 +162,16 @@ boilerplate['.clangd'] = {
   read = false,
   -- template = [[
   content = [[
-Index:
-  background: Build
-  External:
-    File: .clangd_index
 CompileFlags:
   Add:
-  Add: 
     - "-xc++"
     - "-std=c++17"
-    - "-D__cplusplus=201703L" # Manually define the C++ macro
+    - "-D__cplusplus=201703L"
+    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
+    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
+    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include"
+    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
+    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
   Remove:
     - "-target"
     - "riscv32-esp-elf"
@@ -208,6 +208,10 @@ Diagnostics:
       - "bugprone-*"
       - "hicpp-vararg"
       - "modernize-*"
+Index:
+  background: Build
+  External:
+    File: .clangd_index
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
