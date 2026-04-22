@@ -167,6 +167,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   end
 
   local modified = false
+  local prntFlags = true
   for _, entry in ipairs(data) do
     -- Standard normalization
     if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
@@ -191,8 +192,10 @@ function M.compile_commandsFix() --M.dbPathsFix()
             if full_compiler_path:find(" ") then
               full_compiler_path = '"' .. full_compiler_path .. '"'
             end
-
-            print(string.format('ful_compiler_path = %s', full_compiler_path))
+            if prntFlags then
+              print(string.format('ful_compiler_path = %s flags=%s', full_compiler_path, args))
+              prntFlags = false
+            end
             local argsFormated = misc.normalizeFlags(args)
             -- entry.command = full_compiler_path .. argsFormated
             entry.command = full_compiler_path .. args
