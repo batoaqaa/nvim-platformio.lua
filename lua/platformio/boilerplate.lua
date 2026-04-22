@@ -146,6 +146,11 @@ clangd
   end,
 }
 
+-- - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
+-- - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
+--
+-- - "-target"
+-- - "riscv32-esp-els"
 -- -- Add:
 --   - %q
 --   - %q
@@ -160,11 +165,7 @@ boilerplate['.clangd'] = {
 CompileFlags:
   Add:
     - "-xc++"
-    - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
-    - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
   Remove:
-    - "-target"
-    - "riscv32-esp-els"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
