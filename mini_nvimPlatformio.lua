@@ -420,7 +420,8 @@ end
 -----------------------------------------------------------------------------------------
 local pioConfig = {
   lspClangd = {
-    enabled = true,
+    enabled = false,
+    -- enabled = true,
     attach = {
       enabled = true,
       keymaps = true,
