@@ -338,27 +338,31 @@ local plugins = {
 
 -- 1. Import the actions module (This is the missing part!)
 local actions = require('telescope.actions')
-require('telescope').setup({
-  defaults = {
-    mappings = {
-      i = {
-        ['<C-d>'] = actions.delete_buffer, -- Delete buffer in insert mode
-      },
-      n = {
-        ['dd'] = actions.delete_buffer, -- Delete buffer in normal mode
+local telescope = require('telescope')
+local tok, telescope = pcall(require, 'telescope')
+if tok then
+  -- print("here" .. vim.inspect(pioConfig))
+  telescope.setup({
+    defaults = {
+      mappings = {
+        i = {
+          ['<C-d>'] = actions.delete_buffer, -- Delete buffer in insert mode
+        },
+        n = {
+          ['dd'] = actions.delete_buffer, -- Delete buffer in normal mode
+        },
       },
     },
-  },
-  pickers = {
-    buffers = {
-      show_all_buffers = true,
-      sort_lastused = true,
-      theme = 'dropdown', -- Compact look
-      previewer = false, -- Disable preview for a faster feel
+    pickers = {
+      buffers = {
+        show_all_buffers = true,
+        sort_lastused = true,
+        theme = 'dropdown', -- Compact look
+        previewer = false, -- Disable preview for a faster feel
+      },
     },
-  },
-})
-
+  })
+end
 -- Keymap to open the buffer list
 vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
 
