@@ -336,11 +336,11 @@ local plugins = {
 }
 ----------------------------------------------------------------------------------------
 
--- 1. Import the actions module (This is the missing part!)
-local actions = require('telescope.actions')
-local telescope = require('telescope')
 local tok, telescope = pcall(require, 'telescope')
 if tok then
+  -- 1. Import the actions module (This is the missing part!)
+  local actions = require('telescope.actions')
+  local telescope = require('telescope')
   -- print("here" .. vim.inspect(pioConfig))
   telescope.setup({
     defaults = {
