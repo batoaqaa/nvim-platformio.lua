@@ -121,8 +121,8 @@ function M.save_project_config(quiet)
     print('Error encoding JSON: ' .. json_data)
     return
   end
-  local pretty_json = vim.misc.async_shell_cmd
-  local current_hash = vim.fn.sha256(json_data)
+  local pretty_json = vim.misc.pretty_print(json_data)
+  local current_hash = vim.fn.sha256(pretty_json)
 
   --   file:write(pio.jsonFormat(json_data))
   if current_hash ~= last_saved_hash then
@@ -159,17 +159,19 @@ function M.load_project_config()
   --     end
   --   end
   -- end
-  local json_data = vim.misc.readFile(config_path)
-  if json_data then
-    local ok, table_data = pcall(vim.json.decode, json_data)
-    if ok and type(table_data) == 'table' then
-      -- We update _pio_metadata directly to avoid triggering
-      -- 50+ notifications/restarts during the initial load loop
-      for k, v in pairs(table_data) do
-        _pio_metadata[k] = v
+  if vim.fn.filereadable(config_path) == 1 then
+    local json_data = vim.misc.readFile(config_path)
+    if json_data then
+      local ok, table_data = pcall(vim.json.decode, json_data)
+      if ok and type(table_data) == 'table' then
+        -- We update _pio_metadata directly to avoid triggering
+        -- 50+ notifications/restarts during the initial load loop
+        for k, v in pairs(table_data) do
+          _pio_metadata[k] = v
+        end
+        last_saved_hash = vim.fn.sha256(json_data)
+        return
       end
-      last_saved_hash = vim.fn.sha256(json_data)
-      return
     end
   end
   -- If no file, initialize hash with defaults

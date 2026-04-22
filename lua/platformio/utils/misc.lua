@@ -79,7 +79,7 @@ end
 -- stylua: ignore
 function M.pretty_json(data)
   -- 1. Get a guaranteed valid JSON string from Neovim's core
-  local json = data --vim.json.encode(data)
+  local json = vim.json.encode(data)
 
   -- 2. Use regex to inject newlines and indentation
   -- This is much faster than manual recursion in Lua
@@ -102,8 +102,7 @@ function M.pretty_json(data)
     -- Increase level if line ends with opening bracket
     if line:match('[%[{]$') then level = level + 1 end
   end
-  return(lines)
-  -- return table.concat(lines, '\n')
+  return table.concat(lines, '\n')
 end
 ------------------------------------------------------
 
@@ -112,7 +111,6 @@ end
 -- local function pretty_print(data) -- 48ms
 function M.pretty_print(data) -- 48ms
   -- Force input into a table if it's just a single string
-  local patterns = type(data) == "table" and data or { data }
   local insert = table.insert
   local buffer = {}
   local function format_item(item, current_level)
@@ -137,7 +135,7 @@ function M.pretty_print(data) -- 48ms
       insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
     else insert(buffer, tostring(item)) end
   end
-  format_item(patterns, 0)
+  format_item(data, 0)
   return table.concat(buffer)
 end
 
