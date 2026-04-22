@@ -173,6 +173,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
     if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
     if entry.file then entry.file = misc.normalizePath(entry.file) end
     if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
+    if entry.output then entry.output = misc.normalizeFlags(entry.output) end
 
     if entry.command then
       -- Extract compiler and everything after it
@@ -193,10 +194,11 @@ function M.compile_commandsFix() --M.dbPathsFix()
               full_compiler_path = '"' .. full_compiler_path .. '"'
             end
             if prntFlags then
-              print(string.format('ful_compiler_path = %s flags=%s', full_compiler_path, args))
+              print(string.format('ful_compiler_path = %s', full_compiler_path))
+              -- print(string.format('ful_compiler_path = %s flags=%s', full_compiler_path, args))
               prntFlags = false
             end
-            local argsFormated = misc.normalizeFlags(args)
+            -- local argsFormated = misc.normalizeFlags(args)
             -- entry.command = full_compiler_path .. argsFormated
             entry.command = full_compiler_path .. args
             modified = true
