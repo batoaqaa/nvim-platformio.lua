@@ -87,6 +87,7 @@ boilerplate['.clangd_config'] = {
     "--fallback-style=llvm",
     "--log=error",
     "--pch-storage=memory",
+    "--check-gcc-install",
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
@@ -158,6 +159,9 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
+  Add:
+    - "-target"
+    - "riscv32-esp-els"
   Remove:
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
