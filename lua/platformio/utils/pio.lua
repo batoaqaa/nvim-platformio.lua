@@ -275,15 +275,15 @@ function M.handlePioinit(result)
   elseif result == 'PASS' then
     commandPassed = commandPassed + 1
     if commandPassed == 1 then
-      vim.schedule(function()
-        vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
-        local pio_manager = require('platformio.pio_setup').pio_manager
-        pio_manager.refresh(function()
-          local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-          boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-          boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        end)
+      -- vim.schedule(function()
+      vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
+      local pio_manager = require('platformio.pio_setup').pio_manager
+      pio_manager.refresh(function()
+        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       end)
+      -- end)
       -- elseif commandPassed == 2 then
     end
     local full_cmd = table.remove(M.queue, 1)
