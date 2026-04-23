@@ -10,14 +10,12 @@ local boilerplate_gen = boilerplate.boilerplate_gen
 -- =============================================================================
 -- UNIVERSAL TOOLCHAIN DETECTION
 -- =============================================================================
---- stylua: ignore
+-- stylua: ignore
 function M.get_sysroot_triplet(cc_compiler)
   local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
 
   -- Early exit if path is nil or not a directory
-  if not bin_path or vim.fn.isdirectory(bin_path) == 0 then
-    return nil
-  end
+  if not bin_path or vim.fn.isdirectory(bin_path) == 0 then return nil end
 
   -- Normalize backslashes to forward slashes for cross-platform consistency
   bin_path = bin_path:gsub('\\', '/')
@@ -28,16 +26,12 @@ function M.get_sysroot_triplet(cc_compiler)
   for _, name in ipairs(files) do
     -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
     local match = name:match('^(.*)%-g[c%+][c%+]')
-    if match then
-      triplet = misc.normalizePath(match)
-      break
+    if match then triplet = misc.normalizePath(match) break
     end
   end
 
   -- Return nil if no compiler was found in the bin directory
-  if not triplet then
-    return nil
-  end
+  if not triplet then return nil end
 
   -- toolchain_root is the parent of the 'bin' folder
   local toolchain_root = misc.normalizePath(vim.fn.fnamemodify(bin_path, ':h'))
@@ -62,16 +56,243 @@ function M.get_sysroot_triplet(cc_compiler)
   return nil
 end
 
+-- -- INFO: 1. The Core PIO Manager & Generic Extractor
+-- --- stylua: ignore
+-- M.pio_manager = (function()
+--   local cache = nil -- Stores the decoded platformio.ini JSON structure
+--   -- INFO:
+--   local function find_in_data(data, section_name, key_name)
+--     -- Safety check: Ensure data is a valid table from a successful JSON decode
+--     if type(data) ~= 'table' then
+--       return nil
+--     end
+--
+--     for _, section in ipairs(data) do
+--       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
+--       if section and type(section) == 'table' and #section >= 2 then
+--         local s_id = section[1] -- Section header string
+--         local s_body = section[2] -- Table of key-value pairs
+--
+--         if s_id == section_name and type(s_body) == 'table' then
+--           for _, kv in ipairs(s_body) do
+--             -- Each kv is a table: [1]=key, [2]=value
+--             if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
+--               local val = kv[2]
+--               -- Treat empty strings or empty tables as nil to trigger fallback logic
+--               if val == nil or val == '' or (type(val) == 'table' and #val == 0) then
+--                 return nil
+--               end
+--               return val
+--             end
+--           end
+--         end
+--       end
+--     end
+--     return nil
+--   end
+--
+--   -- INFO: ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
+--   local function refresh(callback)
+--     vim.schedule(function()
+--       vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO)
+--     end)
+--
+--     -- INFO: get project metadata
+--
+--     local function get_metadata(attempts, env)
+--       local active_env = env or (_G.metadata and _G.metadata.active_env)
+--       if not active_env then
+--         return
+--       end
+--
+--       vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(obj)
+--         vim.schedule(function()
+--           -- 1. Robust Error Check
+--           if obj.code ~= 0 then
+--             if attempts > 0 then
+--               return vim.defer_fn(function()
+--                 get_metadata(attempts - 1, env)
+--               end, 500)
+--             end
+--             local msg = obj.code == 127 and 'pio command not found' or (obj.stderr or 'Unknown error')
+--             return vim.notify('PIO Manager: ' .. msg, vim.log.levels.ERROR)
+--           end
+--
+--           -- 2. Decode and Guard
+--           local ok, raw_data = pcall(vim.json.decode, obj.stdout or '')
+--           local _, data = next(raw_data or {})
+--           if not ok or not data then
+--             return vim.notify('PIO: Failed to parse metadata JSON', vim.log.levels.WARN)
+--           end
+--
+--           -- 3. Optimized mapping helper
+--           local function map_list(list, prefix)
+--             local out = {}
+--             for _, v in ipairs(list or {}) do
+--               local path = misc.normalizePath(v) or v
+--               table.insert(out, string.format('%q', (prefix or '') .. path))
+--             end
+--             return out
+--           end
+--
+--           -- 4. Process Data & Reset State
+--           local meta = _G.metadata
+--           -- Reset keys
+--           meta.cc_path, meta.cxx_path, meta.gdb_path = '', '', ''
+--           meta.cc_flags, meta.cxx_flags, meta.defines = {}, {}, {}
+--           meta.includes_build, meta.includes_toolchain, meta.includes_cometaaptlib = {}, {}, {}
+--
+--           -- Assign paths
+--           meta.cc_path = misc.normetaalizePath(data.cc_path) or ''
+--           meta.cc_cometapiler = meta.cc_path
+--           meta.cxx_path = misc.normetaalizePath(data.cxx_path) or ''
+--           meta.gdb_path = misc.normetaalizePath(data.gdb_path) or ''
+--
+--           -- Assign flags/defines
+--           meta.cc_flags = map_list(data.cc_flags)
+--           meta.cxx_flags = map_list(data.cxx_flags)
+--           meta.defines = map_list(data.defines)
+--
+--           -- Assign Includes
+--           local inc = data.includes or {}
+--           meta.includes_build = map_list(inc.build, '-I')
+--           meta.includes_toolchain = map_list(inc.toolchain, '-isystemeta')
+--           meta.includes_cometaaptlib = map_list(inc.cometapatlib, '-isystemeta')
+--
+--           -- 5. Finalize
+--           pcall(meta.get_sysroot_triplet, meta.cc_cometapiler)
+--
+--           if callback then
+--             vim.notify('PIO: metadata successful', vim.log.levels.INFO)
+--             callback()
+--           end
+--         end)
+--       end)
+--     end
+--
+--     ------------------
+--
+--     local hometae = os.getenv('HOmetaE') or os.getenv('USERPROFILE') or ''
+--
+--     vim.systemeta({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
+--       vim.schedule(function()
+--         -- 1. Error Handling
+--         if obj.code ~= 0 then
+--           local metasg = obj.code == 127 and 'pio cometametaand not found' or (obj.stderr or 'Unknown')
+--           return vim.notify('PIO Config Error: ' .. metasg, vim.log.levels.ERROR)
+--         end
+--
+--         -- 2. State Reset
+--         local meta = _G.metadata
+--         for _, key in ipairs({ 'core_dir', 'packages_dir', 'platformetas_dir', 'active_env' }) do
+--           meta[key] = ''
+--         end
+--         meta.default_envs, meta.envs = {}, {}
+--
+--         -- 3. Decode JSON
+--         local ok, decoded = pcall(vim.json.decode, obj.stdout or '[]')
+--         if not ok or type(decoded) ~= 'table' then
+--           return vim.notify('PIO: Failed to decode config JSON', vim.log.levels.WARN)
+--         end
+--
+--         -- 4. Parse Sections
+--         for _, section in ipairs(decoded) do
+--           local name, data = section[1], section[2]
+--           if name == 'platformetaio' then
+--             for _, kv in ipairs(data or {}) do
+--               local k, v = kv[1], kv[2]
+--               if k and v and v ~= '' then
+--                 meta[k] = (type(v) == 'string') and misc.normetaalizePath(v) or v
+--               end
+--             end
+--           elseif type(name) == 'string' and name:match('^env:') then
+--             local env_name = name:match('^env:(.+)')
+--             meta.envs[env_name] = {}
+--             for _, kv in ipairs(data or {}) do
+--               meta.envs[env_name][kv[1]] = kv[2]
+--             end
+--           end
+--         end
+--
+--         -- 5. Determetaine Active Environmetaent
+--         meta.active_env = meta.default_envs[1] or next(meta.envs) or ''
+--
+--         -- 6. Fallback & Path Expansion Logic
+--         local dir_metaap = {
+--           { id = 'core_dir', env = 'PLATFORmetaIO_CORE_DIR', sub = '/.platformetaio' },
+--           { id = 'packages_dir', env = 'PLATFORmetaIO_PACKAGES_DIR', sub = '/.platformetaio/packages' },
+--           { id = 'platformetas_dir', env = 'PLATFORmetaIO_PLATFORmetaS_DIR', sub = '/.platformetaio/platformetas' },
+--         }
+--
+--         for _, dir in ipairs(dir_metaap) do
+--           local val = meta[dir.id]
+--           if not val or val == '' then
+--             val = os.getenv(dir.env) or (hometae .. dir.sub)
+--           end
+--
+--           if type(val) == 'string' then
+--             -- Expand internal variables
+--             val = val:gsub('%%${platformetaio.core_dir}', meta.core_dir or '')
+--             meta[dir.id] = misc.normetaalizePath(val)
+--           end
+--         end
+--
+--         -- 7. Finalize / Chain to metadata
+--         if meta.active_env ~= '' then
+--           vim.notify('PIO: Config fetched: ' .. meta.active_env, vim.log.levels.INFO)
+--           get_metadata(1, meta.active_env)
+--         else
+--           vim.notify('PIO: No [env:] found. Please add a board.', vim.log.levels.ERROR)
+--         end
+--       end)
+--     end)
+--   end
+--   -- INFO:
+--   return {
+--     refresh = refresh,
+--     -- INFO:
+--     get = function(s, k)
+--       if not cache then
+--         return nil
+--       end
+--       local res = find_in_data(cache, s, k)
+--
+--       -- FALLBACK: If default_envs is missing/empty, find the first hardware [env:xxx] block
+--       if k == 'default_envs' and not res then
+--         for _, section in ipairs(cache) do
+--           if type(section) == 'table' and type(section[1]) == 'string' then
+--             local name = section[1]
+--             if name:find('^env:') then
+--               local fallback = name:match('^env:(.+)')
+--               if fallback then
+--                 vim.schedule(function()
+--                   vim.notify('PIO: default_envs empty. Using: ' .. fallback, vim.log.levels.INFO)
+--                 end)
+--                 return fallback
+--               end
+--             end
+--           end
+--         end
+--         vim.schedule(function()
+--           vim.notify('PIO: Config Error. Check platformio.ini no env', vim.log.levels.WARN)
+--         end)
+--       elseif k == 'default_envs' and res and type(res) == 'table' then
+--         return res[1]
+--       else
+--         return res
+--       end
+--     end,
+--   }
+-- end)()
+
 -- INFO: 1. The Core PIO Manager & Generic Extractor
---- stylua: ignore
+-- stylua: ignore
 M.pio_manager = (function()
   local cache = nil -- Stores the decoded platformio.ini JSON structure
   -- INFO:
   local function find_in_data(data, section_name, key_name)
     -- Safety check: Ensure data is a valid table from a successful JSON decode
-    if type(data) ~= 'table' then
-      return nil
-    end
+    if type(data) ~= 'table' then return nil end
 
     for _, section in ipairs(data) do
       -- Each section must be a table with at least 2 elements: [1]=name, [2]=content
@@ -85,9 +306,7 @@ M.pio_manager = (function()
             if type(kv) == 'table' and #kv >= 2 and kv[1] == key_name then
               local val = kv[2]
               -- Treat empty strings or empty tables as nil to trigger fallback logic
-              if val == nil or val == '' or (type(val) == 'table' and #val == 0) then
-                return nil
-              end
+              if val == nil or val == '' or (type(val) == 'table' and #val == 0) then return nil end
               return val
             end
           end
@@ -99,9 +318,7 @@ M.pio_manager = (function()
 
   -- INFO: ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
   local function refresh(callback)
-    vim.schedule(function()
-      vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO)
-    end)
+    vim.schedule(function() vim.notify('PIO: Fetching Config ...', vim.log.levels.INFO) end)
 
     -- INFO: get project metadata
     local function get_metadata(attempts, env)
@@ -379,88 +596,7 @@ M.pio_manager = (function()
   }
 end)()
 
--- -- INFO:
--- function _G.get_pio_sdk_info()
---   local pio_info = { includes = {}, cc_compiler = '' }
---   if vim.fn.filereadable('platformio.ini') == 0 then
---     return nil
---   end
---
---   local handle = io.popen('pio run -t envdump')
---   if not handle then
---     return nil
---   end
---
---   local packages_dir, cc_name, toolchain_pkg = '', '', ''
---
---   for line in handle:lines() do
---     -- 1. Get the global packages directory
---     packages_dir = packages_dir ~= '' and packages_dir or line:match("'PROJECT_PACKAGES_DIR': '([^']+)'")
---
---     -- 2. Get the compiler executable name (e.g., riscv32-esp-elf-gcc)
---     cc_name = cc_name ~= '' and cc_name or line:match("'CC': '([^']+)'")
---
---     -- 3. Find the specific toolchain package name from the PACKAGES list
---     -- Matches lines like "- toolchain-riscv32-esp @ 14.2.0"
---     local pkg = line:match('%- (toolchain%-[^ ]+)')
---     if pkg then
---       toolchain_pkg = pkg
---     end
---
---     -- 4. Collect include paths
---     local path_list = line:match("'CPPPATH': %[(.+)%]")
---     if path_list then
---       for path in path_list:gmatch("'([^']+)'") do
---         table.insert(pio_info.includes, '-I' .. path)
---       end
---     end
---   end
---   handle:close()
---
---   -- Construct the absolute path: <packages_dir>/<toolchain_pkg>/bin/<cc_name>
---   if packages_dir and packages_dir ~= '' and toolchain_pkg and toolchain_pkg ~= '' and cc_name ~= '' then
---     local full_path = packages_dir .. '/' .. toolchain_pkg .. '/bin/' .. cc_name
---     if vim.fn.executable(full_path) == 1 then
---       pio_info.cc_compiler = full_path
---     end
---   end
---
---   local final = packages_dir .. '/' .. toolchain_pkg .. '/bin/*'
---   print('get_pio_sdk_info(): final=' .. final)
---   -- Normalize paths for the OS and ensure backslashes for Windows if needed
---   -- print(vim.inspect(_G.metadata))
---   return (misc.normalize_path(final))
---   -- return _G.metadata.query_driver
---   -- return pio_info
--- end
-
 -- INFO:
--- FILE WATCHER: Listens for changes in platformio.ini to trigger auto-sync
---- stylua: ignore
-----------------------------------------------------------------------------------------------
--- INFO:
--- DATABASE PATCHER: Generates compile_commands.json and injects the --sysroot flag
--- stylua: ignore
--- local function pio_generate_db()
---   vim.schedule(function() vim.notify('PIO: Generating Compile DB ...', vim.log.levels.INFO) end)
---   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
---     vim.schedule(function()
---       if obj.code ~= 0 then
---         if obj.code == 127 then
---           vim.notify("PIO Manager db: 'pio' command not found. Ensure PlatformIO Core is installed.", vim.log.levels.ERROR)
---         else
---           vim.notify('PIO Manager db: Generating Compile DB failed (' .. obj.stderr or 'Unknown Error' .. ')', vim.log.levels.WARN)
---         end
---         return
---       end
---       vim.notify('PIO: Generating Compile DB successful', vim.log.levels.INFO)
---     end)
---   end)
--- end
-
-local dir_path = vim.uv.cwd()
-local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
-
 -- 1. Helper: Unified hashing for change detection
 local function get_hash(path)
   if vim.fn.filereadable(path) == 0 then
@@ -501,6 +637,9 @@ function M.run_compiledb()
   end)
 end
 
+local dir_path = vim.uv.cwd()
+local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
+-- INFO:
 -- 4. Simple Watcher: Only triggers if the FILE CONTENT changed
 function M.start_watcher()
   if not dir_path or vim.fn.filereadable(ini_file) == 0 then

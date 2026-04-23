@@ -6,6 +6,8 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+------------------------------------------------------
+--INFO:
 -- iterrative loop 48ms
 -- stylua: ignore
 function M.jsonFormat(root_data)
@@ -73,8 +75,8 @@ function M.jsonFormat(root_data)
   return table.concat(buffer)
 end
 
-
 ------------------------------------------------------
+--INFO:
 -- regex 100ms
 -- stylua: ignore
 function M.pretty_json(data)
@@ -104,8 +106,9 @@ function M.pretty_json(data)
   end
   return table.concat(lines, '\n')
 end
-------------------------------------------------------
 
+------------------------------------------------------
+--INFO:
 -- recursion 50ms
 -- stylua: ignore
 -- local function pretty_print(data) -- 48ms
@@ -139,6 +142,7 @@ function M.pretty_print(data) -- 48ms
   return table.concat(buffer)
 end
 
+------------------------------------------------------
 --INFO:
 -- Example Usage
 -- local content = readFile("compile_commands.json")
@@ -171,6 +175,7 @@ function M.readFile(path)
   return content
 end
 
+------------------------------------------------------
 --INFO:
 -- Example
 -- local ok, err = writeFiile(path, json)
@@ -197,37 +202,7 @@ function M.writeFile(data, path)
   return true
 end
 
---INFO:
---- stylua: ignore
--- function M.normalizeFlags(input)
---   local path_map = {}
---
---   -- Force input into a table if it's just a single string
---   local patterns = type(input) == 'table' and input or { input }
---
---   for _, pattern in ipairs(patterns) do
---     -- Expand ~ or environment variables
---     local expanded = vim.fn.expand(pattern)
---
---     -- glob returns a table of matching files
---     local matches = vim.fn.glob(expanded, false, true)
---
---     for _, full_path in ipairs(matches) do
---       if vim.fn.isdirectory(full_path) == 0 then
---         -- Normalize slashes and extract filename key
---         local clean_path = full_path:gsub('\\', '/')
---         local name = clean_path:match('([^/]+)$'):gsub('%.exe$', '')
---
---         path_map[name] = clean_path
---       end
---     end
---   end
---
---   return path_map
--- end
-
 ------------------------------------------------------
-
 --[[ 
 Targets Windows paths, normalizes slashes, and fixes smashed PlatformIO paths.
 Cleans and repairs compiler flags in a command string.
@@ -283,15 +258,15 @@ function M.normalizeFlags(flags)
   return cleaned_cmd
 end
 
---INFO:
 ------------------------------------------------------
+--INFO:
 function M.normalizePath(path)
   -- return path:gsub('[\\]+', '/'):gsub('[//]+', '/')
   return path:gsub('[\\/]+', '/')
 end
 
---INFO:
 ------------------------------------------------------
+--INFO:
 function M.strsplit(inputstr, del)
   local t = {}
   if type(inputstr) == 'string' and inputstr and inputstr ~= '' then
@@ -302,11 +277,13 @@ function M.strsplit(inputstr, del)
   return t
 end
 
+------------------------------------------------------
 --INFO:
 function M.check_prefix(str, prefix)
   return str:sub(1, #prefix) == prefix
 end
 
+------------------------------------------------------
 --INFO:
 local function pathmul(n)
   return '..' .. string.rep('/..', n)
@@ -314,6 +291,7 @@ end
 
 local paths = { '.', '..', pathmul(1), pathmul(2), pathmul(3), pathmul(4), pathmul(5) }
 
+------------------------------------------------------
 --INFO:
 function M.file_exists(name)
   local f = io.open(name, 'r')
@@ -325,6 +303,7 @@ function M.file_exists(name)
   end
 end
 
+------------------------------------------------------
 --INFO:
 function M.set_platformioRootDir()
   if vim.g.platformioRootDir ~= nil then
@@ -339,12 +318,14 @@ function M.set_platformioRootDir()
   vim.notify('Could not find platformio.ini, run :Pioinit to create a new project', vim.log.levels.ERROR)
 end
 
+------------------------------------------------------
 --INFO:
 function M.cd_pioini()
   -- M.set_platformioRootDir()
   vim.cmd('cd ' .. vim.g.platformioRootDir)
 end
 
+------------------------------------------------------
 --INFO:
 function M.pio_install_check()
   local handle = (jit.os == 'Windows') and assert(io.popen('where.exe pio 2>./nul')) or assert(io.popen('which pio 2>/dev/null'))
@@ -358,6 +339,7 @@ function M.pio_install_check()
   return true
 end
 
+------------------------------------------------------
 --INFO:
 function M.async_shell_cmd(cmd, callback)
   local output = {}
@@ -382,6 +364,7 @@ function M.async_shell_cmd(cmd, callback)
   })
 end
 
+------------------------------------------------------
 --INFO:
 function M.shell_cmd_blocking(command)
   local handle = io.popen(command, 'r')
@@ -395,6 +378,7 @@ function M.shell_cmd_blocking(command)
   return result
 end
 
+------------------------------------------------------
 --INFO:
 function M.gitignore_lsp_configs(config_file)
   local gitignore_path = vim.fs.joinpath(vim.g.platformioRootDir, '.gitignore')
