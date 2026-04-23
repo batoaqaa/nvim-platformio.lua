@@ -205,6 +205,8 @@ boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
   Remove:
+    - "-target"
+    - "riscv32-esp-elf"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
