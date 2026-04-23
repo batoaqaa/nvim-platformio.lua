@@ -273,9 +273,9 @@ local plugins = {
           },
         },
         -- Optional: If you also want to hide it from the tree view entirely
-        filters = {
-          custom = { '^\\.cache$', '^\\.pio$' },
-        },
+        -- filters = {
+        --   custom = { '^\\.cache$', '^\\.pio$' },
+        -- },
       })
     end,
   },
