@@ -156,6 +156,7 @@ clangd
 --     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
 --     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
 --   Remove:
+--     - "-target=*"
 --     - "-target"
 --     - "riscv32-esp-elf"
 --     - "-fno-fat-lto-objects"
@@ -205,9 +206,6 @@ boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
   Remove:
-    - "-target=*"
-    - "-target"
-    - "riscv32-esp-elf"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
