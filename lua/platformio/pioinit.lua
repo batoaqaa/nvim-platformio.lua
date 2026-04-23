@@ -64,10 +64,10 @@ local function pick_framework(board_details)
             -- cb = function () vim.notify('Pioinit: Pass', vim.log.levels.INFO) end
             cb = pio.handlePioinitPass,
           },
-          {
-            cmd = 'pio run -t compiledb',
-            cb = pio.handleDb,
-          },
+          -- {
+          --   cmd = 'pio run -t compiledb',
+          --   cb = pio.handleDb,
+          -- },
           -- {
           --   cmd = 'echo _CMMNDS_":"DONE',
           --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
