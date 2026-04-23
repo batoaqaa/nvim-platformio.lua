@@ -75,7 +75,7 @@ boilerplate['.clangd_config'] = {
   content = [[
 {
   cmd = {
-    "c:/esp-clangd/bin/clangd.exe",
+    "clangd",
     "--all-scopes-completion",
     "--background-index",
     "--clang-tidy",
