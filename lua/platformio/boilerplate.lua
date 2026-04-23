@@ -75,7 +75,7 @@ boilerplate['.clangd_config'] = {
   content = [[
 {
   cmd = {
-    "clangd",
+    "c:/esp-clangd/bin/clangd.exe",
     "--all-scopes-completion",
     "--background-index",
     "--clang-tidy",
@@ -205,7 +205,9 @@ boilerplate['.clangd'] = {
   content = [[
 CompileFlags:
   Remove:
-    - "-target*"
+    - "-target=*"
+    - "-target"
+    - "riscv32-esp-elf"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
