@@ -205,6 +205,9 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
+  Add:
+    - "-xc++"
+    - "-std=gnu++17"
   Remove:
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
