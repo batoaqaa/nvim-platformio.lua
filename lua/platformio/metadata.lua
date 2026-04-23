@@ -73,7 +73,11 @@ _G.metadata = setmetatable({}, {
           if _pio_metadata.dbTrigger then
             vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
             local dbFix = pio.compile_commandsFix
-            dbFix()
+            local ok, _ = pcall(dbFix)
+            if not ok then
+              print('Env: dbTrigger')
+            end
+            -- dbFix()
             _pio_metadata.dbTrigger = false
           else
             local LspRestart = require('platformio.utils.lsp').lsp_restart
