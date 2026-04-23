@@ -5,7 +5,6 @@ local misc = vim.misc
 M.selected_framework = ''
 M.is_processing = false
 M.queue = {}
-local pio_buffer = '' -- Persistent stream buffer
 
 -- to fix require loop, this value is set in plugin/platformio
 
@@ -204,9 +203,15 @@ end
   -- _G.metadata.isBusy = false
   -- M.process_queue()
 
-------------------------------------------------------
--- INFO: ToggleTerminal commands sequencer
 
+
+
+
+
+
+local pio_buffer = '' -- Persistent stream buffer
+local callBack = nil
+local commandPassed = 0
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands stdout filter
 -- stylua: ignore
@@ -221,27 +226,15 @@ function M.stdoutcallback(_, _, data)
     for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
 
     for status in pio_buffer:gmatch('_CMMNDS_:(%a+)') do
-      if status then
-        -- if status == 'PASS' then
-        --   pio_buffer = data[#data]
-        --   vim.schedule(function() M.process_queue() end)
-        -- elseif status == 'FAIL' then
-        -- end
+      if callBack and status then
         if status == 'PASS' then
-          -- 4. Store the last element as the new partial buffer for the next call
+          -- Store the last element as the new partial buffer for the next call
           pio_buffer = data[#data]
-          local task = table.remove(M.queue, 1)
-          if task then vim.schedule(task) end
+          vim.schedule(function() callBack('PASS') end)
         elseif status == 'DONE' then
-          pio_buffer = ''
-          M.queue = {} -- Clear queue on any other status
-          local task = table.remove(M.queue, 1)
-          if task then vim.schedule(task) end
+          vim.schedule(function() callBack('DONE') end)
         elseif status == 'FAIL' then
-          pio_buffer = ''
-          M.queue = {} -- Clear queue on any other status (failure)
-          local task = table.remove(M.queue, 1)
-          if task then vim.schedule(task) end
+          vim.schedule(function() callBack('DONE') end)
         end
         break
       end
@@ -250,48 +243,157 @@ function M.stdoutcallback(_, _, data)
   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
 end
 
-------------------------------------------------------
--- INFO: ToggleTerminal commands Sequencer
--- Semicolon (;): Runs the next command regardless of whether the first one succeeded.
--- Success Operator (&&): Runs the second command only if the first succeeds.
--- Fail Operator (||): Runs if any of the previous commands fail
---- stylua: ignore
+-- stylua: ignore
 M.run_sequence = function(tasks)
-  -- Reset local state for new run
   M.queue = {}
-  pio_buffer = ''
-  local full_cmd = ''
+  callBack = tasks.cb -- 1. Save the callback in a local variable
+  local commands = tasks.cmnds
+
   local done = ' && echo _CMMNDS_":"DONE'
   local pass = ' && echo _CMMNDS_":"PASS'
   local fail = ' || echo _CMMNDS_":"FAIL'
   --
-  for _, task in ipairs(tasks) do
-    table.insert(M.queue, task.cb)
-    local part = string.format('%s %s', task.cmd, pass)
-    if full_cmd == '' then
-      full_cmd = part
-    else
-      full_cmd = full_cmd .. ' && ' .. part
-    end
+  for i, cmd in ipairs(commands) do
+    local full_cmd = ''
+    if i == #commands then full_cmd = cmd .. done .. fail
+    else full_cmd = cmd .. pass .. fail end
+    table.insert(M.queue, full_cmd)
   end
-  full_cmd = full_cmd .. done .. fail
-
-  table.insert(M.queue, function()
-    vim.notify('Pioinit: Done', vim.log.levels.INFO)
-    term.stdout_callback = nil
+  vim.schedule(function()
+    if callBack then callBack('INIT') end
   end)
-
-  table.insert(M.queue, function()
-    vim.notify('Pioinit: Failed', vim.log.levels.INFO)
-  end)
-
-  -- full_cmd = full_cmd .. ' || ' .. fail
-  _G.metadata.isBusy = true
-  -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
-  term.stdout_callback = M.stdoutcallback
-  term.ToggleTerminal(full_cmd, 'float')
 end
 
+-- Handle after pioinit execution
+function M.handlePioinit(result)
+  if result == 'INIT' then
+    commandPassed = 0
+    _G.metadata.isBusy = true
+    pio_buffer = ''
+    local full_cmd = table.remove(M.queue, 1)
+    term.stdout_callback = M.stdoutcallback
+    term.ToggleTerminal(full_cmd, 'float')
+  elseif result == 'PASS' then
+    commandPassed = commandPassed + 1
+    if commandPassed == 1 then
+      vim.schedule(function()
+        vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
+        local pio_manager = require('platformio.pio_setup').pio_manager
+        pio_manager.refresh(function()
+          local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+          boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+          boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        end)
+      end)
+      -- elseif commandPassed == 2 then
+    end
+    local full_cmd = table.remove(M.queue, 1)
+    term.ToggleTerminal(full_cmd, 'float')
+  elseif result == 'DONE' then
+    pio_buffer = ''
+    M.queue = {} -- Clear queue on any other status (failure)
+    term.stdout_callback = nil
+    vim.schedule(function()
+      vim.notify('compiledb: Pass', vim.log.levels.INFO)
+      vim.misc.gitignore_lsp_configs('compile_commands.json')
+      _G.metadata.dbTrigger = true
+    end)
+  elseif result == 'FAIL' then
+    pio_buffer = ''
+    M.queue = {} -- Clear queue on any other status (failure)
+    term.stdout_callback = nil
+  end
+end
+
+------------------------------------------------------
+-- INFO: ToggleTerminal commands sequencer
+
+-- local pio_buffer = '' -- Persistent stream buffer
+-- ------------------------------------------------------
+-- -- INFO: ToggleTerminal commands stdout filter
+-- -- stylua: ignore
+-- function M.stdoutcallback(_, _, data)
+--   if #M.queue == 0 then return end
+--
+--   -- 1. attach partial buffer from previous data last line to 1st line
+--   pio_buffer = pio_buffer .. data[1]
+--   -- 2. If the chunk has more than one element, we've encountered newlines
+--   if #data > 1 then
+--     -- 3. Process any "middle" lines which are guaranteed to be complete
+--     for i = 2, #data - 1 do pio_buffer = pio_buffer .. data[i] end
+--
+--     for status in pio_buffer:gmatch('_CMMNDS_:(%a+)') do
+--       if status then
+--         -- if status == 'PASS' then
+--         --   pio_buffer = data[#data]
+--         --   vim.schedule(function() M.process_queue() end)
+--         -- elseif status == 'FAIL' then
+--         -- end
+--         if status == 'PASS' then
+--           -- 4. Store the last element as the new partial buffer for the next call
+--           pio_buffer = data[#data]
+--           local task = table.remove(M.queue, 1)
+--           if task then vim.schedule(task) end
+--         elseif status == 'DONE' then
+--           pio_buffer = ''
+--           M.queue = {} -- Clear queue on any other status
+--           local task = table.remove(M.queue, 1)
+--           if task then vim.schedule(task) end
+--         elseif status == 'FAIL' then
+--           pio_buffer = ''
+--           M.queue = {} -- Clear queue on any other status (failure)
+--           local task = table.remove(M.queue, 1)
+--           if task then vim.schedule(task) end
+--         end
+--         break
+--       end
+--     end
+--   end
+--   if #pio_buffer > 10000 then pio_buffer = pio_buffer:sub(-5000) end
+-- end
+--
+-- ------------------------------------------------------
+-- -- INFO: ToggleTerminal commands Sequencer
+-- -- Semicolon (;): Runs the next command regardless of whether the first one succeeded.
+-- -- Success Operator (&&): Runs the second command only if the first succeeds.
+-- -- Fail Operator (||): Runs if any of the previous commands fail
+-- --- stylua: ignore
+-- M.run_sequence = function(tasks)
+--   -- Reset local state for new run
+--   M.queue = {}
+--   pio_buffer = ''
+--   local full_cmd = ''
+--   local done = ' && echo _CMMNDS_":"DONE'
+--   local pass = ' && echo _CMMNDS_":"PASS'
+--   local fail = ' || echo _CMMNDS_":"FAIL'
+--   --
+--   for _, task in ipairs(tasks) do
+--     table.insert(M.queue, task.cb)
+--     local part = string.format('%s %s', task.cmd, pass)
+--     if full_cmd == '' then
+--       full_cmd = part
+--     else
+--       full_cmd = full_cmd .. ' && ' .. part
+--     end
+--   end
+--   full_cmd = full_cmd .. done .. fail
+--
+--   table.insert(M.queue, function()
+--     vim.notify('Pioinit: Done', vim.log.levels.INFO)
+--     term.stdout_callback = nil
+--   end)
+--
+--   table.insert(M.queue, function()
+--     vim.notify('Pioinit: Failed', vim.log.levels.INFO)
+--   end)
+--
+--   -- full_cmd = full_cmd .. ' || ' .. fail
+--   _G.metadata.isBusy = true
+--   -- local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+--   term.stdout_callback = M.stdoutcallback
+--   term.ToggleTerminal(full_cmd, 'float')
+-- end
+--
 -- {
 --   cmd = 'echo _CMMNDS_":"DONE',
 --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
@@ -305,6 +407,7 @@ function M.handleDb()
   _G.metadata.dbTrigger = true
 end
 
+------------------------------------------------------
 ------------------------------------------------------
 -- Handle after pioinit execution
 function M.handlePioinitPass()

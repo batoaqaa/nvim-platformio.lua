@@ -43,41 +43,48 @@ local boardentry_maker = function(opts)
   end
 end
 
--- stylua: ignore
+--- stylua: ignore
 local function pick_framework(board_details)
   local opts = {}
-  pickers.new(opts, {
-    prompt_title = 'frameworks',
-    finder = finders.new_table({
-      results = board_details['frameworks'],
-    }),
-    attach_mappings = function(prompt_bufnr, _)
-      actions.select_default:replace(function()
-        actions.close(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
+  pickers
+    .new(opts, {
+      prompt_title = 'frameworks',
+      finder = finders.new_table({
+        results = board_details['frameworks'],
+      }),
+      attach_mappings = function(prompt_bufnr, _)
+        actions.select_default:replace(function()
+          actions.close(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
 
-        local pio = require('platformio.utils.pio')
-        pio.selected_framework = selection[1]
-        pio.run_sequence({
-          {
-            cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
-            -- cb = function () vim.notify('Pioinit: Pass', vim.log.levels.INFO) end
-            cb = pio.handlePioinitPass,
-          },
-          -- {
-          --   cmd = 'pio run -t compiledb',
-          --   cb = pio.handleDb,
-          -- },
-          -- {
-          --   cmd = 'echo _CMMNDS_":"DONE',
-          --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
-          -- },
-        })
-      end)
-      return true
-    end,
-    sorter = telescope_conf.generic_sorter(opts),
-  }):find()
+          local pio = require('platformio.utils.pio')
+          pio.selected_framework = selection[1]
+          pio.run_sequence({
+            cmnds = {
+              'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
+              'pio run -t compiledb',
+            },
+            cb = pio.handlePioinit,
+            -- {
+            --   cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
+            --   -- cb = function () vim.notify('Pioinit: Pass', vim.log.levels.INFO) end
+            --   cb = pio.handlePioinitPass,
+            -- },
+            -- {
+            --   cmd = 'pio run -t compiledb',
+            --   cb = pio.handleDb,
+            -- },
+            -- {
+            --   cmd = 'echo _CMMNDS_":"DONE',
+            --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
+            -- },
+          })
+        end)
+        return true
+      end,
+      sorter = telescope_conf.generic_sorter(opts),
+    })
+    :find()
 end
 
 -- stylua: ignore
