@@ -1,12 +1,12 @@
 local M = {}
+
+-- to fix require loop, this value is set in plugin/platformio
 local misc = vim.misc
 
 -- local sep = package.config:sub(1, 1) -- Dynamic OS separator (\ or /)
 M.selected_framework = ''
 M.is_processing = false
 M.queue = {}
-
--- to fix require loop, this value is set in plugin/platformio
 
 local term = require('platformio.utils.term')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
@@ -42,7 +42,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
     if entry.command then
       -- Extract compiler and everything after it
       local compiler, args = entry.command:match("^%s*(%S+)(.*)")
-
       if compiler then
         local is_absolute = compiler:sub(1, 1) == '/' or compiler:match('^%a:')
 
@@ -289,15 +288,15 @@ function M.handlePioinit(result)
     end
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
-  elseif result == 'DONE' then
+  elseif result == 'DONE' then -- compile_commands.json created
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
     term.stdout_callback = nil
-    vim.schedule(function()
-      vim.notify('compiledb: Pass', vim.log.levels.INFO)
-      vim.misc.gitignore_lsp_configs('compile_commands.json')
-      _G.metadata.dbTrigger = true
-    end)
+    -- vim.schedule(function()
+    vim.notify('compiledb: Pass', vim.log.levels.INFO)
+    vim.misc.gitignore_lsp_configs('compile_commands.json')
+    _G.metadata.dbTrigger = true
+    -- end)
   elseif result == 'FAIL' then
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
