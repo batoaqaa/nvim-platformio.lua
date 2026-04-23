@@ -145,16 +145,57 @@ clangd
     return string.format(self.template, _G.metadata.query_driver or '**')
   end,
 }
+-- CompileFlags:
+--   Add:
+--     - "-xc++"
+--     - "-std=c++17"
+--     - "-D__cplusplus=201703L"
+--     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
+--     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
+--     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include"
+--     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
+--     - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
+--   Remove:
+--     - "-target"
+--     - "riscv32-esp-elf"
+--     - "-fno-fat-lto-objects"
+--     - "-fno%%-fat%%-lto%%-objects"
+--     - "-fno%%-canonical%%-system%%-headers"
+--     - "-misc-definitions-in-headers"
+--     - "-fno-tree-switch-conversion"
+--     - "-mtext-section-literals"
+--     - "-mlong-calls"
+--     - "-mlongcalls"
+--     - "-fstrict-volatile-bitfields"
+--     - "-free*"
+--     - "-fipa-pta*"
+--     - "-march=*"
+--     - "-mabi=*"
+--     - "-mcpu=*"
+-- Diagnostics:
+--   Suppress:
+--     - "misc-definitions-in-headers"
+--     - "pp_including_mainfile_in_preamble"
+--     - "misc-unused-using-decls"
+--     - "unused-includes"
+--   ClangTidy:
+--     Remove:
+--       - "readability-*"
+--       - "cert-err58-cpp"
+--       - "llvmlibc-*"
+--       - "fuchsia-*"
+--       - "hicpp-avoid-c-arrays"
+--       - "cppcoreguidelines-*"
+--       - "llvm-*"
+--       - "google-*"
+--       - "bugprone-*"
+--       - "hicpp-vararg"
+--       - "modernize-*"
+-- Index:
+--   Background: Build
+--   External:
+--     File: .clangd_index
 
--- Add:
---   - "-xc++"
--- - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
--- - "--include-directory=C:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
---
--- -- Add:
---   - %q
---   - %q
--- - "riscv32-esp-elf"
 -- INFO: .clangd
 -- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
@@ -163,18 +204,7 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
-  Add:
-    - "-xc++"
-    - "-std=c++17"
-    - "-D__cplusplus=201703L"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed"
-    - "-isystemC:/Users/batoaqaa/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
   Remove:
-    - "-target"
-    - "riscv32-esp-elf"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
@@ -208,10 +238,6 @@ Diagnostics:
       - "bugprone-*"
       - "hicpp-vararg"
       - "modernize-*"
-Index:
-  Background: Build
-  External:
-    File: .clangd_index
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot

@@ -115,13 +115,14 @@ function _G.get_clangd_config()
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
-      q_driver =  _G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
+      q_driver =  '**' --_G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
     end
   end
 
   -- 3. Format your template string
   local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  local formatted_str = string.format(table_config, q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
+  -- local formatted_str = string.format(table_config, q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
+  local formatted_str = string.format(table_config, q_driver, '', vim.misc.normalizePath(new_root_dir))
 
   -- 4. Load the config table
   local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)
