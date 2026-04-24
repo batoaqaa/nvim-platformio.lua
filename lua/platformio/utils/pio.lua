@@ -265,6 +265,7 @@ function M.handlePioinit(result)
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
+    vim.notify('compiledb: Pass', vim.log.levels.INFO)
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
     term.stdout_callback = nil
