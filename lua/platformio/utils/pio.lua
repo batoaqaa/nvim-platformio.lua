@@ -259,7 +259,7 @@ function M.handlePioinit(result)
     commandPassed = commandPassed + 1
     if commandPassed == 1 then
       vim.schedule(function()
-        vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
+        vim.notify('Pioinit: commandPassed ..', vim.log.levels.INFO)
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
