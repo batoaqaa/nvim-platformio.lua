@@ -265,17 +265,19 @@ function M.handlePioinit(result)
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
-    vim.notify('compiledb: Pass', vim.log.levels.INFO)
-    pio_buffer = ''
-    M.queue = {} -- Clear queue on any other status (failure)
-    term.stdout_callback = nil
-
-    local pio_refresh = require('platformio.pio_setup').pio_refresh
-    -- vim.defer_fn(function()
-    pio_refresh(function()
+    vim.schedule(function()
       vim.notify('compiledb: Pass', vim.log.levels.INFO)
-      vim.misc.gitignore_lsp_configs('compile_commands.json')
-      _G.metadata.dbTrigger = true
+      pio_buffer = ''
+      M.queue = {} -- Clear queue on any other status (failure)
+      term.stdout_callback = nil
+
+      local pio_refresh = require('platformio.pio_setup').pio_refresh
+      -- vim.defer_fn(function()
+      pio_refresh(function()
+        vim.notify('compiledb: Pass', vim.log.levels.INFO)
+        vim.misc.gitignore_lsp_configs('compile_commands.json')
+        _G.metadata.dbTrigger = true
+      end)
     end)
   elseif result == 'FAIL' then
     pio_buffer = ''
