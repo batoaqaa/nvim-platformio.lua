@@ -138,19 +138,19 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 3: Auto-Initialize (If files are missing)
     ---------------------------------------------------------
-    if not current_checksum then
-      vim.notify('PIO: Initializing project metadata...', vim.log.levels.WARN)
-      vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
-        vim.schedule(function()
-          if obj.code == 0 then
-            get_metadata(attempts, active_env) -- Recursive call after files created
-          else
-            vim.notify('PIO: Initialization failed. Build project manually.', vim.log.levels.ERROR)
-          end
-        end)
-      end)
-      return
-    end
+    -- if not current_checksum then
+    --   vim.notify('PIO: Initializing project metadata...', vim.log.levels.WARN)
+    --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
+    --     vim.schedule(function()
+    --       if obj.code == 0 then
+    --         get_metadata(attempts, active_env) -- Recursive call after files created
+    --       else
+    --         vim.notify('PIO: Initialization failed. Build project manually.', vim.log.levels.ERROR)
+    --       end
+    --     end)
+    --   end)
+    --   return
+    -- end
 
     ---------------------------------------------------------
     -- STEP 4: Standard CLI Fallback (The Slow Path)
