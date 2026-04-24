@@ -280,11 +280,10 @@ function M.run_compiledb()
     vim.schedule(function()
       -- _G.metadata.isBusy = false
       if obj.code == 0 then
-        local dbFix = require('platformio.utils.pio').compile_commandsFix
-        dbFix()
-        vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-
         M.pio_refresh(function()
+          local dbFix = require('platformio.utils.pio').compile_commandsFix
+          dbFix()
+          vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- pio_generate_db()
           -- M.run_compiledb()
           -- lsp_restart('clangd')
