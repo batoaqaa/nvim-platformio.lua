@@ -57,7 +57,7 @@ function M.get_sysroot_triplet(cc_compiler)
 end
 
 -- stylua: ignore
-function M.pio_refreh(callback)
+function M.pio_refresh(callback)
   vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
 
   -- stylua: ignore
