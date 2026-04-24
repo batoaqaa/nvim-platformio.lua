@@ -60,8 +60,8 @@ end
 -- INFO: ASYNC REFRESH: Fetches the latest config from PlatformIO CLI
 function M.pio_refresh(callback)
   vim.notify('PIO: Fetching PIO config ...', vim.log.levels.INFO)
-  -- stylua: ignore
 
+  -- stylua: ignore
   local function get_metadata(attempts, env)
     local meta = _G.metadata
     local active_env = env or meta.active_env
@@ -100,7 +100,8 @@ function M.pio_refresh(callback)
 
     -- 1. Try Fast Path: Read idedata.json directly
     local idedata_path = string.format("%s/.pio/build/%s/idedata.json", vim.uv.cwd(), active_env)
-    local content = vim.misc.readFile(idedata_path) -- Assuming this is your custom helper
+    print(idedata_path)
+    local content = vim.misc.readFile(idedata_path)
 
     if content then
       local ok, decoded = pcall(vim.json.decode, content)
