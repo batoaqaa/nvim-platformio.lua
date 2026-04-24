@@ -76,7 +76,7 @@ _G.metadata = setmetatable({}, {
             local dbFix = pio.compile_commandsFix
             local ok, _ = pcall(dbFix)
             if not ok then
-              print('Env: dbTrigger')
+              print('Env: dbTrigger, fail to call dbFix')
             end
             -- dbFix()
             _pio_metadata.dbTrigger = false

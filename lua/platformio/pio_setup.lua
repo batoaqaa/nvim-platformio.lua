@@ -57,8 +57,8 @@ function M.get_sysroot_triplet(cc_compiler)
 end
 
 -- stylua: ignore
-function M.pio_refresh(callback)
-  vim.notify('PIO: Fetching PIO config ...', vim.log.levels.INFO)
+function M.pio_refreh(callback)
+  vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
 
   -- stylua: ignore
   -- INFO:-------------------------------------------------
@@ -155,7 +155,7 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 4: Standard CLI Fallback (The Slow Path)
     ---------------------------------------------------------
-    vim.notify('PIO: Fetching fresh metadata...', vim.log.levels.INFO)
+    vim.notify('PIO: Metadata sync ...', vim.log.levels.INFO)
     vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(obj)
       vim.schedule(function()
         if obj.code ~= 0 then

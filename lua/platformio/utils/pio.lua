@@ -58,7 +58,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
               full_compiler_path = '"' .. full_compiler_path .. '"'
             end
             if prntFlags then
-              print(string.format('ful_compiler_path = %s', full_compiler_path))
               -- print(string.format('ful_compiler_path = %s flags=%s', full_compiler_path, args))
               prntFlags = false
             end
@@ -80,15 +79,15 @@ function M.compile_commandsFix() --M.dbPathsFix()
       return
     end
 
-    local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
-    if not wk then print(err) end
+    -- local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
+    -- if not wk then print(err) end
 
-    -- local f = io.open(filename, 'w')
-    -- if f then
-    --   f:write(formatted)
-    --   f:close()
-    --   print('Fixed and formatted ' .. filename)
-    -- end
+    local f = io.open(filename, 'w')
+    if f then
+      f:write(formatted)
+      f:close()
+      print('Fixed and formatted ' .. filename)
+    end
 
     local end_time = vim.loop.hrtime()
     local duration = (end_time - start_time) / 1e6
@@ -267,13 +266,12 @@ function M.handlePioinit(result)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
     vim.schedule(function()
-      vim.notify('compiledb: Done', vim.log.levels.INFO)
+      vim.notify('compiledb: Done ..', vim.log.levels.INFO)
       M.queue = {}
       term.stdout_callback = nil
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       -- vim.defer_fn(function()
       pio_refresh(function()
-        vim.notify('metadata: refreshed', vim.log.levels.INFO)
         vim.misc.gitignore_lsp_configs('compile_commands.json')
         _G.metadata.dbTrigger = true
       end)
