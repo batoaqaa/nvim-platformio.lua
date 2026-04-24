@@ -249,7 +249,6 @@ function M.handlePioinit(result)
   if result == 'INIT' then
     commandPassed = 0
     _G.metadata.isBusy = true
-    -- pio_buffer = ''
     local full_cmd = table.remove(M.queue, 1)
     term.stdout_callback = M.stdoutcallback
     term.ToggleTerminal(full_cmd, 'float')
@@ -257,7 +256,7 @@ function M.handlePioinit(result)
     commandPassed = commandPassed + 1
     if commandPassed == 1 then
       vim.schedule(function()
-        vim.notify('Pioinit: commandPassed ..', vim.log.levels.INFO)
+        vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
@@ -269,23 +268,21 @@ function M.handlePioinit(result)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
     vim.schedule(function()
-      vim.notify('compiledb: Pass', vim.log.levels.INFO)
-      -- pio_buffer = ''
-      M.queue = {} -- Clear queue on any other status (failure)
+      vim.notify('compiledb: Done', vim.log.levels.INFO)
+      M.queue = {}
       term.stdout_callback = nil
-
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       -- vim.defer_fn(function()
       pio_refresh(function()
-        vim.notify('compiledb: Pass', vim.log.levels.INFO)
+        vim.notify('metadata: refreshed', vim.log.levels.INFO)
         vim.misc.gitignore_lsp_configs('compile_commands.json')
         _G.metadata.dbTrigger = true
       end)
     end)
   elseif result == 'FAIL' then
-    -- pio_buffer = ''
-    M.queue = {} -- Clear queue on any other status (failure)
+    M.queue = {}
     term.stdout_callback = nil
+    _G.metadata.isBusy = false
   end
 end
 
