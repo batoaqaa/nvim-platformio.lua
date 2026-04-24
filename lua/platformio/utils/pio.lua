@@ -208,7 +208,10 @@ function M.stdoutcallback(_, _, data)
         -- vim.schedule(function() callBack('DONE') end)
         -- elseif status == 'FAIL' then
         -- callBack('PASS')
-        callBack(status)
+        -- callBack(status)
+        vim.schedule(function()
+          callBack(status)
+        end)
         -- vim.schedule(function() callBack('DONE') end)
         -- end
         break
