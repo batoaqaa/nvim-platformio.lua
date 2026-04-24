@@ -29,6 +29,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
     path_map[name] = full_path
   end
 
+  -- 2. Update Entries
   local modified = false
   local prntFlags = true
   for _, entry in ipairs(data) do
@@ -69,38 +70,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
       end
     end
   end
-  -- 2. Update Entries
-  -- local modified = false
-  -- for _, entry in ipairs(data) do
-  --   if entry.directory then entry.directory = misc.normalizePath(entry.directory) end
-  --   if entry.file then entry.file = misc.normalizePath(entry.file) end
-  --   if entry.arguments then entry.arguments = misc.normalizeFlags(entry.arguments) end
-  --   --
-  --   if entry.command then
-  --     -- local first_token = cmd:match('^%S+') -- Get first word before space
-  --     local compiler, args = entry.command:match("^%s*(%S+)(.*)")
-  --
-  --     -- Check if it's already a short name (not an absolute path)
-  --     if compiler and not (compiler:sub(1, 1) == '/' or compiler:match('^%a:')) then
-  --       -- get the file name without .exe
-  --       -- local short_name = compiler:gsub('%.exe$', '')
-  --       local short_name = compiler:match('([^/\\\\]+)$'):gsub('%.exe$', '')
-  --       if path_map[short_name] then -- if there is full path for this file
-  --         -- Swap compiler with full path safely
-  --         local full_compiler_path = path_map[short_name] --misc.normalizePath(path_map[short_name])
-  --         --Quore the path if it contains spaces
-  --         if full_compiler_path.find(" ") then
-  --           full_compiler_path = '"' .. full_compiler_path .. '"'
-  --         end
-  --         print(string.format('compiler = %s', compiler))
-  --         -- local argsFormated = misc.normalizeFlags(args)
-  --         -- entry.command = full_compiler_path .. argsFormated
-  --         entry.command = full_compiler_path .. args
-  --         modified = true
-  --       end
-  --     end
-  --   end
-  -- end
   -- -- 3. Save with Formatting
   if modified then
     local start_time = vim.loop.hrtime()
@@ -288,11 +257,13 @@ function M.handlePioinit(result)
       vim.schedule(function()
         vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
         local pio_refresh = require('platformio.pio_setup').pio_refresh
-        pio_refresh(function()
-          local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-          boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-          boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        end)
+        vim.defer_fn(function()
+          pio_refresh(function()
+            local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+            boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
+            boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+          end)
+        end, 500)
       end)
       -- elseif commandPassed == 2 then
     end
@@ -302,11 +273,11 @@ function M.handlePioinit(result)
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
     term.stdout_callback = nil
-    vim.schedule(function()
+    vim.defer_fn(function()
       vim.notify('compiledb: Pass', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
       _G.metadata.dbTrigger = true
-    end)
+    end, 500)
   elseif result == 'FAIL' then
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
