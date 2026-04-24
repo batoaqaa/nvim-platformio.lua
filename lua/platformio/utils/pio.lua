@@ -17,6 +17,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   local content = vim.fn.readfile(filename)
   if #content == 0 then return end
 
+  local start_time = vim.loop.hrtime()
   local ok, data = pcall(vim.json.decode, table.concat(content, '\n'))
   if not ok or type(data) ~= 'table' then return end
 
@@ -61,8 +62,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
               -- print(string.format('ful_compiler_path = %s flags=%s', full_compiler_path, args))
               prntFlags = false
             end
-            -- local argsFormated = misc.normalizeFlags(args)
-            -- entry.command = full_compiler_path .. argsFormated
             entry.command = full_compiler_path .. args
             modified = true
           end
@@ -72,7 +71,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
   end
   -- -- 3. Save with Formatting
   if modified then
-    local start_time = vim.loop.hrtime()
+    -- local start_time = vim.loop.hrtime()
 
     local jok, formatted = pcall(vim.misc.jsonFormat, data)
     -- local jok, formatted = pcall(M.pretty_print, data)
@@ -81,20 +80,22 @@ function M.compile_commandsFix() --M.dbPathsFix()
       return
     end
 
-    local f = io.open(filename, 'w')
-    if f then
-      f:write(formatted)
-      f:close()
-      print('Fixed and formatted ' .. filename)
-    end
+    local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
+    if not wk then print(err) end
+
+    -- local f = io.open(filename, 'w')
+    -- if f then
+    --   f:write(formatted)
+    --   f:close()
+    --   print('Fixed and formatted ' .. filename)
+    -- end
 
     local end_time = vim.loop.hrtime()
     local duration = (end_time - start_time) / 1e6
-    print(string.format('Saved %s in %.2fms', filename, duration))
-    vim.notify('compiledb: paths fixed', vim.log.levels.INFO)
+    vim.notify(string.format('compiledb: paths fixed in %.2fms', duration), vim.log.levels.INFO)
     lsp_restart('clangd')
-    _G.metadata.isBusy = false
   end
+  _G.metadata.isBusy = false
 end
 
 

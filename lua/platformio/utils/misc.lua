@@ -187,27 +187,44 @@ end
 -- local ok, err = writeFiile(path, json)
 -- if ok then print("Write complete!") end
 -- stylua: ignore
-function M.writeFile(data, path)
+function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
+  opts = opts or {}
+  -- opts.overwrite: boolean (default true)
+  -- opts.mkdir: boolean (default true)
 
-  -- 1. Open file for writing
-  -- 'w' = open for writing (creates if doesn't exist, truncates if it does)
-  -- 438 is octal 0666 (standard read/write permissions)
-  local fd, err = uv.fs_open(path, 'w', 438)
-  if not fd or err then return nil, 'writeFile: Open error: ' .. err end
+  -- 1. Check if file exists and handle overwrite flag
+  local stat = uv.fs_stat(path)
+  if stat and opts.overwrite == false then
+    return nil, 'writeFile: File already exists and overwrite is disabled'
+  end
 
-  -- 2. Write the data
-  -- fd, data, offset (0 to start at beginning)
+  -- 2. Ensure folder exists (mkdir -p logic)
+  if opts.mkdir ~= false then
+    local parent = vim.fn.fnamemodify(path, ':h')
+    if uv.fs_stat(parent) == nil then
+      -- 448 is octal 0700 (user read/write/execute)
+      -- Using vim.fn.mkdir is easier for recursive creation
+      vim.fn.mkdir(parent, 'p')
+    end
+  end
+
+  -- 3. Open file for writing
+  -- 'w' truncates existing, 'wx' fails if exists (extra safety)
+  local flags = opts.overwrite == false and 'wx' or 'w'
+  local fd, err = uv.fs_open(path, flags, 438)
+  if not fd then return nil, 'writeFile: Open error: ' .. (err or 'unknown') end
+
+  -- 4. Write data
   local _, write_err = uv.fs_write(fd, data, 0)
 
-  -- 3. ALWAYS close the file descriptor
+  -- 5. ALWAYS close
   uv.fs_close(fd)
 
   if write_err then return nil, 'writeFile: Write error: ' .. write_err end
 
   return true
 end
-
 ------------------------------------------------------
 --[[ 
 Targets Windows paths, normalizes slashes, and fixes smashed PlatformIO paths.
