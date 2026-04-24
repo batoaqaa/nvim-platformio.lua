@@ -79,15 +79,15 @@ function M.compile_commandsFix() --M.dbPathsFix()
       return
     end
 
-    -- local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
-    -- if not wk then print(err) end
+    local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
+    if not wk then print(err) end
 
-    local f = io.open(filename, 'w')
-    if f then
-      f:write(formatted)
-      f:close()
-      print('Fixed and formatted ' .. filename)
-    end
+    -- local f = io.open(filename, 'w')
+    -- if f then
+    --   f:write(formatted)
+    --   f:close()
+    --   print('Fixed and formatted ' .. filename)
+    -- end
 
     local end_time = vim.loop.hrtime()
     local duration = (end_time - start_time) / 1e6
