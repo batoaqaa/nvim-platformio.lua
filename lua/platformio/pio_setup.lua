@@ -99,7 +99,8 @@ function M.pio_refresh(callback)
     end
 
     -- 1. Try Fast Path: Read idedata.json directly
-    local idedata_path = string.format("%s/.pio/build/%s/idedata.json", vim.uv.cwd(), active_env)
+    local idedata_path = vim.fs.joinpath(vim.uv.cwd(), '.pio/build', active_env, 'idedata.json')
+    -- local idedata_path = string.format("%s/.pio/build/%s/idedata.json", vim.uv.cwd(), active_env)
     print(idedata_path)
     local content = vim.misc.readFile(idedata_path)
 
