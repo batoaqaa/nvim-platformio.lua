@@ -244,6 +244,7 @@ end
 local commandPassed = 0
 -- Handle after pioinit execution
 function M.handlePioinit(result)
+  vim.notify(result, vim.log.levels.INFO)
   if result == 'INIT' then
     commandPassed = 0
     _G.metadata.isBusy = true
