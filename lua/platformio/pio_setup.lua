@@ -283,6 +283,12 @@ function M.run_compiledb()
         local dbFix = require('platformio.utils.pio').compile_commandsFix
         dbFix()
         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+
+        M.pio_refresh(function()
+          -- pio_generate_db()
+          -- M.run_compiledb()
+          -- lsp_restart('clangd')
+        end)
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_refresh(function()
         -- boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
@@ -322,12 +328,7 @@ function M.start_watcher()
         local new_hash = get_hash(ini_file)
         if new_hash and new_hash ~= current_ini_hash then
           current_ini_hash = new_hash
-          M.pio_refresh(function()
-            -- pio_generate_db()
-            -- M.run_compiledb()
-            M.run_compiledb() -- Smart: Auto-update DB if config changes
-            -- lsp_restart('clangd')
-          end)
+          M.run_compiledb() -- Smart: Auto-update DB if config changes
         end
       end)
     )
@@ -408,15 +409,15 @@ function M.init()
 
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-      M.pio_refresh(function()
-        -- vim.schedule(function()
-        -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-        -- pio_generate_db()
-        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        M.run_compiledb() -- Smart: Auto-update DB if config changes
-        -- lsp_restart('clangd')
-        -- end)
-      end)
+      M.run_compiledb() -- Smart: Auto-update DB if config changes
+      -- M.pio_refresh(function()
+      --   -- vim.schedule(function()
+      --   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
+      --   -- pio_generate_db()
+      --   -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+      --   -- lsp_restart('clangd')
+      --   -- end)
+      -- end)
     end
   end
 end

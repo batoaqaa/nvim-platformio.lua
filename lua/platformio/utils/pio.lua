@@ -74,8 +74,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
   end
   -- -- 3. Save with Formatting
   if modified then
-    -- local start_time = vim.loop.hrtime()
-
     local jok, formatted = pcall(vim.misc.jsonFormat, data)
     -- local jok, formatted = pcall(M.pretty_print, data)
     if not jok then
@@ -86,13 +84,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
     local wk, err = vim.misc.writeFile(filename, formatted, { overwrite = true, mkdir = true })
     if not wk then print(err) end
 
-    -- local f = io.open(filename, 'w')
-    -- if f then
-    --   f:write(formatted)
-    --   f:close()
-    --   print('Fixed and formatted ' .. filename)
-    -- end
-
     local end_time = vim.loop.hrtime()
     local duration = (end_time - start_time) / 1e6
     vim.notify(string.format('compiledb: paths fixed in %.2fms', duration), vim.log.levels.INFO)
@@ -101,129 +92,38 @@ function M.compile_commandsFix() --M.dbPathsFix()
   _G.metadata.isBusy = false
 end
 
-
--- stylua: ignore
--- function M.compile_commandsFix()
---   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
---   if vim.fn.filereadable(filename) == 0 then return end
---
---   -- 1. Read and Decode (Atomic read)
---   local content = table.concat(vim.fn.readfile(filename), "\n")
---   local ok, data = pcall(vim.json.decode, content)
---   if not ok or type(data) ~= 'table' then return end
---
---   -- 2. Build Path Map (Dynamic OS Separator)
---   local sep = package.config:sub(1,1)
---   local path_map = {}
---   local toolchain = (_G.metadata and _G.metadata.toolchain_root or "")
---
---   if toolchain ~= "" then
---     local bin_glob = vim.fs.joinpath(toolchain, "bin", "*")
---     for _, full_path in ipairs(vim.fn.glob(bin_glob, false, true)) do
---       -- Correct regex for both / and \
---       local name = full_path:match("([^" .. sep .. "/]+)$"):gsub("%.exe$", "")
---       path_map[name] = full_path
---     end
---   end
---
---   -- 3. Update Entries
---   local modified = false
---   for _, entry in ipairs(data) do
---     local cmd = entry.command or ""
---     local first_token = cmd:match("^%S+")
---
---     if first_token then
---       -- Check if it's already absolute (starts with / or C:)
---       local is_abs = first_token:sub(1,1) == '/' or first_token:match("^%a:")
---       if not is_abs then
---         local name = first_token:gsub("%.exe$", "")
---         if path_map[name] then
---           entry.command = path_map[name] .. cmd:sub(#first_token + 1)
---           modified = true
---         end
---       end
---     end
---   end
---
---   if modified then
---     -- 1. Encode with 2-space indentation (This creates \n characters in the string)
---     local ok, json_str = pcall(vim.json.encode, data, { indent = "  " })
---
---     if ok and json_str then
---       -- 2. FORCE SPLIT: Turn the one long string into a List of lines
---       -- The { plain = true } ensures we split on the literal \n
---       local lines = vim.split(json_str, "\n", { plain = true })
---
---       -- 3. Use writefile:
---       -- Linux: joins table with \n
---       -- Windows: joins table with \r\n (Fixing your single-line issue!)
---       local status = vim.fn.writefile(lines, filename, 's')
---
---       if status == 0 then
---         vim.cmd("checktime " .. vim.fn.fnameescape(filename))
---         vim.notify("PIO: Fixed paths and line endings", 2)
---       end
---     end
---   end
---   lsp_restart('clangd')
---   _G.metadata.isBusy = false
---   -- M.process_queue()
--- end
-
-  -- lsp_restart('clangd')
-  -- _G.metadata.isBusy = false
-  -- M.process_queue()
-
-
-
-
-
-
-
 local callBack = nil
+local pio_buffer = '' -- Persistent stream buffer
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands stdout filter
---- stylua: ignore
+-- stylua: ignore
 function M.stdoutcallback(_, _, data)
-  local pio_buffer = '' -- Persistent stream buffer
+  if not data then return end
 
-  -- 1. attach partial buffer from previous data last line to 1st line
-  pio_buffer = pio_buffer .. data[1]
-  -- 2. If the chunk has more than one element, we've encountered newlines
+  -- 1. Combine the last partial line with the new first line
+  local lines_to_process = pio_buffer .. data[1]
+
+  -- 2. If there are newlines, we have complete lines to check
   if #data > 1 then
-    -- 3. Process any "middle" lines which are guaranteed to be complete
-    for i = 2, #data do
-      pio_buffer = pio_buffer .. data[i]
-    end
+    -- Join all complete parts (everything except the very last partial line)
+    for i = 2, #data - 1 do lines_to_process = lines_to_process .. data[i] end
 
-    for status in pio_buffer:gmatch('_CMMNDS_:(%a+)') do
-      if callBack and status then
-        pio_buffer = data[#data]
-        -- if status == 'PASS' then
-        --   -- Store the last element as the new partial buffer for the next call
-        -- end
-        -- vim.schedule(function() callBack('PASS') end)
-        --   callBack('PASS')
-        -- elseif status == 'DONE' then
-        -- callBack('PASS')
-        -- vim.schedule(function() callBack('DONE') end)
-        -- elseif status == 'FAIL' then
-        -- callBack('PASS')
-        -- callBack(status)
-        vim.schedule(function()
-          callBack(status)
-        end)
-        -- vim.schedule(function() callBack('DONE') end)
-        -- end
-        break
-      end
-    end
+    -- 3. Search for the status in the complete chunk
+    local status = lines_to_process:match('_CMMNDS_:(%a+)')
+    if status and callBack then vim.schedule(function() callBack(status) end) end
+    -- save the trailing part for the next chunk
+    pio_buffer = data[#data]
+  else
+    -- Only one element in data means no newline yet; just update the partial buffer
+    pio_buffer = lines_to_process
   end
-  -- if #pio_buffer > 10000 then
-  --   pio_buffer = pio_buffer:sub(-5000)
-  -- end
+
+  -- 4. Safety Trim (Prevents memory leaks if no newline ever comes)
+  if #pio_buffer > 5000 then pio_buffer = pio_buffer:sub(-2500) end
 end
 
+------------------------------------------------------
+-- INFO: commands sequencer
 -- stylua: ignore
 M.run_sequence = function(tasks)
   M.queue = {}
@@ -240,15 +140,14 @@ M.run_sequence = function(tasks)
     else full_cmd = cmd .. pass .. fail end
     table.insert(M.queue, full_cmd)
   end
-  vim.schedule(function()
-    if callBack then callBack('INIT') end
-  end)
+  vim.schedule(function() if callBack then callBack('INIT') end end)
 end
 
-local commandPassed = 0
+------------------------------------------------------
 -- Handle after pioinit execution
+local commandPassed = 0
 function M.handlePioinit(result)
-  if result == 'INIT' then
+  if result == 'INIT' then -- initialize
     commandPassed = 0
     _G.metadata.isBusy = true
     local full_cmd = table.remove(M.queue, 1)
@@ -263,18 +162,16 @@ function M.handlePioinit(result)
         boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       end)
-      -- elseif commandPassed == 2 then
+      -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
     end
-    -- pio_buffer = ''
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
-  elseif result == 'DONE' then -- compile_commands.json created
+  elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
       vim.notify('compiledb: Done ..', vim.log.levels.INFO)
       M.queue = {}
       term.stdout_callback = nil
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      -- vim.defer_fn(function()
       pio_refresh(function()
         vim.misc.gitignore_lsp_configs('compile_commands.json')
         _G.metadata.dbTrigger = true
@@ -288,30 +185,22 @@ function M.handlePioinit(result)
 end
 
 ------------------------------------------------------
--- Handle after 'pio run -t compiledb' execution
-function M.handleDb()
-  vim.notify('compiledb: Pass', vim.log.levels.INFO)
-  misc.gitignore_lsp_configs('compile_commands.json')
-  -- M.compile_commandsFix()
-  _G.metadata.dbTrigger = true
-end
-
-------------------------------------------------------
-------------------------------------------------------
--- Handle after pioinit execution
-function M.handlePioinitPass()
-  vim.notify('Pioinit: Pass', vim.log.levels.INFO)
-  local pio_refresh = require('platformio.pio_setup').pio_refresh
-  pio_refresh(function()
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-    boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
-    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-  end)
-end
-------------------------------------------------------
 -- Handle after piolib execution
-function M.handlePiolib()
-  vim.notify('Piolib: Success', vim.log.levels.INFO)
+function M.handlePiolib(result)
+  if result == 'INIT' then -- initialize
+    commandPassed = 0
+    _G.metadata.isBusy = true
+    local full_cmd = table.remove(M.queue, 1)
+    term.stdout_callback = M.stdoutcallback
+    term.ToggleTerminal(full_cmd, 'float')
+  -- elseif result == 'PASS' then
+  elseif result == 'DONE' then -- result of the only and the last command
+    vim.notify('Piolib: Success', vim.log.levels.INFO)
+  elseif result == 'FAIL' then
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
+  end
 end
 
 return M

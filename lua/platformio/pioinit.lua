@@ -65,19 +65,6 @@ local function pick_framework(board_details)
               'pio run -t compiledb',
             },
             cb = pio.handlePioinit,
-            -- {
-            --   cmd = 'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
-            --   -- cb = function () vim.notify('Pioinit: Pass', vim.log.levels.INFO) end
-            --   cb = pio.handlePioinitPass,
-            -- },
-            -- {
-            --   cmd = 'pio run -t compiledb',
-            --   cb = pio.handleDb,
-            -- },
-            -- {
-            --   cmd = 'echo _CMMNDS_":"DONE',
-            --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
-            -- },
           })
         end)
         return true

@@ -63,17 +63,9 @@ local function pick_library(json_data)
         local pio = require('platformio.utils.pio')
         pio.run_sequence({
           {
-            cmd = 'pio pkg install --library "' .. pkg_name .. '"',
+            cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
             cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
           },
-          -- {
-          --   cmd = 'pio run -t compiledb',
-          --   cb = pio.handleDb,
-          -- },
-          -- {
-          --   cmd = 'echo _CMMNDS_":"LAST',
-          --   cb = function () vim.notify('Pioinit: Done', vim.log.levels.INFO) end
-          -- },
         })
       end)
       return true
