@@ -176,22 +176,19 @@ end
 
 
 
-local pio_buffer = '' -- Persistent stream buffer
 local callBack = nil
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands stdout filter
 --- stylua: ignore
 function M.stdoutcallback(_, _, data)
-  if #M.queue == 0 then
-    return
-  end
+  local pio_buffer = '' -- Persistent stream buffer
 
   -- 1. attach partial buffer from previous data last line to 1st line
   pio_buffer = pio_buffer .. data[1]
   -- 2. If the chunk has more than one element, we've encountered newlines
   if #data > 1 then
     -- 3. Process any "middle" lines which are guaranteed to be complete
-    for i = 2, #data - 1 do
+    for i = 2, #data do
       pio_buffer = pio_buffer .. data[i]
     end
 
@@ -218,9 +215,9 @@ function M.stdoutcallback(_, _, data)
       end
     end
   end
-  if #pio_buffer > 10000 then
-    pio_buffer = pio_buffer:sub(-5000)
-  end
+  -- if #pio_buffer > 10000 then
+  --   pio_buffer = pio_buffer:sub(-5000)
+  -- end
 end
 
 -- stylua: ignore
@@ -251,7 +248,7 @@ function M.handlePioinit(result)
   if result == 'INIT' then
     commandPassed = 0
     _G.metadata.isBusy = true
-    pio_buffer = ''
+    -- pio_buffer = ''
     local full_cmd = table.remove(M.queue, 1)
     term.stdout_callback = M.stdoutcallback
     term.ToggleTerminal(full_cmd, 'float')
@@ -266,13 +263,13 @@ function M.handlePioinit(result)
       end)
       -- elseif commandPassed == 2 then
     end
-    pio_buffer = ''
+    -- pio_buffer = ''
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
     vim.schedule(function()
       vim.notify('compiledb: Pass', vim.log.levels.INFO)
-      pio_buffer = ''
+      -- pio_buffer = ''
       M.queue = {} -- Clear queue on any other status (failure)
       term.stdout_callback = nil
 
@@ -285,7 +282,7 @@ function M.handlePioinit(result)
       end)
     end)
   elseif result == 'FAIL' then
-    pio_buffer = ''
+    -- pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
     term.stdout_callback = nil
   end
