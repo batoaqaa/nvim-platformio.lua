@@ -267,7 +267,7 @@ local function get_hash(path)
   return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
 end
 
-_G.metadata.isBusy = false
+-- _G.metadata.isBusy = false
 -- 2. Smart Save/Load: Uses JSON and Hashing
 -- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
