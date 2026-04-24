@@ -266,6 +266,7 @@ function M.handlePioinit(result)
       end)
       -- elseif commandPassed == 2 then
     end
+    pio_buffer = ''
     local full_cmd = table.remove(M.queue, 1)
     term.ToggleTerminal(full_cmd, 'float')
   elseif result == 'DONE' then -- compile_commands.json created
