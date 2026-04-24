@@ -11,6 +11,10 @@ M.queue = {}
 local term = require('platformio.utils.term')
 local lsp_restart = require('platformio.lsp.tools').lsp_restart
 
+-- INFO:
+-- =============================================================================
+-- UNIVERSAL TOOLCHAIN DETECTION
+-- =============================================================================
 -- stylua: ignore
 function M.compile_commandsFix() --M.dbPathsFix()
   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
@@ -79,7 +83,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
       return
     end
 
-    local wk, err = M.writeFile(filename, formatted, { overwrite = true, mkdir = true })
+    local wk, err = vim.misc.writeFile(filename, formatted, { overwrite = true, mkdir = true })
     if not wk then print(err) end
 
     -- local f = io.open(filename, 'w')
