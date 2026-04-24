@@ -89,7 +89,7 @@ function M.pio_refresh(callback)
         local res = {}
         for _, v in ipairs(list or {}) do
           local val = prefix and (prefix .. norm(v)) or v
-          table.insert(res, string.format('%q', val))
+          table.insert(res, string.format('%s', val))
         end
         return res
       end
