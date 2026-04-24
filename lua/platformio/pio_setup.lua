@@ -1,6 +1,5 @@
 M = {}
 
-local misc = require('platformio.utils.misc')
 -- local lsp_restart = require('platformio.lsp.tools').lsp_restart
 local boilerplate = require('platformio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
@@ -26,7 +25,7 @@ function M.get_sysroot_triplet(cc_compiler)
   for _, name in ipairs(files) do
     -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
     local match = name:match('^(.*)%-g[c%+][c%+]')
-    if match then triplet = misc.normalizePath(match) break
+    if match then triplet = vim.misc.normalizePath(match) break
     end
   end
 
@@ -34,10 +33,10 @@ function M.get_sysroot_triplet(cc_compiler)
   if not triplet then return nil end
 
   -- toolchain_root is the parent of the 'bin' folder
-  local toolchain_root = misc.normalizePath(vim.fn.fnamemodify(bin_path, ':h'))
+  local toolchain_root = vim.misc.normalizePath(vim.fn.fnamemodify(bin_path, ':h'))
   -- sysroot folder is expected to have the same name as the triplet
-  local sysroot = misc.normalizePath(toolchain_root .. '/' .. triplet)
-  local query_driver = misc.normalizePath(bin_path .. '/' .. triplet .. '-*')
+  local sysroot = vim.misc.normalizePath(toolchain_root .. '/' .. triplet)
+  local query_driver = vim.misc.normalizePath(bin_path .. '/' .. triplet .. '-*')
 
   -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
   -- Only return data if the sysroot folder actually exists on disk
@@ -72,9 +71,10 @@ function M.pio_refresh(callback)
     end
 
     -- Set up file paths
-    local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build', active_env)
+    local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build')
+    local build_env_dir = vim.misc.joinPath(build_dir, active_env)
     local checksum_path = vim.misc.joinPath(build_dir, 'project.checksum')
-    local idedata_path = vim.misc.joinPath(build_dir, 'idedata.json')
+    local idedata_path = vim.misc.joinPath(build_env_dir, 'idedata.json')
 
     ---------------------------------------------------------
     -- INTERNAL PROCESSOR: Applies parsed data to _G.metadata
@@ -240,7 +240,7 @@ function M.pio_refresh(callback)
           -- Expand variables and Normalize
           if type(val) == "string" then
             val = val:gsub('%%${platformio.core_dir}', meta.core_dir or "")
-            meta[item.key] = misc.normalizePath(val)
+            meta[item.key] = vim.misc.normalizePath(val)
           end
         end
 
@@ -267,6 +267,7 @@ local function get_hash(path)
   return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
 end
 
+_G.metadata.isBusy = false
 -- 2. Smart Save/Load: Uses JSON and Hashing
 -- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
@@ -303,36 +304,133 @@ function M.run_compiledb()
   end)
 end
 
-local dir_path = vim.uv.cwd()
-local ini_file = vim.fs.joinpath(dir_path, 'platformio.ini')
--- INFO:
--- 4. Simple Watcher: Only triggers if the FILE CONTENT changed
-function M.start_watcher()
-  if not dir_path or vim.fn.filereadable(ini_file) == 0 then
-    return
-  end
-  local current_ini_hash = get_hash(ini_file)
-  _G.metadata.isBusy = false
+-- Store handles globally within the module so we can stop them
+local uv = vim.uv or vim.loop
+M.watcher_handles = {}
 
-  local handle = vim.uv.new_fs_event()
+local function watch_file(full_path, callback)
+  local handle = uv.new_fs_event()
+  local parent_dir = vim.fn.fnamemodify(full_path, ':h')
+  local target_file = vim.fn.fnamemodify(full_path, ':t')
+
   if handle then
     handle:start(
-      dir_path,
-      { recursive = false },
-      vim.schedule_wrap(function(err, fname, events)
-        if err or fname ~= 'platformio.ini' or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
-          return
+      parent_dir,
+      {},
+      vim.schedule_wrap(function(err, filename, events)
+        -- handle:start(parent_dir, {}, function(err, filename)
+        -- if err then
+        if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
+          return handle:stop()
+          -- return
         end
 
-        local new_hash = get_hash(ini_file)
-        if new_hash and new_hash ~= current_ini_hash then
-          current_ini_hash = new_hash
-          M.run_compiledb() -- Smart: Auto-update DB if config changes
+        if filename == target_file then
+          vim.schedule(callback)
         end
       end)
     )
+    return handle
   end
 end
+
+function M.start_watchers()
+  -- Clean up any existing watchers first to prevent duplicates
+  M.stop_watchers()
+
+  local project_root = vim.uv.cwd() -- Use dynamic CWD instead of hardcoded path
+  local active_env = _G.metadata.active_env or 'default'
+
+  local targets = {
+    { -- watcher for platformio.ini
+      path = vim.misc.joinPath(project_root, 'platformio.ini'),
+      current_ini_hash = '',
+      cb = function(self)
+        local new_hash = get_hash(self.path) or ''
+        if new_hash and new_hash ~= self.current_ini_hash then
+          self.current_ini_hash = new_hash
+          M.run_compiledb() -- Smart: Auto-update DB if config changes
+        end
+        -- fetch_config()
+      end,
+    },
+    { -- watcher for ./.pio/build/projct.checksum
+      checksum_path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'),
+      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),
+      cb = function(self)
+        -- Set up file paths
+        ---------------------------------------------------------
+        -- STEP 1: Fast Checksum Check
+        ---------------------------------------------------------
+        local current_checksum = vim.misc.readFile(self.checksum_path)
+        if current_checksum and current_checksum ~= '' then
+          if current_checksum == _G.metadata.last_checksum then
+            return
+          end -- Already updated
+
+          -- STEP 2: Cache Path (idedata.json exists and checksum changed)
+          -- local content = vim.misc.readFile(self.idedata_path)
+          -- if content then
+          M.pio_refresh(function()
+            local dbFix = require('platformio.utils.pio').compile_commandsFix
+            dbFix()
+            vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+          end)
+          -- end
+        end
+        -- get_metadata(0)
+      end,
+    },
+  }
+  targets[1].current_ini_hash = get_hash(targets[1].path) or ''
+
+  for _, target in ipairs(targets) do
+    local h = watch_file(target.path, target.cb)
+    table.insert(M.watcher_handles, h)
+  end
+end
+
+function M.stop_watchers()
+  for _, handle in ipairs(M.watcher_handles) do
+    handle:stop()
+  end
+  M.watcher_handles = {}
+end
+
+-- local dir_path = vim.uv.cwd()
+-- local ini_file = vim.misc.joinPath(dir_path, 'platformio.ini')
+-- -- INFO:
+-- -- 4. Simple Watcher: Only triggers if the FILE CONTENT changed
+-- function M.start_watcher()
+--   if not dir_path or vim.fn.filereadable(ini_file) == 0 then
+--     return
+--   end
+--   local current_ini_hash = get_hash(ini_file)
+--   _G.metadata.isBusy = false
+--
+--   local handle = vim.uv.new_fs_event()
+--   if handle then
+--     handle:start(
+--       dir_path,
+--       { recursive = false },
+--       vim.schedule_wrap(function(err, fname, events)
+--         if err or fname ~= 'platformio.ini' or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
+--           return handle:stop()
+--         end
+--
+--         if _G.metadata.isBusy then
+--           return
+--         end
+--
+--         local new_hash = get_hash(ini_file)
+--         if new_hash and new_hash ~= current_ini_hash then
+--           current_ini_hash = new_hash
+--           M.run_compiledb() -- Smart: Auto-update DB if config changes
+--         end
+--       end)
+--     )
+--   end
+-- end
 
 ----------------------------------------------------------------------------------------------
 -- local function start_pio_watcher()
