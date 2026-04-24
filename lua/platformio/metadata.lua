@@ -53,6 +53,7 @@ local _pio_metadata = {
   sysroot = '',
   fallbackFlags = {},
   dbTrigger = false,
+  last_checksum = '', -- Used to track changes
 }
 -- 2. The Reactive Proxy Wrapper
 -- Any write to _G.metadata.key = val triggers this logic

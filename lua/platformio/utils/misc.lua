@@ -6,6 +6,12 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+--INFO:
+--  Version-Safe Path Joining (Fallback for Neovim < 0.10.0)
+-- stylua: ignore
+M.joinPath = vim.fs.joinpath or function(...)
+  return table.concat({ ... }, '/'):gsub('//+', '/')
+end
 ------------------------------------------------------
 --INFO:
 -- iterrative loop 48ms
