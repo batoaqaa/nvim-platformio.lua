@@ -325,7 +325,9 @@ function M.start_watcher()
           M.pio_refresh(function()
             -- pio_generate_db()
             -- M.run_compiledb()
-            M.run_compiledb() -- Smart: Auto-update DB if config changes
+
+            -- M.run_compiledb() -- Smart: Auto-update DB if config changes
+
             -- lsp_restart('clangd')
           end)
         end
@@ -413,7 +415,9 @@ function M.init()
         -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
         -- pio_generate_db()
         -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        M.run_compiledb() -- Smart: Auto-update DB if config changes
+
+        -- M.run_compiledb() -- Smart: Auto-update DB if config changes
+
         -- lsp_restart('clangd')
         -- end)
       end)
