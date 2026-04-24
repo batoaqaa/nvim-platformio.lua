@@ -276,7 +276,6 @@ function M.handlePioinit(result)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
       _G.metadata.dbTrigger = true
     end)
-    -- end, 500)
   elseif result == 'FAIL' then
     pio_buffer = ''
     M.queue = {} -- Clear queue on any other status (failure)
