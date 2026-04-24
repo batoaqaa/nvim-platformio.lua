@@ -22,7 +22,6 @@ function M.compile_commandsFix() --M.dbPathsFix()
 
   -- 1. Build Path Map (Scan toolchain)
   local path_map = {}
-
   local pio_binaries = _G.metadata.query_driver or '/bin/*'
   -- local pio_binaries = (_G.metadata.toolchain_root or "") .. '/bin/*'
   for _, full_path in ipairs(vim.fn.glob(pio_binaries, false, true)) do
@@ -210,7 +209,6 @@ end
 
 local pio_buffer = '' -- Persistent stream buffer
 local callBack = nil
-local commandPassed = 0
 ------------------------------------------------------
 -- INFO: ToggleTerminal commands stdout filter
 --- stylua: ignore
@@ -274,6 +272,7 @@ M.run_sequence = function(tasks)
   end)
 end
 
+local commandPassed = 0
 -- Handle after pioinit execution
 function M.handlePioinit(result)
   if result == 'INIT' then
@@ -288,8 +287,8 @@ function M.handlePioinit(result)
     if commandPassed == 1 then
       vim.schedule(function()
         vim.notify('Pioinit: commandPassed', vim.log.levels.INFO)
-        local pio_manager = require('platformio.pio_setup').pio_manager
-        pio_manager.refresh(function()
+        local pio_refresh = require('platformio.pio_setup').pio_refresh
+        pio_refresh(function()
           local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
           boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
           boilerplate_gen([[.clangd]], _G.metadata.core_dir)
@@ -422,8 +421,8 @@ end
 -- Handle after pioinit execution
 function M.handlePioinitPass()
   vim.notify('Pioinit: Pass', vim.log.levels.INFO)
-  local pio_manager = require('platformio.pio_setup').pio_manager
-  pio_manager.refresh(function()
+  local pio_refresh = require('platformio.pio_setup').pio_refresh
+  pio_refresh(function()
     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
     boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
