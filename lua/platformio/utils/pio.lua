@@ -197,10 +197,10 @@ function M.stdoutcallback(_, _, data)
 
     for status in pio_buffer:gmatch('_CMMNDS_:(%a+)') do
       if callBack and status then
-        if status == 'PASS' then
-          -- Store the last element as the new partial buffer for the next call
-          pio_buffer = data[#data]
-        end
+        pio_buffer = data[#data]
+        -- if status == 'PASS' then
+        --   -- Store the last element as the new partial buffer for the next call
+        -- end
         -- vim.schedule(function() callBack('PASS') end)
         --   callBack('PASS')
         -- elseif status == 'DONE' then
