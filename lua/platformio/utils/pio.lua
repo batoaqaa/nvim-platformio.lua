@@ -174,7 +174,11 @@ function M.handlePioinit(result)
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         vim.misc.gitignore_lsp_configs('compile_commands.json')
-        _G.metadata.dbTrigger = true
+        -- _G.metadata.dbTrigger = true
+        local ok, _ = pcall(M.compile_commandsFix)
+        if not ok then
+          print('Env: dbTrigger, fail to call dbFix')
+        end
       end)
     end)
   elseif result == 'FAIL' then

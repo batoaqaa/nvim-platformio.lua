@@ -69,7 +69,7 @@ _G.metadata = setmetatable({}, {
     vim.schedule(function()
       -- M.save_project_config(true)
       if key == 'toolchain_root' then
-        vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
+        -- vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         pcall(function()
           if _pio_metadata.dbTrigger then
             vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
