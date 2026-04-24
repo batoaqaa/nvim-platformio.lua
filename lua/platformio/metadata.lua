@@ -70,22 +70,22 @@ _G.metadata = setmetatable({}, {
       -- M.save_project_config(true)
       if key == 'toolchain_root' then
         -- vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
-        pcall(function()
-          if _pio_metadata.dbTrigger then
-            vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
-            local dbFix = pio.compile_commandsFix
-            local ok, _ = pcall(dbFix)
-            if not ok then
-              print('Env: dbTrigger, fail to call dbFix')
-            end
-            -- dbFix()
-            _pio_metadata.dbTrigger = false
-          else
-            local LspRestart = require('platformio.lsp.tools').lsp_restart
-            LspRestart('clangd')
-            vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
-          end
-        end)
+        -- pcall(function()
+        --   if _pio_metadata.dbTrigger then
+        --     vim.notify('Env: dbTrigger', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
+        --     local dbFix = pio.compile_commandsFix
+        --     local ok, _ = pcall(dbFix)
+        --     if not ok then
+        --       print('Env: dbTrigger, fail to call dbFix')
+        --     end
+        --     -- dbFix()
+        --     _pio_metadata.dbTrigger = false
+        --   else
+        --     local LspRestart = require('platformio.lsp.tools').lsp_restart
+        --     LspRestart('clangd')
+        --     vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
+        --   end
+        -- end)
       elseif key == 'active_env' then
         -- Force global statusline so it doesn't get pushed around by Trouble or splits
         vim.o.laststatus = 3
