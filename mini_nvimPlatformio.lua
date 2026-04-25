@@ -464,6 +464,15 @@ if tok then
   -- local telescope = require('telescope')
   -- print("here" .. vim.inspect(pioConfig))
   telescope.setup({
+    extensions = {
+      ['ui-select'] = {
+        require('telescope.themes').get_dropdown({
+          -- Customizing the dialog appearance
+          width = 0.6,
+          previewer = false,
+        }),
+      },
+    },
     defaults = {
       mappings = {
         i = {
@@ -487,6 +496,46 @@ if tok then
   -- Enable Telescope extensions if they are installed
   pcall(require('telescope').load_extension, 'fzf')
   pcall(require('telescope').load_extension, 'ui-select')
+
+  local function run_project_wizard()
+    local project_config = {}
+
+    -- Step 1: Select IDE
+    vim.ui.select({ 'Neovim', 'VS Code', 'IntelliJ' }, { prompt = 'Select IDE' }, function(ide)
+      if not ide then
+        return
+      end
+      project_config.ide = ide
+
+      -- Step 2: Select Board
+      vim.ui.select({ 'ESP32', 'Arduino Uno', 'Raspberry Pi' }, { prompt = 'Select Board' }, function(board)
+        if not board then
+          return
+        end
+        project_config.board = board
+
+        -- Step 3: Select Framework
+        vim.ui.select({ 'ESP-IDF', 'Arduino Core', 'MicroPython' }, { prompt = 'Select Framework' }, function(fw)
+          if not fw then
+            return
+          end
+          project_config.framework = fw
+
+          -- Step 4: Final Selection
+          vim.ui.select({ 'true', 'false' }, { prompt = 'Include Sample Code?' }, function(sample)
+            project_config.sample = sample == 'true'
+
+            -- Final Output/Action
+            print(
+              string.format('Setup: %s on %s using %s (Sample: %s)', project_config.ide, project_config.board, project_config.framework, project_config.sample)
+            )
+          end)
+        end)
+      end)
+    end)
+  end
+
+  vim.keymap.set('n', '<leader>pw', run_project_wizard, { desc = 'Run Project Wizard' })
 
   -- See `:help telescope.builtin`
   local builtin = require('telescope.builtin')
