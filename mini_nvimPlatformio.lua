@@ -146,8 +146,8 @@ end, { desc = '[D]elete Buffer' })
 -- keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
 -- keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
 
-keymap('n', '<leader>e', '<cmd>NeoTree<CR>', { desc = 'NvimTreeToggle' })
-keymap('n', '\\', '<cmd>NeoTree<CR>', { desc = 'NvimTreeToggle' })
+keymap('n', '<leader>e', '<cmd>Neotree<CR>', { desc = 'NvimTreeToggle' })
+keymap('n', '\\', '<cmd>Neotree<CR>', { desc = 'NvimTreeToggle' })
 -- keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
 -- keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
 
