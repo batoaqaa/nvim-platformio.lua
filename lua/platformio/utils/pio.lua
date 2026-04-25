@@ -129,7 +129,6 @@ M.run_sequence = function(tasks)
   M.queue = {}
   callBack = tasks.cb -- 1. Save the callback in a local variable
   local commands = tasks.cmnds
-  print(#commands)
    
   local done = ' && echo _CMMNDS_":"DONE'
   local pass = ' && echo _CMMNDS_":"PASS'
@@ -149,7 +148,6 @@ end
 local commandPassed = 0
 function M.handlePioinitDb(result)
   if result == 'INIT' then -- initialize
-    print('db')
     commandPassed = 0
     _G.metadata.isBusy = true
     local full_cmd = table.remove(M.queue, 1)
@@ -193,7 +191,6 @@ end
 -- Handle after pioinit execution
 function M.handlePioinit(result)
   if result == 'INIT' then -- initialize
-    print('init')
     commandPassed = 0
     _G.metadata.isBusy = true
     local full_cmd = table.remove(M.queue, 1)
