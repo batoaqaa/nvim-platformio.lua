@@ -271,11 +271,15 @@ local plugins = {
     },
     lazy = false, -- neo-tree will lazily load itself
     opts = {
+      use_libuv_file_watcher = true,
       sources = {
         'filesystem',
         'buffers',
         'git_status',
         'document_symbols', -- Add this line
+      },
+      filters = {
+        custom = { '^\\.cache$', '^\\.pio$' },
       },
     },
   },
