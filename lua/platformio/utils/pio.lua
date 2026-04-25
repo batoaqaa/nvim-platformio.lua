@@ -129,7 +129,8 @@ M.run_sequence = function(tasks)
   M.queue = {}
   callBack = tasks.cb -- 1. Save the callback in a local variable
   local commands = tasks.cmnds
-
+  print(#commands)
+   
   local done = ' && echo _CMMNDS_":"DONE'
   local pass = ' && echo _CMMNDS_":"PASS'
   local fail = ' || echo _CMMNDS_":"FAIL'
