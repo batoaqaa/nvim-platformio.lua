@@ -120,12 +120,12 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 1: Fast Checksum Check
     ---------------------------------------------------------
-    local current_checksum = vim.misc.readFile(checksum_path)
+    local _, current_checksum = vim.misc.readFile(checksum_path)
     if current_checksum and current_checksum ~= '' then
       if current_checksum == meta.last_checksum then return end -- Already updated
 
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-      local content = vim.misc.readFile(idedata_path)
+      local _, content = vim.misc.readFile(idedata_path)
       if content then
         local ok, decoded = pcall(vim.json.decode, content)
         if ok and apply_metadata(decoded, current_checksum) then
@@ -142,7 +142,7 @@ function M.pio_refresh(callback)
     --   vim.notify('PIO: Initializing project metadata...', vim.log.levels.WARN)
     --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
     --     vim.schedule(function()
-    --       if obj.code == 0 then
+    --       if obj.code == 0 thenl
     --         get_metadata(attempts, active_env) -- Recursive call after files created
     --       else
     --         vim.notify('PIO: Initialization failed. Build project manually.', vim.log.levels.ERROR)
@@ -170,7 +170,7 @@ function M.pio_refresh(callback)
         local _, data = next(raw_data or {})
 
         if ok and apply_metadata(data, current_checksum) then
-          vim.notify('PIO: Metadata sync successful', vim.log.levels.INFO)
+          vim.notify('PIO: Metadata synced from CLI', vim.log.levels.INFO)
         else
           vim.notify('PIO: Failed to parse metadata output', vim.log.levels.WARN)
         end
@@ -263,8 +263,10 @@ local function get_hash(path)
   if vim.fn.filereadable(path) == 0 then
     return nil
   end
-  local ok, data = pcall(vim.fn.readfile, path) -- readfile is safer than io.open
-  return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
+  -- local ok, data = pcall(vim.fn.readfile, path) -- readfile is safer than io.open
+  -- return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
+  local ok, data = vim.misc.readFile(path) -- readfile is safer than io.open
+  return (ok and data) and vim.fn.sha256(data) or ''
 end
 
 -- _G.metadata.isBusy = false
@@ -358,27 +360,19 @@ function M.start_watchers()
       checksum_path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'),
       idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),
       cb = function(self)
-        -- Set up file paths
-        ---------------------------------------------------------
-        -- STEP 1: Fast Checksum Check
-        ---------------------------------------------------------
-        local current_checksum = vim.misc.readFile(self.checksum_path)
+        local _, current_checksum = vim.misc.readFile(self.checksum_path)
         if current_checksum and current_checksum ~= '' then
           if current_checksum == _G.metadata.last_checksum then
             return
           end -- Already updated
 
           -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-          -- local content = vim.misc.readFile(self.idedata_path)
-          -- if content then
           M.pio_refresh(function()
             local dbFix = require('platformio.utils.pio').compile_commandsFix
             dbFix()
             vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           end)
-          -- end
         end
-        -- get_metadata(0)
       end,
     },
   }

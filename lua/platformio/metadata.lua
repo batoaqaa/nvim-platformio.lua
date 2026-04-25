@@ -145,7 +145,7 @@ function M.load_project_config()
   --   end
   -- end
   if vim.fn.filereadable(config_path) == 1 then
-    local json_data = vim.misc.readFile(config_path)
+    local _, json_data = vim.misc.readFile(config_path)
     if json_data then
       local ok, table_data = pcall(vim.json.decode, json_data)
       if ok and type(table_data) == 'table' then

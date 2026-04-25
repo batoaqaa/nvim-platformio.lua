@@ -160,13 +160,13 @@ function M.readFile(path)
   -- 1. Open the file (r = read-only)
   -- 438 is the octal for 0666 (standard permissions)
   local fd, err = uv.fs_open(path, 'r', 438)
-  if not fd or err then return nil, 'readFile: Open error: ' .. err end
+  if not fd or err then return false, 'readFile: Open error: ' .. err end
 
   -- 2. Get file stats to find out how many bytes to read
   local stat, stat_err = uv.fs_fstat(fd)
   if not stat or stat_err then
     uv.fs_close(fd)
-    return nil, 'readFile: Stat error: ' .. stat_err
+    return false, 'readFile: Stat error: ' .. stat_err
   end
 
   -- 3. Read the entire content
@@ -176,9 +176,9 @@ function M.readFile(path)
   -- 4. ALWAYS close the file descriptor
   uv.fs_close(fd)
 
-  if read_err then return nil, 'readFile: Read error: ' .. read_err end
+  if read_err then return false, 'readFile: Read error: ' .. read_err end
 
-  return content
+  return true, content
 end
 
 ------------------------------------------------------
