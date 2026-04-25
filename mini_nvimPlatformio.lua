@@ -205,6 +205,7 @@ local plugins = {
         require('lualine').setup({
           options = {
             globalstatus = true, -- Single statusline for all windows
+            extensios = { 'neo-treee' },
           },
           -- This replaces the visual part of bufferline
           tabline = {
@@ -257,28 +258,40 @@ local plugins = {
     -- config = true,
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
+
   {
-    'nvim-tree/nvim-tree.lua',
-    -- version = '*',
-    lazy = false,
-    dependencies = 'nvim-tree/nvim-web-devicons',
-    config = function()
-      require('nvim-tree').setup({
-        filesystem_watchers = {
-          ignore_dirs = {
-            '/.cache', -- Ignores clangd's heavy index folder
-            '/.pio', -- Ignores pio heavy index folder
-            '/node_modules', -- Good practice for performance
-            '/.git',
-          },
-        },
-        -- Optional: If you also want to hide it from the tree view entirely
-        -- filters = {
-        --   custom = { '^\\.cache$', '^\\.pio$' },
-        -- },
-      })
-    end,
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      'nvim-tree/nvim-web-devicons', -- optional, but recommended
+    },
+    lazy = false, -- neo-tree will lazily load itself
   },
+
+  -- {
+  --   'nvim-tree/nvim-tree.lua',
+  --   -- version = '*',
+  --   lazy = false,
+  --   dependencies = 'nvim-tree/nvim-web-devicons',
+  --   config = function()
+  --     require('nvim-tree').setup({
+  --       filesystem_watchers = {
+  --         ignore_dirs = {
+  --           '/.cache', -- Ignores clangd's heavy index folder
+  --           '/.pio', -- Ignores pio heavy index folder
+  --           '/node_modules', -- Good practice for performance
+  --           '/.git',
+  --         },
+  --       },
+  --       -- Optional: If you also want to hide it from the tree view entirely
+  --       -- filters = {
+  --       --   custom = { '^\\.cache$', '^\\.pio$' },
+  --       -- },
+  --     })
+  --   end,
+  -- },
 
   {
     'batoaqaa/nvim-platformio.lua',
