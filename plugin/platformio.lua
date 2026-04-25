@@ -31,6 +31,19 @@ vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
 --   end
 -- end, { ['repeat'] = -1 })
 
+-- In ~/.config/nvim/init.lua
+local pio_wiz = require('platformio.pioinit2')
+
+-- Create a keybinding to trigger the wizard
+vim.keymap.set('n', '<leader>pi', function()
+  pio_wiz.launch()
+end, { desc = 'Run PIO Project Wizard' })
+
+-- Alternatively, create a user command
+vim.api.nvim_create_user_command('PioWizard', function()
+  pio_wiz.launch()
+end, {})
+
 -- Pioinit
 vim.api.nvim_create_user_command('Pioinit', function()
   require('platformio.pioinit').pioinit()
