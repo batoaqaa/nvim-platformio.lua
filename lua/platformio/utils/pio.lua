@@ -146,7 +146,7 @@ end
 ------------------------------------------------------
 -- Handle after pioinit execution
 local commandPassed = 0
-function M.handlePioinit(result)
+function M.handlePioinitDb(result)
   if result == 'INIT' then -- initialize
     commandPassed = 0
     _G.metadata.isBusy = true
@@ -159,7 +159,6 @@ function M.handlePioinit(result)
       vim.schedule(function()
         vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen(M.selected_framework, vim.uv.cwd() .. '/src', 'main.cpp')
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       end)
       -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
@@ -179,6 +178,42 @@ function M.handlePioinit(result)
         -- if not ok then
         --   print('Env: dbTrigger, fail to call dbFix')
         -- end
+      end)
+    end)
+  elseif result == 'FAIL' then
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
+  end
+end
+
+------------------------------------------------------
+-- Handle after pioinit execution
+function M.handlePioinit(result)
+  if result == 'INIT' then -- initialize
+    commandPassed = 0
+    _G.metadata.isBusy = true
+    local full_cmd = table.remove(M.queue, 1)
+    term.stdout_callback = M.stdoutcallback
+    term.ToggleTerminal(full_cmd, 'float')
+  elseif result == 'DONE' then -- result of the last command
+    vim.schedule(function()
+      vim.notify('compiledb: Done ..', vim.log.levels.INFO)
+      M.queue = {}
+      term.stdout_callback = nil
+      vim.schedule(function()
+        vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
+        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        local pio_refresh = require('platformio.pio_setup').pio_refresh
+        pio_refresh(function()
+          vim.misc.gitignore_lsp_configs('compile_commands.json')
+          -- _G.metadata.dbTrigger = true
+          -- local ok, _ = pcall(M.compile_commandsFix)
+          -- if not ok then
+          --   print('Env: dbTrigger, fail to call dbFix')
+          -- end
+        end)
       end)
     end)
   elseif result == 'FAIL' then
