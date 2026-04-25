@@ -115,7 +115,8 @@ function _G.get_clangd_config()
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
-      q_driver =  '**' --_G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
+      -- q_driver =  '**' --_G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
+      q_driver =  _G.metadata.query_driver --.. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
     end
   end
 
