@@ -33,28 +33,18 @@ end
 
 -- --- PICKERS (In Order of Execution) ---
 
-local function dialog_opts(title, width)
-  return require('telescope.themes').get_dropdown({
-    prompt_title = title,
-    layout_config = {
-      width = width or 0.4, -- Adjust width (0.4 = 40% of screen)
-      height = 0.2, -- Small height for few choices
-    },
-    previewer = false, -- Hide preview for simple choices
-  })
-end
 -- STEP 4: Sample (True/False)
 local function pick_sample()
-  local opts = dialog_opts('Include Sample Code?', 0.3)
   pickers
-    .new(opts, {
+    .new({}, {
+      prompt_title = 'Include Sample Code?',
       finder = finders.new_table({ results = { 'true', 'false' } }),
-      sorter = telescope_conf.generic_sorter(opts),
+      sorter = telescope_conf.generic_sorter({}),
       attach_mappings = function(prompt_bufnr)
         actions.select_default:replace(function()
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
-          wizard_data.sample = selection[1]
+          wizard_data.sample = selection[1] -- Capture result
           finalize_setup()
         end)
         return true
@@ -122,17 +112,17 @@ end
 
 -- STEP 1: IDE (True/False)
 local function start_pio_wizard(json_data)
-  local opts = dialog_opts('Initialize for Neovim?', 0.3)
   pickers
-    .new(opts, {
+    .new({}, {
+      prompt_title = 'Setup for Neovim IDE?',
       finder = finders.new_table({ results = { 'true', 'false' } }),
-      sorter = telescope_conf.generic_sorter(opts),
+      sorter = telescope_conf.generic_sorter({}),
       attach_mappings = function(prompt_bufnr)
         actions.select_default:replace(function()
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
           wizard_data.use_ide = (selection[1] == 'true')
-          pick_board(json_data)
+          pick_board(json_data) -- Next step
         end)
         return true
       end,
