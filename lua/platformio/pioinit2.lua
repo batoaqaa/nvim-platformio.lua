@@ -11,22 +11,21 @@ local wizard_data = {}
 local function finalize_setup()
   local pio = require('platformio.utils.pio')
 
-  -- 1. Determine IDE flag: --ide vim enables LSP support for Neovim
-  local ide_flag = wizard_data.use_ide and ' --ide vim' or ''
-
-  -- 2. Determine Sample flag: --sample-code generates boilerplate
+  -- 1. Flags (We'll default IDE to atom or similar if not using vim specifically)
   local sample_flag = wizard_data.sample == 'true' and ' --sample-code' or ''
 
-  -- 3. Construct the full init command
-  local init_cmd = string.format('pio project init --board %s %s -O "framework=%s"%s', wizard_data.board_id, ide_flag, wizard_data.framework, sample_flag)
+  local init_cmd = string.format('pio project init --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
 
-  print('Executing: ' .. init_cmd)
+  -- 2. Build command list based on Selection
+  local commands = { init_cmd }
+  if wizard_data.use_compiledb then
+    table.insert(commands, 'pio run -t compiledb')
+  end
+
+  print('Running ' .. #commands .. ' commands...')
 
   pio.run_sequence({
-    cmnds = {
-      init_cmd,
-      'pio run -t compiledb', -- Essential to generate compile_commands.json for LSP
-    },
+    cmnds = commands,
     cb = pio.handlePioinit,
   })
 end
@@ -136,7 +135,12 @@ end
 
 -- STEP 1: IDE (True/False)
 local function start_pio_wizard(json_data)
-  local opts = dialog_opts('Initialize for Neovim?', 0.3)
+  local opts = require('telescope.themes').get_dropdown({
+    prompt_title = 'Generate Compilation Database (LSP)?',
+    layout_config = { width = 0.4, height = 0.2 },
+    previewer = false,
+  })
+
   pickers
     .new(opts, {
       finder = finders.new_table({ results = { 'true', 'false' } }),
@@ -145,7 +149,8 @@ local function start_pio_wizard(json_data)
         actions.select_default:replace(function()
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
-          wizard_data.use_ide = (selection[1] == 'true')
+          -- Save the boolean for the final step
+          wizard_data.use_compiledb = (selection[1] == 'true')
           pick_board(json_data)
         end)
         return true
