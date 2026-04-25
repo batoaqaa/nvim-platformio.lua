@@ -285,7 +285,7 @@ function M.run_compiledb()
       if obj.code == 0 then
         M.pio_refresh(function()
           local dbFix = require('platformio.utils.pio').compile_commandsFix
-          dbFix()
+          -- dbFix()
           vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- pio_generate_db()
           -- M.run_compiledb()
@@ -369,7 +369,7 @@ function M.start_watchers()
           -- STEP 2: Cache Path (idedata.json exists and checksum changed)
           M.pio_refresh(function()
             local dbFix = require('platformio.utils.pio').compile_commandsFix
-            dbFix()
+            -- dbFix()
             vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           end)
         end
