@@ -13,7 +13,7 @@ local function finalize_setup()
 
   -- 1. Construct the basic init command
   local sample_flag = wizard_data.sample == 'true' and ' --sample-code' or ''
-  local init_cmd = string.format('pio project init --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
+  local init_cmd = string.format('pio project init --ide vim --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
 
   -- 2. Determine commands and callback
   local commands = { init_cmd }
