@@ -11,26 +11,25 @@ local wizard_data = {}
 local function finalize_setup()
   local pio = require('platformio.utils.pio')
 
-  -- 1. Flags (We'll default IDE to atom or similar if not using vim specifically)
+  -- 1. Construct the basic init command
   local sample_flag = wizard_data.sample == 'true' and ' --sample-code' or ''
-
   local init_cmd = string.format('pio project init --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
 
-  -- 2. Build command list based on Selection
+  -- 2. Determine commands and callback
   local commands = { init_cmd }
+  local final_cb = pio.handlePioinit -- Default for 1 command
+
   if wizard_data.use_compiledb then
     table.insert(commands, 'pio run -t compiledb')
+    final_cb = pio.handlePioinitDb -- Switch to Db handler for 2 commands
   end
 
-  print('Running ' .. #commands .. ' commands...')
-
+  -- 3. Execute
   pio.run_sequence({
     cmnds = commands,
-    cb = pio.handlePioinit,
+    cb = final_cb,
   })
 end
-
--- --- PICKERS (In Order of Execution) ---
 
 local function dialog_opts(title, width)
   return require('telescope.themes').get_dropdown({
@@ -42,6 +41,9 @@ local function dialog_opts(title, width)
     previewer = false, -- Hide preview for simple choices
   })
 end
+
+--- PICKERS (In Order of Execution) ---
+
 -- STEP 4: Sample (True/False)
 local function pick_sample()
   local opts = dialog_opts('Include Sample Code?', 0.3)
@@ -61,8 +63,6 @@ local function pick_sample()
     })
     :find()
 end
-
--- STEP 3: Framework (From Board Data)
 
 -- STEP 3: Framework Selection (Small Dialog)
 local function pick_framework(board_details)
