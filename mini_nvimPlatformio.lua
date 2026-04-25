@@ -270,6 +270,14 @@ local plugins = {
       'nvim-tree/nvim-web-devicons', -- optional, but recommended
     },
     lazy = false, -- neo-tree will lazily load itself
+    opts = {
+      sources = {
+        'filesystem',
+        'buffers',
+        'git_status',
+        'document_symbols', -- Add this line
+      },
+    },
   },
 
   -- {
