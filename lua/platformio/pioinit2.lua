@@ -64,18 +64,32 @@ local function pick_sample()
 end
 
 -- STEP 3: Framework (From Board Data)
+
+-- STEP 3: Framework Selection (Small Dialog)
 local function pick_framework(board_details)
+  -- Use dropdown theme to keep the window small and centered
+  local opts = require('telescope.themes').get_dropdown({
+    prompt_title = 'Select Framework (' .. board_details.id .. ')',
+    layout_config = {
+      width = 0.4, -- 40% of screen width
+      height = 0.25, -- Small height for few choices
+    },
+    previewer = false, -- No preview needed for framework names
+  })
+
   pickers
-    .new({}, {
-      prompt_title = 'Select Framework (' .. board_details.id .. ')',
-      finder = finders.new_table({ results = board_details['frameworks'] }),
-      sorter = telescope_conf.generic_sorter({}),
+    .new(opts, {
+      finder = finders.new_table({
+        results = board_details['frameworks'],
+      }),
+      sorter = telescope_conf.generic_sorter(opts),
       attach_mappings = function(prompt_bufnr)
         actions.select_default:replace(function()
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
+          -- selection is a simple string in this case
           wizard_data.framework = selection[1]
-          pick_sample() -- Next step
+          pick_sample()
         end)
         return true
       end,
