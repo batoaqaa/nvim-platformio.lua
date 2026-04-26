@@ -228,7 +228,7 @@ end
 --     return
 --   end
 -- end
-local checker = io.open(lazypath .. [[\lua\lazy\init.lua]], 'r')
+local checker = io.open(lazypath .. [[/lua/lazy/init.lua]], 'r')
 if checker then
   checker:close()
 else
