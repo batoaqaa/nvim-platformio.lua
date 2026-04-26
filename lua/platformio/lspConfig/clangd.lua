@@ -74,7 +74,9 @@ if mok then
   })
 end
 
-local capabilities = vim.lsp.protocol.make_client_capabilities({
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+
+capabilities.textDocument.foldingRange = {
   textDocument = {
     -- Folding capabilities for nvim-ufo
     foldingRange = {
@@ -82,7 +84,7 @@ local capabilities = vim.lsp.protocol.make_client_capabilities({
       lineFoldingOnly = true,
     },
   },
-})
+}
 local bok, blink = pcall(require, 'blink.cmp')
 if bok then
   capabilities = blink.get_lsp_capabilities(capabilities)
