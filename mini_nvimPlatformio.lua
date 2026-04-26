@@ -282,7 +282,7 @@ local plugins = {
         visible = false, -- Change to true if you want to see them dimmed
         hide_dotfiles = true,
         hide_gitignored = true,
-        hide_by_name = { '^\\.cache$', '^\\.pio$' },
+        hide_by_name = { '.cache', '.pio' },
         never_show = { -- This is the strongest setting to ignore the folder
           '.cache',
           '.git',
