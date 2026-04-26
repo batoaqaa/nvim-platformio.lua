@@ -654,7 +654,17 @@ end
 -- end
 -- Keymap to open the buffer list
 -- vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
+require('plenary')
+require('nui.utils')
 
+-- 4. Setup Neo-tree with Watcher Exclusions
+require('neo-tree').setup({
+  filesystem = {
+    filtered_items = {
+      never_show = { '.cache', '.git' }, -- Prevents file-watcher loops
+    },
+  },
+})
 local pioConfig = {
   lspClangd = {
     -- enabled = false,
