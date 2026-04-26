@@ -185,27 +185,38 @@ local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 local data_dir = tmp_root .. '/data'
 local lazypath = data_dir .. '/lazy/lazy.nvim'
 
--- 1. Create parents, but NOT the lazypath itself (Git needs to create it)
+-- 1. Ensure the parent directory exists
 if vim.fn.isdirectory(data_dir .. '/lazy') == 0 then
   vim.fn.mkdir(data_dir .. '/lazy', 'p')
 end
 
--- 2. Correct Git Clone URL and logic
+-- 2. Improved Git Clone with Error Reporting
 if vim.fn.isdirectory(lazypath) == 0 then
-  print('Downloading lazy.nvim...')
-  -- Correct URL: https://github.com
-  local cmd = string.format('git clone --filter=blob:none https://github.com --branch=stable "%s"', lazypath)
-  vim.fn.system(cmd)
+  print('Attempting to download lazy.nvim...')
+
+  -- The full URL is mandatory
+  local repo = 'https://github.com'
+  local cmd = string.format('git clone --filter=blob:none %s --branch=stable "%s"', repo, lazypath)
+
+  local output = vim.fn.system(cmd)
+
+  -- Check if git actually worked
+  if vim.v.shell_error ~= 0 then
+    print('GIT ERROR DETECTED:')
+    print(output) -- This will tell you if 'git' is not found or access is denied
+    error("Could not clone lazy.nvim. Please ensure 'git' is installed and accessible.")
+  end
 end
 
--- 3. Verify
+-- 3. Verify the specific file needed for require('lazy')
 local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
 if checker then
   checker:close()
 else
-  -- If this hits, check if 'git' is in your PATH
-  error('FATAL: lazy.nvim was not downloaded correctly to ' .. lazypath)
+  error('FATAL: Folder exists but /lua/lazy/init.lua is missing at ' .. lazypath)
 end
+
+-- ... rest of your setup ...
 
 -- 4. Environment Setup
 vim.opt.rtp:prepend(lazypath)
