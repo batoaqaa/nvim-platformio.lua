@@ -278,17 +278,17 @@ local plugins = {
         'git_status',
         'document_symbols', -- Add this line
       },
-      filtered_items = {
-        visible = false, -- Change to true if you want to see them dimmed
-        hide_dotfiles = true,
-        hide_gitignored = true,
-        hide_by_name = { '.cache', '.pio' },
-        never_show = { -- This is the strongest setting to ignore the folder
-          '.cache',
-          '.git',
-          'node_modules',
-        },
-      },
+      -- filtered_items = {
+      --   visible = false, -- Change to true if you want to see them dimmed
+      --   hide_dotfiles = true,
+      --   hide_gitignored = true,
+      --   hide_by_name = { '.cache', '.pio' },
+      --   never_show = { -- This is the strongest setting to ignore the folder
+      --     '.cache',
+      --     '.git',
+      --     'node_modules',
+      --   },
+      -- },
     },
   },
 
