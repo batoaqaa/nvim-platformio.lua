@@ -184,6 +184,7 @@ local home = os.getenv('USERPROFILE') or os.getenv('HOME')
 local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 local data_dir = tmp_root .. '/data'
 vim.env.XDG_DATA_HOME = data_dir
+print(vim.env.XDG_DATA_HOME)
 local lazypath = data_dir .. '/lazy/lazy.nvim'
 
 -- 1. Ensure parent exists
