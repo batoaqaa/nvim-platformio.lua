@@ -161,20 +161,56 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
 -- pick a temp root
-local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
-vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
-vim.env.XDG_DATA_HOME = tmp .. '/data'
-vim.env.XDG_CACHE_HOME = tmp .. '/cache'
-vim.env.XDG_STATE_HOME = tmp .. '/state'
+-- local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
+-- vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
+-- vim.env.XDG_DATA_HOME = tmp .. '/data'
+-- vim.env.XDG_CACHE_HOME = tmp .. '/cache'
+-- vim.env.XDG_STATE_HOME = tmp .. '/state'
+--
+-- local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
+--
+-- if not (vim.uv or vim.loop).fs_stat(lazypath) then
+--   vim.fn.system({
+--     'git',
+--     'clone',
+--     '--filter=blob:none',
+--     'https://github.com/folke/lazy.nvim.git',
+--     '--branch=stable',
+--     lazypath,
+--   })
+-- end
 
-local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
+-- 1. Setup Cross-Platform Redirected Paths
+local home = os.getenv('USERPROFILE') or os.getenv('HOME')
+local tmp_root = home .. '/tmp/nvim-tmp'
+local data_dir = tmp_root .. '/data'
+local config_dir = tmp_root .. '/config'
+local cache_dir = tmp_root .. '/cache'
+local state_dir = tmp_root .. '/state'
 
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
+-- Create directories (handles Windows/Linux)
+for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir }) do
+  if vim.fn.isdirectory(dir) == 0 then
+    vim.fn.mkdir(dir, 'p')
+  end
+end
+
+-- Override stdpath so lazy.nvim knows where to stay
+vim.fn.stdpath = (function(orig)
+  return function(what)
+    local redirected = { data = data_dir, config = config_dir, cache = cache_dir, state = state_dir }
+    return redirected[what] or orig(what)
+  end
+end)(vim.fn.stdpath)
+
+-- 2. Bootstrap lazy.nvim
+local lazypath = data_dir .. '/lazy/lazy.nvim'
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     'git',
     'clone',
     '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
+    'https://github.com',
     '--branch=stable',
     lazypath,
   })
@@ -362,11 +398,18 @@ local plugins = {
 
 ----------------------------------------------------------------------------------------
 -- INFO: Install/config plugins
-require('lazy').setup(plugins, {
-  install = {
-    missing = true,
-  },
+-- require('lazy').setup(plugins, {
+--   install = {
+--     missing = true,
+--   },
+-- })
+
+require('lazy').setup({
+  root = data_dir .. '/lazy',
+  spec = { plugins },
 })
+
+
 ----------------------------------------------------------------------------------------
 
 -- stylua: ignore
