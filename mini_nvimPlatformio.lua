@@ -146,10 +146,10 @@ end, { desc = '[D]elete Buffer' })
 -- keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
 -- keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
 
-keymap('n', '<leader>e', '<cmd>Neotree document_symbols<CR>', { desc = 'NeoTreeToggle' })
-keymap('n', '\\', '<cmd>Neotree toggle<CR>', { desc = 'NeoTreeToggle' })
--- keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
--- keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+-- keymap('n', '<leader>e', '<cmd>Neotree document_symbols<CR>', { desc = 'NeoTreeToggle' })
+-- keymap('n', '\\', '<cmd>Neotree toggle<CR>', { desc = 'NeoTreeToggle' })
+keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
