@@ -146,10 +146,10 @@ end, { desc = '[D]elete Buffer' })
 -- keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
 -- keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
 
--- keymap('n', '<leader>e', '<cmd>Neotree document_symbols<CR>', { desc = 'NeoTreeToggle' })
--- keymap('n', '\\', '<cmd>Neotree toggle<CR>', { desc = 'NeoTreeToggle' })
-keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
-keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+keymap('n', '<leader>e', '<cmd>Neotree document_symbols<CR>', { desc = 'NeoTreeToggle' })
+keymap('n', '\\', '<cmd>Neotree toggle<CR>', { desc = 'NeoTreeToggle' })
+-- keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
+-- keymap('n', '\\', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -262,138 +262,37 @@ local plugins = {
   },
 
   {
-    -- 'nvim-neo-tree/neo-tree.nvim',
-    -- -- cmd = 'Neotree',
-    -- lazy = false,
-    -- dependencies = 'nvim-tree/nvim-web-devicons',
-    -- keys = {
-    --   {
-    --     '\\',
-    --     function()
-    --       require('neo-tree.command').execute({ toggle = true, dir = vim.uv.cwd() })
-    --     end,
-    --     desc = 'Explorer NeoTree (cwd)',
-    --   },
-    --   { '<leader>e', '<leader>fe', desc = 'Explorer NeoTree (Root Dir)', remap = true },
-    --   { '<leader>E', '<leader>fE', desc = 'Explorer NeoTree (cwd)', remap = true },
-    --   {
-    --     '<leader>ge',
-    --     function()
-    --       require('neo-tree.command').execute({ source = 'git_status', toggle = true })
-    --     end,
-    --     desc = 'Git Explorer',
-    --   },
-    --   {
-    --     '<leader>be',
-    --     function()
-    --       require('neo-tree.command').execute({ source = 'buffers', toggle = true })
-    --     end,
-    --     desc = 'Buffer Explorer',
-    --   },
-    -- },
-    -- opts = {
-    --   sources = { 'filesystem', 'buffers', 'git_status' },
-    --   open_files_do_not_replace_types = { 'terminal', 'Trouble', 'trouble', 'qf', 'Outline' },
-    --   filesystem = {
-    --     bind_to_cwd = false,
-    --     follow_current_file = { enabled = true },
-    --     use_libuv_file_watcher = true,
-    --   },
-    --   window = {
-    --     mappings = {
-    --       ['l'] = 'open',
-    --       ['h'] = 'close_node',
-    --       ['<space>'] = 'none',
-    --       ['Y'] = {
-    --         function(state)
-    --           local node = state.tree:get_node()
-    --           local path = node:get_id()
-    --           vim.fn.setreg('+', path, 'c')
-    --         end,
-    --         desc = 'Copy Path to Clipboard',
-    --       },
-    --       ['O'] = {
-    --         function(state)
-    --           require('lazy.util').open(state.tree:get_node().path, { system = true })
-    --         end,
-    --         desc = 'Open with System Application',
-    --       },
-    --       ['P'] = { 'toggle_preview', config = { use_float = false } },
-    --     },
-    --   },
-    --   default_component_configs = {
-    --     indent = {
-    --       with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
-    --       expander_collapsed = '',
-    --       expander_expanded = '',
-    --       expander_highlight = 'NeoTreeExpander',
-    --     },
-    --     git_status = {
-    --       symbols = {
-    --         unstaged = '󰄱',
-    --         staged = '󰱒',
-    --       },
-    --     },
-    --   },
-    -- },
-    -- 'nvim-neo-tree/neo-tree.nvim',
-    -- branch = 'v3.x',
-    -- dependencies = {
-    --   'nvim-lua/plenary.nvim',
-    --   'MunifTanjim/nui.nvim',
-    --   'nvim-tree/nvim-web-devicons', -- optional, but recommended
-    -- },
-    -- lazy = false, -- neo-tree will lazily load itself
-    -- opts = {
-    --   -- use_libuv_file_watcher = true,
-    --   open_files_do_not_replace_types = { 'terminal', 'Trouble', 'trouble', 'qf', 'Outline' },
-    --   filesystem = {
-    --     bind_to_cwd = false,
-    --     follow_current_file = { enabled = true },
-    --     use_libuv_file_watcher = true,
-    --   },
-    --   sources = {
-    --     'filesystem',
-    --     'buffers',
-    --     'git_status',
-    --     'document_symbols', -- Add this line
-    --   },
-    -- filtered_items = {
-    --   visible = false, -- Change to true if you want to see them dimmed
-    --   hide_dotfiles = true,
-    --   hide_gitignored = true,
-    --   hide_by_name = { '.cache', '.pio' },
-    --   never_show = { -- This is the strongest setting to ignore the folder
-    --     '.cache',
-    --     '.git',
-    --     'node_modules',
-    --   },
-    -- },
-    -- },
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      'nvim-tree/nvim-web-devicons', -- optional, but recommended
+    },
+    lazy = false, -- neo-tree will lazily load itself
   },
-
-  {
-    'nvim-tree/nvim-tree.lua',
-    -- version = '*',
-    lazy = false,
-    dependencies = 'nvim-tree/nvim-web-devicons',
-    config = function()
-      require('nvim-tree').setup({
-        filesystem_watchers = {
-          ignore_dirs = {
-            '/.cache', -- Ignores clangd's heavy index folder
-            '/.pio', -- Ignores pio heavy index folder
-            '/node_modules', -- Good practice for performance
-            '/.git',
-          },
-        },
-        -- Optional: If you also want to hide it from the tree view entirely
-        -- filters = {
-        --   custom = { '^\\.cache$', '^\\.pio$' },
-        -- },
-      })
-    end,
-  },
+  -- {
+  --   'nvim-tree/nvim-tree.lua',
+  --   -- version = '*',
+  --   lazy = false,
+  --   dependencies = 'nvim-tree/nvim-web-devicons',
+  --   config = function()
+  --     require('nvim-tree').setup({
+  --       filesystem_watchers = {
+  --         ignore_dirs = {
+  --           '/.cache', -- Ignores clangd's heavy index folder
+  --           '/.pio', -- Ignores pio heavy index folder
+  --           '/node_modules', -- Good practice for performance
+  --           '/.git',
+  --         },
+  --       },
+  --       -- Optional: If you also want to hide it from the tree view entirely
+  --       -- filters = {
+  --       --   custom = { '^\\.cache$', '^\\.pio$' },
+  --       -- },
+  --     })
+  --   end,
+  -- },
 
   {
     'batoaqaa/nvim-platformio.lua',
@@ -441,7 +340,7 @@ local plugins = {
               end
             end,
           })
-          -- vim.g.platformioRootDir = vim.uv.cwd()
+          vim.g.platformioRootDir = vim.uv.cwd()
           require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
         end, {})
       end
@@ -662,6 +561,7 @@ if tok then
 end
 -- Keymap to open the buffer list
 vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
+
 local pioConfig = {
   lspClangd = {
     -- enabled = false,
