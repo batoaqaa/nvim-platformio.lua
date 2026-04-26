@@ -409,35 +409,35 @@ local plugins = {
         },
       },
     },
-    -- This is the "magic" line.
-    -- If it returns false, the plugin won't load on startup.
-    cond = function()
-      return vim.fn.filereadable('platformio.ini') == 1
-    end,
 
-    -- This allows you to MANUALLY load it via :Pioinit even if platformio.ini is missing
-    -- Lazy.nvim allows 'cmd' to override 'cond' in most versions
+    lazy = true,
+
+    -- 2. Define commands that should trigger the load
     cmd = { 'Pio', 'Pioinit' },
 
     init = function()
-      -- Create the manual force command
+      -- 3. Automatic Check: Runs on startup
+      if vim.fn.filereadable('platformio.ini') == 1 then
+        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+      end
+
+      -- 4. Manual Force: This command is now always registered
       vim.api.nvim_create_user_command('Pioinit', function()
-        -- We bypass the cond by explicitly loading
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
         vim.schedule(function()
-          vim.cmd('Pio')
+          vim.cmd('Pio') -- Automatically opens the menu after force-loading
         end)
       end, { desc = 'Force activate PlatformIO' })
     end,
 
     config = function()
-      local pioConfig = {
+      -- 5. Standard plugin configuration
+      require('platformio').setup({
         lspClangd = {
           enabled = true,
           attach = { enabled = true, keymaps = true },
         },
-      }
-      require('platformio').setup(pioConfig)
+      })
     end,
     -- init = function()
     --   -- 1. Automatic check: Load if file exists
