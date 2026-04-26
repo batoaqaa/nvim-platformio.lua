@@ -141,7 +141,7 @@ local function pick_board(json_data)
       layout_strategy = 'horizontal',
       layout_config = {
         width = 0.9, -- Overall width of the Telescope window (90% of screen)
-        preview_width = 0.75, -- 75% of the window goes to "Board Details", leaving 25% for results
+        preview_width = 0.65, -- 65% of the window goes to "Board Details", leaving 25% for results
       },
       finder = finders.new_table({
         results = json_data,
@@ -174,6 +174,7 @@ local function pick_board(json_data)
     })
     :find()
 end
+
 -- STEP 1: IDE (True/False)
 local function start_pio_wizard(json_data)
   local opts = require('telescope.themes').get_dropdown({
