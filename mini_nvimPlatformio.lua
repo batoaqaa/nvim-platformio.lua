@@ -314,6 +314,9 @@ local plugins = {
       -- 1. Automatic check: Load if file exists
       if vim.fn.filereadable('platformio.ini') == 1 then
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+        vim.g.platformioRootDir = vim.uv.cwd()
+      else
+        vim.g.platformioRootDir = nil
       end
 
       -- 2. Manual Force: Create a command that overrides the check
