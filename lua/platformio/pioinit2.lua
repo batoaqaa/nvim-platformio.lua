@@ -97,42 +97,6 @@ local function pick_framework(board_details)
 end
 
 -- STEP 2: Board (with Buffer Previewer)
--- local function pick_board(json_data)
---   pickers
---     .new({}, {
---       prompt_title = 'Select Board',
---       finder = finders.new_table({
---         results = json_data,
---         entry_maker = function(entry)
---           return {
---             value = entry,
---             display = entry.name or entry.id,
---             ordinal = (entry.name or '') .. ' ' .. (entry.id or ''),
---           }
---         end,
---       }),
---       previewer = previewers.new_buffer_previewer({
---         title = 'Board Details',
---         define_preview = function(self, entry)
---           local content = vim.split(vim.inspect(entry.value), '\n')
---           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, content)
---           vim.api.nvim_set_option_value('filetype', 'lua', { buf = self.state.bufnr })
---         end,
---       }),
---       sorter = telescope_conf.generic_sorter({}),
---       attach_mappings = function(prompt_bufnr)
---         actions.select_default:replace(function()
---           local selection = action_state.get_selected_entry()
---           actions.close(prompt_bufnr)
---           wizard_data.board_id = selection.value.id
---           pick_framework(selection.value) -- Next step
---         end)
---         return true
---       end,
---     })
---     :find()
--- end
-
 local function pick_board(json_data)
   pickers
     .new({}, {

@@ -48,6 +48,10 @@ local function pick_library(json_data)
   local opts = {}
   pickers.new(opts, {
     prompt_title = 'Libraries',
+    layout_config = {
+      width = 0.9, -- Overall width of the Telescope window (90% of screen)
+      preview_width = 0.60, -- 65% of the window goes to "Board Details", leaving 25% for results
+    },
     finder = finders.new_table({
       results = json_data['items'],
       entry_maker = opts.entry_maker or libentry_maker(opts),
