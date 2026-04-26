@@ -433,8 +433,7 @@ local plugins = {
               end
             end,
           })
-          -- vim.g.platformioRootDir = vim.fn.getcwd()
-          vim.g.platformioRootDir = vim.uv.cwd()
+          -- vim.g.platformioRootDir = vim.uv.cwd()
           require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
         end, {})
       end
