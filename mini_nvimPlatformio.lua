@@ -218,6 +218,8 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
+package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
 local plugins = {
@@ -404,9 +406,6 @@ local plugins = {
 --   },
 -- })
 
-vim.opt.rtp:prepend(lazypath)
-package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
-package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
 require('lazy').setup(plugins, {
   root = data_dir .. '/lazy', -- Ensure plugins install in tmp
   install = {
