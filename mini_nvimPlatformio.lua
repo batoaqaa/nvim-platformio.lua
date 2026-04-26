@@ -255,12 +255,26 @@ local plugins = {
     },
     opts = {
       filesystem = {
-        hijack_netrw_behavior = 'open_default',
-        use_libuv_file_watcher = true, -- This will use the OS level file watchers to detect changes
+        use_libuv_file_watcher = true,
         filtered_items = {
-          never_show = { '.cache', '.git' },
+          hide_dotfiles = false,
+          hide_gitignored = true,
+          never_show = { -- Add any massive folders here
+            '.cache',
+            '.git',
+            'node_modules',
+            'build',
+            'target',
+          },
         },
       },
+      -- filesystem = {
+      --   hijack_netrw_behavior = 'open_default',
+      --   use_libuv_file_watcher = true, -- This will use the OS level file watchers to detect changes
+      --   filtered_items = {
+      --     never_show = { '.cache', '.git', '.pio' },
+      --   },
+      -- },
     },
   },
 
