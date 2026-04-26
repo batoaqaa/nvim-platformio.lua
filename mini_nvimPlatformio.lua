@@ -169,33 +169,33 @@ vim.env.XDG_STATE_HOME = tmp .. '/state'
 
 local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
 
-local data_path = vim.env.XDG_DATA_HOME
-local plugins = {
-  nui = data_path .. 'nui.nvim',
-  plenary = data_path .. 'plenary.nvim',
-  neotree = data_path .. 'neo-tree.nvim',
-  pio = data_path .. 'nvim-platformio.lua',
-  telescope = data_path .. 'telescope.nvim',
-  toggleterm = data_path .. 'toggleterm.nvim',
-}
-
--- 2. Add ALL to runtimepath immediately
-for _, path in pairs(plugins) do
-  if vim.fn.isdirectory(path) == 1 then
-    vim.opt.rtp:append(path)
-  end
-end
-
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  vim.fn.system({
-    'git',
-    'clone',
-    '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
-    '--branch=stable',
-    lazypath,
-  })
-end
+-- local data_path = vim.env.XDG_DATA_HOME
+-- local plugins = {
+--   nui = data_path .. 'nui.nvim',
+--   plenary = data_path .. 'plenary.nvim',
+--   neotree = data_path .. 'neo-tree.nvim',
+--   pio = data_path .. 'nvim-platformio.lua',
+--   telescope = data_path .. 'telescope.nvim',
+--   toggleterm = data_path .. 'toggleterm.nvim',
+-- }
+--
+-- -- 2. Add ALL to runtimepath immediately
+-- for _, path in pairs(plugins) do
+--   if vim.fn.isdirectory(path) == 1 then
+--     vim.opt.rtp:append(path)
+--   end
+-- end
+--
+-- if not (vim.uv or vim.loop).fs_stat(lazypath) then
+--   vim.fn.system({
+--     'git',
+--     'clone',
+--     '--filter=blob:none',
+--     'https://github.com/folke/lazy.nvim.git',
+--     '--branch=stable',
+--     lazypath,
+--   })
+-- end
 
 vim.opt.rtp:prepend(lazypath)
 
@@ -278,16 +278,16 @@ local plugins = {
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
 
-  {
-    'nvim-neo-tree/neo-tree.nvim',
-    branch = 'v3.x',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'MunifTanjim/nui.nvim',
-      'nvim-tree/nvim-web-devicons', -- optional, but recommended
-    },
-    lazy = false, -- neo-tree will lazily load itself
-  },
+  -- {
+  --   'nvim-neo-tree/neo-tree.nvim',
+  --   branch = 'v3.x',
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim',
+  --     'MunifTanjim/nui.nvim',
+  --     'nvim-tree/nvim-web-devicons', -- optional, but recommended
+  --   },
+  --   lazy = false, -- neo-tree will lazily load itself
+  -- },
   -- {
   --   'nvim-tree/nvim-tree.lua',
   --   -- version = '*',
@@ -654,17 +654,17 @@ end
 -- end
 -- Keymap to open the buffer list
 -- vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
-require('plenary')
-require('nui.utils')
-
--- 4. Setup Neo-tree with Watcher Exclusions
-require('neo-tree').setup({
-  filesystem = {
-    filtered_items = {
-      never_show = { '.cache', '.git' }, -- Prevents file-watcher loops
-    },
-  },
-})
+-- require('plenary')
+-- require('nui.utils')
+--
+-- -- 4. Setup Neo-tree with Watcher Exclusions
+-- require('neo-tree').setup({
+--   filesystem = {
+--     filtered_items = {
+--       never_show = { '.cache', '.git' }, -- Prevents file-watcher loops
+--     },
+--   },
+-- })
 local pioConfig = {
   lspClangd = {
     -- enabled = false,
