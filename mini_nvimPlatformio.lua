@@ -182,7 +182,8 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- 1. Setup Cross-Platform Redirected Paths
 local home = os.getenv('USERPROFILE') or os.getenv('HOME')
-local tmp_root = home .. '/tmp/nvim-tmp'
+-- local tmp_root = home .. '/tmp/nvim-tmp'
+local tmp_root = (home .. [[/tmp/nvim-tmp]]):gsub('[\\]+', '/')
 local data_dir = tmp_root .. '/data'
 local config_dir = tmp_root .. '/config'
 local cache_dir = tmp_root .. '/cache'
