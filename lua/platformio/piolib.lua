@@ -180,9 +180,9 @@ local function pick_library(json_data)
         pio.run_sequence({
           {
             -- Use 'cmd' (singular), not 'cmds' or 'cmnds'
-            cmd = {'pio pkg install --library "' .. pkg_name .. '"'}, 
-            cb = function () 
-              vim.notify('Piolib: Done installing ' .. pkg_name, vim.log.levels.INFO) 
+            cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
+            cb = function ()
+              vim.notify('Piolib: Done installing ' .. pkg_name, vim.log.levels.INFO)
             end
           },
         })
