@@ -180,20 +180,20 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 --   })
 -- end
 
-
 local home = os.getenv('USERPROFILE') or os.getenv('HOME')
 local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 
 -- Set environment variables so Neovim and plugins use the tmp folder automatically
 vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
-vim.env.XDG_DATA_HOME   = tmp_root .. '/data'
-vim.env.XDG_CACHE_HOME  = tmp_root .. '/cache'
-vim.env.XDG_STATE_HOME  = tmp_root .. '/state'
+vim.env.XDG_DATA_HOME = tmp_root .. '/data'
+vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
+vim.env.XDG_STATE_HOME = tmp_root .. '/state'
 
-local lazypath = vim.fn.stdpath("data") .. '/lazy/lazy.nvim'
+local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
--- if vim.fn.isdirectory(lazypath) == 0 then
+  -- if vim.fn.isdirectory(lazypath) == 0 then
   print('Attempting to download lazy.nvim...')
+
   vim.fn.system({
     'git',
     'clone',
@@ -315,7 +315,7 @@ local plugins = {
   --   },
   -- },
 
- {
+  {
     'nvim-neo-tree/neo-tree.nvim',
     branch = 'v3.x',
     dependencies = {
@@ -331,31 +331,16 @@ local plugins = {
       },
     },
   },
-}
 
--- 4. Setup lazy.nvim
-require('lazy').setup(plugins, {
-  root = vim.fn.stdpath("data") .. '/lazy',
-  install = { missing = true },
-  ui = { border = 'rounded' },
-})
-
--- 5. Basic Minimal UI Settings
-vim.opt.termguicolors = true
-vim.opt.number = true
-vim.opt.mouse = 'a'
-
-print("Minimal environment loaded in: " .. tmp_root)
-
-Use code with caution.
-Why this is the correct "Complete" version:
-
-    XDG Variables: By setting XDG_DATA_HOME, you don't need to manually mkdir the nvim-data folder for Neo-tree; Neovim handles it.
-    Correct Git URL: It points to folke/lazy.nvim.git so the download actually works.
-    Package Path: It fixes the module 'lazy' not found error on Windows.
-    Conditional Loading: The PlatformIO plugin remains lazy/disabled until it sees the config file or you run :Pioinit.
-
-Does this version successfully download all plugins without any "module not found" or "log file" errors?
+  -- Use code with caution.
+  -- Why this is the correct "Complete" version:
+  --
+  --     XDG Variables: By setting XDG_DATA_HOME, you don't need to manually mkdir the nvim-data folder for Neo-tree; Neovim handles it.
+  --     Correct Git URL: It points to folke/lazy.nvim.git so the download actually works.
+  --     Package Path: It fixes the module 'lazy' not found error on Windows.
+  --     Conditional Loading: The PlatformIO plugin remains lazy/disabled until it sees the config file or you run :Pioinit.
+  --
+  -- Does this version successfully download all plugins without any "module not found" or "log file" errors?
   -- {
   --   'nvim-tree/nvim-tree.lua',
   --   -- version = '*',
@@ -445,7 +430,7 @@ Does this version successfully download all plugins without any "module not foun
 -- })
 
 require('lazy').setup(plugins, {
-  root = vim.fn.stdpath("data") .. '/lazy',
+  root = vim.fn.stdpath('data') .. '/lazy',
   install = { missing = true },
   ui = { border = 'rounded' },
 })
