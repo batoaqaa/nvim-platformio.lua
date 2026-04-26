@@ -1,5 +1,5 @@
---@class lua.platformio.utils.misc
--- File: lua/platformio/wizard.lua
+---@class platformio.utils.misc
+
 local M = {}
 
 M.is_windows = jit.os == 'Windows'

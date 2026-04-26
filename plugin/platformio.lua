@@ -25,26 +25,26 @@
 --   end,
 -- })
 
----@class vim
----@field pio platformio.utils.pio
----@field misc platformio.utils.misc
+--@class vim
+--@field pio platformio.utils.pio
+--@field misc platformio.utils.misc
 
-setmetatable(vim, {
-  __index = function(t, k)
-    if k == 'misc' then
-      local m = require('platformio.utils.misc')
-      rawset(t, k, m) -- Physically add 'misc' to 'vim'
-      return m
-    end
-    if k == 'pio' then
-      local p = require('platformio.utils.pio')
-      rawset(t, k, p) -- Physically add 'pio' to 'vim'
-      return p
-    end
-  end,
-})
--- vim.misc = require('platformio.utils.misc')
--- vim.pio = require('platformio.utils.pio')
+-- setmetatable(vim, {
+--   __index = function(t, k)
+--     if k == 'misc' then
+--       local m = require('platformio.utils.misc')
+--       rawset(t, k, m) -- Physically add 'misc' to 'vim'
+--       return m
+--     end
+--     if k == 'pio' then
+--       local p = require('platformio.utils.pio')
+--       rawset(t, k, p) -- Physically add 'pio' to 'vim'
+--       return p
+--     end
+--   end,
+-- })
+vim.misc = require('platformio.utils.misc')
+vim.pio = require('platformio.utils.pio')
 
 -- INFO: fix paths in compile_commands.json
 vim.api.nvim_create_user_command('PioFixPaths', function()
