@@ -180,78 +180,37 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 --   })
 -- end
 
--- 1. Setup Cross-Platform Redirected Paths
 local home = os.getenv('USERPROFILE') or os.getenv('HOME')
--- local tmp_root = home .. '/tmp/nvim-tmp'
-local tmp_root = (home .. [[/tmp/nvim-temp]]):gsub('[\\/]+', '/')
+local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 local data_dir = tmp_root .. '/data'
-local config_dir = tmp_root .. '/config'
-local cache_dir = tmp_root .. '/cache'
-local state_dir = tmp_root .. '/state'
 local lazypath = data_dir .. '/lazy/lazy.nvim'
 
--- Create directories (handles Windows/Linux)
-for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir }) do
-  if vim.fn.isdirectory(dir) == 0 then
-    vim.fn.mkdir(dir, 'p')
-  end
+-- 1. Create parents, but NOT the lazypath itself (Git needs to create it)
+if vim.fn.isdirectory(data_dir .. '/lazy') == 0 then
+  vim.fn.mkdir(data_dir .. '/lazy', 'p')
 end
 
+-- 2. Correct Git Clone URL and logic
 if vim.fn.isdirectory(lazypath) == 0 then
-  print('Folder missing. Creating and downloading lazy.nvim...')
-  vim.fn.mkdir(lazypath, 'p')
-  local cmd = 'git clone --filter=blob:none https://github.com --branch=stable "' .. lazypath .. '"'
+  print('Downloading lazy.nvim...')
+  -- Correct URL: https://github.com
+  local cmd = string.format('git clone --filter=blob:none https://github.com --branch=stable "%s"', lazypath)
   vim.fn.system(cmd)
 end
 
--- Override stdpath so lazy.nvim knows where to stay
--- vim.fn.stdpath = (function(orig)
---   return function(what)
---     local redirected = { data = data_dir, config = config_dir, cache = cache_dir, state = state_dir }
---     return redirected[what] or orig(what)
---   end
--- end)(vim.fn.stdpath)
---
--- if not (vim.uv or vim.loop).fs_stat(lazypath) then
---   print('Downloading lazy.nvim... please wait.')
---   local output = vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com',
---     '--branch=stable',
---     lazypath,
---   })
---   if vim.v.shell_error ~= 0 then
---     print('FATAL: Git clone failed!')
---     print(output)
---     return
---   end
--- end
-local checker = io.open(lazypath .. [[/lua/lazy/init.lua]], 'r')
+-- 3. Verify
+local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
 if checker then
   checker:close()
 else
+  -- If this hits, check if 'git' is in your PATH
   error('FATAL: lazy.nvim was not downloaded correctly to ' .. lazypath)
 end
 
+-- 4. Environment Setup
 vim.opt.rtp:prepend(lazypath)
-local lua_src = lazypath .. [[/lua]]
-package.path = package.path .. ';' .. lua_src .. [[/?.lua;]] .. lua_src .. [[/?/init.lua]]
--- 2. Bootstrap lazy.nvim
--- if not vim.uv.fs_stat(lazypath) then
---   vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com',
---     '--branch=stable',
---     lazypath,
---   })
--- end
+package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
 
--- package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
--- package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
 local plugins = {
