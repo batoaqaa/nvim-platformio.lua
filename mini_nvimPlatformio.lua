@@ -309,35 +309,50 @@ local plugins = {
 
   {
     'batoaqaa/nvim-platformio.lua',
-    cond = function()
-      -- Check if platformio.ini exists in the current directory
-      local pio_exists = vim.fn.filereadable('platformio.ini') == 1
-      if pio_exists then
-        return true
+
+    init = function()
+      -- 1. Automatic check: Load if file exists
+      if vim.fn.filereadable('platformio.ini') == 1 then
+        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
       end
 
-      -- Create command to load AND open the plugin menu
+      -- 2. Manual Force: Create a command that overrides the check
       vim.api.nvim_create_user_command('Pioinit', function()
-        -- 1. Force lazy.nvim to load the plugin
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-
-        -- 2. Issue the main command to the plugin (opens the Telescope menu)
-        -- Use pcall to ensure it doesn't error if setup takes a millisecond to register
         vim.schedule(function()
-          vim.cmd('Pio')
-          vim.notify('PlatformIO Activated and Menu Opened')
+          vim.cmd('Pio') -- Trigger the plugin's internal menu
         end)
-      end, { desc = 'Force load and open PlatformIO' })
-
-      return false
-      -- If not found, create the :Pioinit command to force load the plugin
-      -- vim.api.nvim_create_user_command('Pioinit', function()
-      --   require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-      --   vim.notify('nvim-platformio.lua forced activation')
-      -- end, { desc = 'Force activate PlatformIO plugin' })
-      --
-      -- return false
+      end, { desc = 'Force activate PlatformIO' })
     end,
+    -- cond = function()
+    --   -- Check if platformio.ini exists in the current directory
+    --   local pio_exists = vim.fn.filereadable('platformio.ini') == 1
+    --   if pio_exists then
+    --     return true
+    --   end
+    --
+    --   -- Create command to load AND open the plugin menu
+    --   vim.api.nvim_create_user_command('Pioinit', function()
+    --     -- 1. Force lazy.nvim to load the plugin
+    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+    --
+    --     -- 2. Issue the main command to the plugin (opens the Telescope menu)
+    --     -- Use pcall to ensure it doesn't error if setup takes a millisecond to register
+    --     vim.schedule(function()
+    --       vim.cmd('Pio')
+    --       vim.notify('PlatformIO Activated and Menu Opened')
+    --     end)
+    --   end, { desc = 'Force load and open PlatformIO' })
+    --
+    --   return false
+    --   -- If not found, create the :Pioinit command to force load the plugin
+    --   -- vim.api.nvim_create_user_command('Pioinit', function()
+    --   --   require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+    --   --   vim.notify('nvim-platformio.lua forced activation')
+    --   -- end, { desc = 'Force activate PlatformIO plugin' })
+    --   --
+    --   -- return false
+    -- end,
     -- cond = function()
     --   -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
     --   local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
