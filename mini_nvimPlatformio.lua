@@ -336,64 +336,64 @@ local plugins = {
     --     },
     --   },
     -- },
-    'nvim-neo-tree/neo-tree.nvim',
-    branch = 'v3.x',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'MunifTanjim/nui.nvim',
-      'nvim-tree/nvim-web-devicons', -- optional, but recommended
-    },
-    lazy = false, -- neo-tree will lazily load itself
-    opts = {
-      -- use_libuv_file_watcher = true,
-      open_files_do_not_replace_types = { 'terminal', 'Trouble', 'trouble', 'qf', 'Outline' },
-      filesystem = {
-        bind_to_cwd = false,
-        follow_current_file = { enabled = true },
-        use_libuv_file_watcher = true,
-      },
-      sources = {
-        'filesystem',
-        'buffers',
-        'git_status',
-        'document_symbols', -- Add this line
-      },
-      -- filtered_items = {
-      --   visible = false, -- Change to true if you want to see them dimmed
-      --   hide_dotfiles = true,
-      --   hide_gitignored = true,
-      --   hide_by_name = { '.cache', '.pio' },
-      --   never_show = { -- This is the strongest setting to ignore the folder
-      --     '.cache',
-      --     '.git',
-      --     'node_modules',
-      --   },
-      -- },
-    },
+    -- 'nvim-neo-tree/neo-tree.nvim',
+    -- branch = 'v3.x',
+    -- dependencies = {
+    --   'nvim-lua/plenary.nvim',
+    --   'MunifTanjim/nui.nvim',
+    --   'nvim-tree/nvim-web-devicons', -- optional, but recommended
+    -- },
+    -- lazy = false, -- neo-tree will lazily load itself
+    -- opts = {
+    --   -- use_libuv_file_watcher = true,
+    --   open_files_do_not_replace_types = { 'terminal', 'Trouble', 'trouble', 'qf', 'Outline' },
+    --   filesystem = {
+    --     bind_to_cwd = false,
+    --     follow_current_file = { enabled = true },
+    --     use_libuv_file_watcher = true,
+    --   },
+    --   sources = {
+    --     'filesystem',
+    --     'buffers',
+    --     'git_status',
+    --     'document_symbols', -- Add this line
+    --   },
+    -- filtered_items = {
+    --   visible = false, -- Change to true if you want to see them dimmed
+    --   hide_dotfiles = true,
+    --   hide_gitignored = true,
+    --   hide_by_name = { '.cache', '.pio' },
+    --   never_show = { -- This is the strongest setting to ignore the folder
+    --     '.cache',
+    --     '.git',
+    --     'node_modules',
+    --   },
+    -- },
+    -- },
   },
 
-  -- {
-  --   'nvim-tree/nvim-tree.lua',
-  --   -- version = '*',
-  --   lazy = false,
-  --   dependencies = 'nvim-tree/nvim-web-devicons',
-  --   config = function()
-  --     require('nvim-tree').setup({
-  --       filesystem_watchers = {
-  --         ignore_dirs = {
-  --           '/.cache', -- Ignores clangd's heavy index folder
-  --           '/.pio', -- Ignores pio heavy index folder
-  --           '/node_modules', -- Good practice for performance
-  --           '/.git',
-  --         },
-  --       },
-  --       -- Optional: If you also want to hide it from the tree view entirely
-  --       -- filters = {
-  --       --   custom = { '^\\.cache$', '^\\.pio$' },
-  --       -- },
-  --     })
-  --   end,
-  -- },
+  {
+    'nvim-tree/nvim-tree.lua',
+    -- version = '*',
+    lazy = false,
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function()
+      require('nvim-tree').setup({
+        filesystem_watchers = {
+          ignore_dirs = {
+            '/.cache', -- Ignores clangd's heavy index folder
+            '/.pio', -- Ignores pio heavy index folder
+            '/node_modules', -- Good practice for performance
+            '/.git',
+          },
+        },
+        -- Optional: If you also want to hide it from the tree view entirely
+        -- filters = {
+        --   custom = { '^\\.cache$', '^\\.pio$' },
+        -- },
+      })
+    end,
+  },
 
   {
     'batoaqaa/nvim-platformio.lua',
