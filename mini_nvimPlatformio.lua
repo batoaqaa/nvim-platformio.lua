@@ -413,7 +413,7 @@ local plugins = {
     lazy = true,
 
     -- 2. Define commands that should trigger the load
-    cmd = { 'Pio', 'Pioinit' },
+    cmd = { 'Pioinit' },
 
     init = function()
       -- 3. Automatic Check: Runs on startup
@@ -425,7 +425,7 @@ local plugins = {
       vim.api.nvim_create_user_command('Pioinit', function()
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
         vim.schedule(function()
-          vim.cmd('Pio') -- Automatically opens the menu after force-loading
+          vim.cmd('Pioinit') -- Automatically opens the menu after force-loading
         end)
       end, { desc = 'Force activate PlatformIO' })
     end,
