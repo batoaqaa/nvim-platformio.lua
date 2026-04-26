@@ -404,6 +404,9 @@ local plugins = {
 --   },
 -- })
 
+vim.opt.rtp:prepend(lazypath)
+package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
+package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
 require('lazy').setup({
   root = data_dir .. '/lazy',
   spec = { plugins },
