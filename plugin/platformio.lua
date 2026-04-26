@@ -6,32 +6,51 @@
 -- +: At least one argument.
 -- -1: Zero or one argument (like ?, explicitly).
 
--- - Only requires the module the FIRST time you actually try to use vim.pf
+----------------------------------------------------------------
+-- lazy-loading technique using a Lua metatable.
+-- It essentially "teaches" Neovim how to find a custom module only when you actually try to use it
 -- setmetatable(vim, {
 --   __index = function(t, k)
+--     -- Lazy load the misc module if requested
 --     if k == 'misc' then
 --       t.misc = require('platformio.utils.misc')
 --       return t.misc
 --     end
+--
+--     -- Alias vim.pio to the pio module for convenience
+--     if k == 'pio' then
+--       t.pio = require('platformio.utils.pio')
+--       return t.pio
+--     end
 --   end,
 -- })
-vim.misc = require('platformio.utils.misc')
-local piolsserial = require('platformio.piolsserial')
-local pio = require('platformio.utils.pio')
 
--- Statusline: Using luaeval for best cross-platform stability
-vim.o.laststatus = 3
-vim.o.statusline = '%f %m %r %= %#PioStatus#%{luaeval("require(\'platformio.metadata\').get_pio_status()")} %y %p%% %l:%c'
-vim.api.nvim_set_hl(0, 'PioStatus', { fg = '#7aa2f7', bold = true })
+---@class vim
+---@field pio platformio.utils.pio
+---@field misc platformio.utils.misc
 
--- Simple timer to animate the spinner if M.is_busy
--- vim.fn.timer_start(100, function()
---   if meta.is_busy then
---     vim.cmd('redrawstatus')
---   end
--- end, { ['repeat'] = -1 })
+setmetatable(vim, {
+  __index = function(t, k)
+    if k == 'misc' then
+      local m = require('platformio.utils.misc')
+      rawset(t, k, m) -- Physically add 'misc' to 'vim'
+      return m
+    end
+    if k == 'pio' then
+      local p = require('platformio.utils.pio')
+      rawset(t, k, p) -- Physically add 'pio' to 'vim'
+      return p
+    end
+  end,
+})
+-- vim.misc = require('platformio.utils.misc')
+-- vim.pio = require('platformio.utils.pio')
 
-----------------------------------------------------------------
+-- INFO: fix paths in compile_commands.json
+vim.api.nvim_create_user_command('PioFixPaths', function()
+  vim.pio.compile_commandsFix()
+end, {})
+
 -- Pioinit2
 local pio_wiz = require('platformio.pioinit2')
 
@@ -44,7 +63,9 @@ end, { desc = 'Run PIO Project Wizard' })
 vim.api.nvim_create_user_command('PioWizard', function()
   pio_wiz.launch()
 end, {})
-----------------------------------------------------------------
+
+------------------------------------------------------
+local piolsserial = require('platformio.piolsserial')
 
 -- Pioinit
 vim.api.nvim_create_user_command('Pioinit', function()
@@ -128,12 +149,6 @@ vim.api.nvim_create_user_command('Piodebug', function()
   require('platformio.pioCommands').piodebug()
 end, {})
 
-------------------------------------------------------
-
--- INFO: fix paths in compile_commands.json
-vim.api.nvim_create_user_command('PioFixPaths', function()
-  pio.compile_commandsFix()
-end, {})
 ------------------------------------------------------
 
 -- require('telescope').load_extension('ui-select')

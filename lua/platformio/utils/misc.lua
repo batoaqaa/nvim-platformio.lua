@@ -1,3 +1,5 @@
+--@class lua.platformio.utils.misc
+-- File: lua/platformio/wizard.lua
 local M = {}
 
 M.is_windows = jit.os == 'Windows'
@@ -154,6 +156,7 @@ end
 -- local content = readFile("compile_commands.json")
 -- if content then local data = vim.json.decode(content) end
 -- stylua: ignore
+---@param path string
 function M.readFile(path)
   local uv = vim.uv or vim.loop -- Support older and newer Neovim versions
 
@@ -187,6 +190,9 @@ end
 -- local ok, err = writeFiile(path, json)
 -- if ok then print("Write complete!") end
 -- stylua: ignore
+---@param path string
+---@param data string
+---@param opts table
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
   opts = opts or {}

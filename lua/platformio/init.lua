@@ -188,4 +188,6 @@ function M.setup(user_config)
   end)
 end
 
+vim.notify('nvim-platformio.lua started', vim.log.levels.INFO)
+
 return M

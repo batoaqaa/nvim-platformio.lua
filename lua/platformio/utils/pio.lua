@@ -1,3 +1,4 @@
+---@class platformio.utils.pio
 local M = {}
 
 -- to fix require loop, this value is set in plugin/platformio

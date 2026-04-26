@@ -110,7 +110,7 @@ function M.pio_refresh(callback)
       meta.includes_build = quote_map(inc.build, '-I')
       meta.includes_toolchain = quote_map(inc.toolchain, '-isystem')
       meta.includes_compatlib = quote_map(inc.compatlib, '-isystem')
-      meta.last_checksum = checksum
+      meta.last_projectChecksum = checksum
       pcall(M.get_sysroot_triplet, meta.cc_compiler)
 
       if callback then callback() end
@@ -122,7 +122,7 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     local _, current_checksum = vim.misc.readFile(checksum_path)
     if current_checksum and current_checksum ~= '' then
-      if current_checksum == meta.last_checksum then return end -- Already updated
+      if current_checksum == meta.last_projectChecksum then return end -- Already updated
 
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
       local _, content = vim.misc.readFile(idedata_path)
@@ -345,8 +345,8 @@ function M.start_watchers()
 
   local targets = {
     { -- watcher for platformio.ini
-      path = vim.misc.joinPath(project_root, 'platformio.ini'),
       current_ini_hash = '',
+      path = vim.misc.joinPath(project_root, 'platformio.ini'),
       cb = function(self)
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.current_ini_hash then
@@ -357,10 +357,10 @@ function M.start_watchers()
       end,
     },
     { -- watcher for ./.pio/build/projct.checksum
-      checksum_path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'),
       idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),
+      path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
       cb = function(self)
-        local _, current_checksum = vim.misc.readFile(self.checksum_path)
+        local _, current_checksum = vim.misc.readFile(self.path)
         if current_checksum and current_checksum ~= '' then
           if current_checksum == _G.metadata.last_checksum then
             return
@@ -474,19 +474,6 @@ function M.init()
     local metadata = require('platformio.metadata')
     metadata.load_project_config()
 
-    ----------------------------------------------------------------------------------------
-    -- INFO: create clangd required files
-    -----------------------------------------------------------------------------------------
-    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
-    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    boilerplate.core_dir = _G.metadata.core_dir
-    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
-    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-    boilerplate_gen([[.stylua.toml]], vim.g.platformioRootDir)
-    boilerplate_gen([[generate_compileDB.py]], vim.g.platformioRootDir)
-    ---------------------------------------------------------------------------------
-
     require('platformio.lsp.clangd')
     if config.lspClangd.attach.enabled then
       require('platformio.lsp.attach')
@@ -498,15 +485,22 @@ function M.init()
 
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
-      M.run_compiledb() -- Smart: Auto-update DB if config changes
-      -- M.pio_refresh(function()
-      --   -- vim.schedule(function()
-      --   -- boilerplate_gen([[.clangd_cmd]], vim.g.platformioRootDir)
-      --   -- pio_generate_db()
-      --   -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-      --   -- lsp_restart('clangd')
-      --   -- end)
-      -- end)
+      ----------------------------------------------------------------------------------------
+      -- INFO: create clangd required files
+      -----------------------------------------------------------------------------------------
+      boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+      -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+      -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+      boilerplate.core_dir = _G.metadata.core_dir
+      boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+      boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+      ---------------------------------------------------------------------------------
+      -- M.run_compiledb() -- Smart: Auto-update DB if config changes
+      M.pio_refresh(function()
+        -- vim.schedule(function()
+        --   lsp_restart('clangd')
+        -- end)
+      end)
     end
   end
 end

@@ -1,28 +1,5 @@
 local M = {}
 
-local pio = require('platformio.utils.pio')
-local frames = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
-local frame_idx = 1
-
-function M.get_pio_status()
-  local meta = _G.metadata
-  if not meta then
-    return ''
-  end
-
-  -- Accessing meta.active_env triggers __index automatically in Lua
-  local active = meta.active_env or ''
-  if active == '' then
-    return ''
-  end
-
-  if M.is_busy then
-    local icon = frames[frame_idx]
-    frame_idx = (frame_idx % #frames) + 1
-    return string.format(' [ %s %s ] ', icon, active)
-  end
-  return string.format(' [ %s ] ', active)
-end
 -------------------------------------------------------------------------------------------------------
 local last_saved_hash = ''
 local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
@@ -53,7 +30,7 @@ local _pio_metadata = {
   sysroot = '',
   fallbackFlags = {},
   dbTrigger = false,
-  last_checksum = '', -- Used to track changes
+  last_projectChecksum = '', -- Used to track changes
 }
 -- 2. The Reactive Proxy Wrapper
 -- Any write to _G.metadata.key = val triggers this logic
@@ -86,6 +63,7 @@ _G.metadata = setmetatable({}, {
         --     vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         --   end
         -- end)
+      elseif key == 'last_projectChecksum' then
       elseif key == 'active_env' then
         -- Force global statusline so it doesn't get pushed around by Trouble or splits
         vim.o.laststatus = 3
@@ -94,6 +72,9 @@ _G.metadata = setmetatable({}, {
   end,
 })
 
+-- -- Add this temporary line in a file where you are coding:
+-- ---@type platformio.utils.misc
+-- local misc = vim.misc
 --INFO:
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
@@ -112,7 +93,7 @@ function M.save_project_config(quiet)
   --   file:write(pio.jsonFormat(json_data))
   if current_hash ~= last_saved_hash then
     -- local status = vim.fn.writefile({ json_data }, config_path)
-    local status, _ = vim.misc.writeFile({ json_data }, config_path)
+    local status, _ = vim.misc.writeFile(json_data, config_path, {})
     if status == 0 then
       last_saved_hash = current_hash
       if not quiet then
@@ -127,23 +108,6 @@ end
 --INFO:
 -- 4. Load Logic (Populates proxy safely)
 function M.load_project_config()
-  -- if vim.fn.filereadable(config_path) == 1 then
-  --   local file = io.open(config_path, 'r')
-  --   if file then
-  --     local content = file:read('*a')
-  --     file:close()
-  --     local ok, decoded = pcall(vim.json.decode, content)
-  --     if ok and type(decoded) == 'table' then
-  --       -- We update _pio_metadata directly to avoid triggering
-  --       -- 50+ notifications/restarts during the initial load loop
-  --       for k, v in pairs(decoded) do
-  --         _pio_metadata[k] = v
-  --       end
-  --       last_saved_hash = vim.fn.sha256(content)
-  --       return
-  --     end
-  --   end
-  -- end
   if vim.fn.filereadable(config_path) == 1 then
     local _, json_data = vim.misc.readFile(config_path)
     if json_data then

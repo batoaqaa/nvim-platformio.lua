@@ -49,13 +49,6 @@ extra_scripts =
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
 
-;build_flags =
-;    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0
-;    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/14.2.0/riscv32-esp-elf
-;    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include
-;    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/14.2.0/include-fixed
-;    -isystemC:/Users/tom/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include
-;  -D COMPILATIONDB_INCLUDE_TOOLCHAIN
 ]],
   content = function(self)
     -- local pio = require('platformio.utils.pio')
@@ -116,34 +109,6 @@ boilerplate['.clangd_config'] = {
   }
 }
 ]],
-}
--- INFO: .clangd_cmd
-boilerplate['.clangd_cmd'] = {
-  rewrite = true,
-  read = false,
-  template = [[
-clangd
---all-scopes-completion
---background-index
---clang-tidy
---compile_args_from=filesystem
---compile-commands-dir=.
---enable-config
---completion-parse=always
---completion-style=detailed
---header-insertion=iwyu
---fallback-style=llvm
--j=12
---log=verbose
---offset-encoding=utf-8
---pch-storage=memory
---pretty
---ranking-model=decision_forest
---query-driver=%s
-]],
-  content = function(self)
-    return string.format(self.template, _G.metadata.query_driver or '**')
-  end,
 }
 -- CompileFlags:
 --   Add:
@@ -248,41 +213,6 @@ Diagnostics:
   --   local triplet = '--target=' .. _G.metadata.triplet
   --   return string.format(self.template, triplet, sysroot)
   -- end,
-}
-
--- INFO: .stylua.toml
-boilerplate['.stylua.toml'] = {
-  rewrite = false,
-  read = false,
-  content = [[
-syntax = "All"
-column_width = 132
-line_endings = "Unix"
-indent_type = "Spaces"
-indent_width = 2
-quote_style = "AutoPreferSingle"
-call_parentheses = "Always"
-collapse_simple_statement = "Never"
-space_after_function_names = "Never"
-
-[sort_requires]
-enabled = false
-]],
-}
-
--- INFO: generate_compileDB.py
-boilerplate['generate_compileDB.py'] = {
-  rewrite = false,
-  read = false,
-  content = [[
-import subprocess
-from SCons.Script import COMMAND_LINE_TARGETS
-
-# Only run if we are NOT already generating the compilation database
-if "compiledb" not in COMMAND_LINE_TARGETS:
-    print("Regenerating compile_commands.json...")
-    subprocess.run(["pio", "run", "-t", "compiledb"])
-]],
 }
 
 -- INFO: .clang-format
