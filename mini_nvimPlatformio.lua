@@ -161,39 +161,17 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
 -- pick a temp root
--- local tmp = vim.loop.os_tmpdir() .. '/nvim-temp'
--- vim.env.XDG_CONFIG_HOME = vim.fn.expand('~/.miniConfig')
--- vim.env.XDG_DATA_HOME = tmp .. '/data'
--- vim.env.XDG_CACHE_HOME = tmp .. '/cache'
--- vim.env.XDG_STATE_HOME = tmp .. '/state'
---
--- local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
---
--- if not (vim.uv or vim.loop).fs_stat(lazypath) then
---   vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com/folke/lazy.nvim.git',
---     '--branch=stable',
---     lazypath,
---   })
--- end
-
-local home = os.getenv('USERPROFILE') or os.getenv('HOME')
-local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
-
--- Set environment variables so Neovim and plugins use the tmp folder automatically
+local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
 vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
 vim.env.XDG_DATA_HOME = tmp_root .. '/data'
 vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
 vim.env.XDG_STATE_HOME = tmp_root .. '/state'
 
-local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+print(tmp_root)
+local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
+-- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  -- if vim.fn.isdirectory(lazypath) == 0 then
   print('Attempting to download lazy.nvim...')
-
   vim.fn.system({
     'git',
     'clone',
@@ -221,6 +199,7 @@ package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '
 -- INFO: define plugins table
 local plugins = {
   { 'windwp/nvim-autopairs', event = 'InsertEnter', config = true },
+
   {
     'Saghen/blink.cmp',
     dependencies = { 'rafamadriz/friendly-snippets' },
@@ -267,55 +246,6 @@ local plugins = {
   },
 
   {
-    -- 'akinsho/bufferline.nvim',
-    -- dependencies = 'nvim-tree/nvim-web-devicons',
-    -- config = function()
-    --   require('bufferline').setup({
-    --     options = {
-    --       mode = 'buffers', -- set to "tabs" to only show standard vim tabs
-    --       separator_style = 'thin', -- options: "slant" | "slope" | "thick" | "thin"
-    --       always_show_bufferline = true,
-    --       show_buffer_close_icons = true,
-    --       show_close_icon = true,
-    --       color_icons = true,
-    --
-    --       -- Add this if you use NvimTree or Neo-tree to prevent overlap
-    --       offsets = {
-    --         {
-    --           filetype = 'NvimTree',
-    --           text = 'File Explorer',
-    --           text_align = 'left',
-    --           separator = true,
-    --         },
-    --       },
-    --     },
-    --   })
-    --   require('bufferline').setup({})
-    -- end,
-    -- config = true,
-    -- config = true is shorthand for config = function() require('bufferline').setup() end
-  },
-
-  -- {
-  --   'nvim-neo-tree/neo-tree.nvim',
-  --   branch = 'v3.x',
-  --   dependencies = {
-  --     'nvim-lua/plenary.nvim',
-  --     'MunifTanjim/nui.nvim',
-  --     'nvim-tree/nvim-web-devicons', -- optional, but recommended
-  --   },
-  --   lazy = false, -- neo-tree will lazily load itself
-  --   opts = {
-  --     sources = {
-  --       'filesystem',
-  --       'buffers',
-  --       'git_status',
-  --       'document_symbols', -- Add this line
-  --     },
-  --   },
-  -- },
-
-  {
     'nvim-neo-tree/neo-tree.nvim',
     branch = 'v3.x',
     dependencies = {
@@ -331,38 +261,6 @@ local plugins = {
       },
     },
   },
-
-  -- Use code with caution.
-  -- Why this is the correct "Complete" version:
-  --
-  --     XDG Variables: By setting XDG_DATA_HOME, you don't need to manually mkdir the nvim-data folder for Neo-tree; Neovim handles it.
-  --     Correct Git URL: It points to folke/lazy.nvim.git so the download actually works.
-  --     Package Path: It fixes the module 'lazy' not found error on Windows.
-  --     Conditional Loading: The PlatformIO plugin remains lazy/disabled until it sees the config file or you run :Pioinit.
-  --
-  -- Does this version successfully download all plugins without any "module not found" or "log file" errors?
-  -- {
-  --   'nvim-tree/nvim-tree.lua',
-  --   -- version = '*',
-  --   lazy = false,
-  --   dependencies = 'nvim-tree/nvim-web-devicons',
-  --   config = function()
-  --     require('nvim-tree').setup({
-  --       filesystem_watchers = {
-  --         ignore_dirs = {
-  --           '/.cache', -- Ignores clangd's heavy index folder
-  --           '/.pio', -- Ignores pio heavy index folder
-  --           '/node_modules', -- Good practice for performance
-  --           '/.git',
-  --         },
-  --       },
-  --       -- Optional: If you also want to hide it from the tree view entirely
-  --       -- filters = {
-  --       --   custom = { '^\\.cache$', '^\\.pio$' },
-  --       -- },
-  --     })
-  --   end,
-  -- },
 
   {
     'batoaqaa/nvim-platformio.lua',
@@ -423,30 +321,15 @@ local plugins = {
 
 ----------------------------------------------------------------------------------------
 -- INFO: Install/config plugins
--- require('lazy').setup(plugins, {
---   install = {
---     missing = true,
---   },
--- })
-
 require('lazy').setup(plugins, {
   root = vim.fn.stdpath('data') .. '/lazy',
   install = { missing = true },
   ui = { border = 'rounded' },
 })
 
--- require('lazy').setup(plugins, {
---   root = data_dir .. [[/lazy]], -- Ensure plugins install in tmp
---   install = {
---     missing = true,
---   },
--- })
-
 ----------------------------------------------------------------------------------------
-
 -- stylua: ignore
 if vim.fn.has('nvim-0.11') == 1 then
-  -- Create an augroup to manage the autocmd
   local json_format_group = vim.api.nvim_create_augroup('JsonFormat', { clear = true })
   vim.api.nvim_create_autocmd('BufWritePre', {
     group = json_format_group,
@@ -643,9 +526,10 @@ if tok then
       previewer = false,
     }))
   end, { desc = '[/] Fuzzily search in current buffer' })
+  -- Keymap to open the buffer list
+  vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
 end
--- Keymap to open the buffer list
-vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
+
 local pioConfig = {
   lspClangd = {
     -- enabled = false,
