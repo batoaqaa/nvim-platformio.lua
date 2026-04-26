@@ -180,9 +180,44 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 --   })
 -- end
 
-local home = os.getenv('USERPROFILE') or os.getenv('HOME')
-local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
+-- 1. Setup Redirected Paths
+local tmp_root = vim.fn.expand('~/tmp/nvim-tmp'):gsub('\\', '/')
 local data_dir = tmp_root .. '/data'
+local config_dir = tmp_root .. '/config'
+local cache_dir = tmp_root .. '/cache'
+local state_dir = tmp_root .. '/state'
+local nvim_data = data_dir .. '/nvim-data'
+
+-- Create directories if they don't exist
+for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir, nvim_data }) do
+  if vim.fn.isdirectory(dir) == 0 then
+    vim.fn.mkdir(dir, 'p')
+  end
+end
+
+-- Override Neovim's internal paths
+vim.opt.packpath = { data_dir .. '/site' }
+vim.fn.stdpath = (function(orig)
+  return function(what)
+    if what == 'data' then
+      return data_dir
+    end
+    if what == 'config' then
+      return config_dir
+    end
+    if what == 'cache' then
+      return cache_dir
+    end
+    if what == 'state' then
+      return state_dir
+    end
+    return orig(what)
+  end
+end)(vim.fn.stdpath)
+
+-- local home = os.getenv('USERPROFILE') or os.getenv('HOME')
+-- local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
+-- local data_dir = tmp_root .. '/data'
 vim.env.XDG_DATA_HOME = data_dir
 print(vim.env.XDG_DATA_HOME)
 local lazypath = data_dir .. '/lazy/lazy.nvim'
