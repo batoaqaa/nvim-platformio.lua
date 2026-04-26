@@ -389,54 +389,103 @@ local plugins = {
 
   {
     'batoaqaa/nvim-platformio.lua',
+    dependencies = {
+      { 'akinsho/toggleterm.nvim' },
+      { 'nvim-telescope/telescope.nvim' },
+      -- {
+      --   'nvim-telescope/telescope.nvim',
+      --   tag = '0.1.8',
+      --   dependencies = { 'nvim-lua/plenary.nvim' },
+      -- },
+      { 'nvim-telescope/telescope-ui-select.nvim' },
+      { 'nvim-lua/plenary.nvim' },
+      { 'folke/which-key.nvim' },
+      {
+        'mason-org/mason-lspconfig.nvim',
+        dependencies = {
+          { 'mason-org/mason.nvim' },
+          { 'folke/trouble.nvim' },
+          { 'j-hui/fidget.nvim' }, -- status bottom right
+        },
+      },
+    },
+    -- This is the "magic" line.
+    -- If it returns false, the plugin won't load on startup.
+    cond = function()
+      return vim.fn.filereadable('platformio.ini') == 1
+    end,
+
+    -- This allows you to MANUALLY load it via :Pioinit even if platformio.ini is missing
+    -- Lazy.nvim allows 'cmd' to override 'cond' in most versions
+    cmd = { 'Pio', 'Pioinit' },
 
     init = function()
-      -- 1. Automatic check: Load if file exists
-      if vim.fn.filereadable('platformio.ini') == 1 then
-        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-        vim.g.platformioRootDir = vim.uv.cwd()
-      else
-        vim.g.platformioRootDir = nil
-      end
-
-      -- 2. Manual Force: Create a command that overrides the check
+      -- Create the manual force command
       vim.api.nvim_create_user_command('Pioinit', function()
+        -- We bypass the cond by explicitly loading
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
         vim.schedule(function()
-          vim.cmd('Pio') -- Trigger the plugin's internal menu
+          vim.cmd('Pio')
         end)
       end, { desc = 'Force activate PlatformIO' })
     end,
+
     config = function()
-      -- -- 3. Setup happens ONLY when the plugin is loaded
-      -- require("platformio").setup({
-      --   lspClangd = {
-      --     enabled = true,
-      --     attach = {
-      --       enabled = true,
-      --       keymaps = true,
-      --     },
-      --   },
-      -- })
       local pioConfig = {
         lspClangd = {
-          -- enabled = false,
           enabled = true,
-          attach = {
-            enabled = true,
-            keymaps = true,
-          },
+          attach = { enabled = true, keymaps = true },
         },
-        -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
-        -- menu_name = "PlatformIO", -- replace this menu name to your convenience
-        -- debug = false,
       }
-      local pok, platformio = pcall(require, 'platformio')
-      if pok then
-        -- print("here" .. vim.inspect(pioConfig))
-        platformio.setup(pioConfig)
-      end
+      require('platformio').setup(pioConfig)
     end,
+    -- init = function()
+    --   -- 1. Automatic check: Load if file exists
+    --   if vim.fn.filereadable('platformio.ini') == 1 then
+    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+    --     vim.g.platformioRootDir = vim.uv.cwd()
+    --   else
+    --     vim.g.platformioRootDir = nil
+    --   end
+    --
+    --   -- 2. Manual Force: Create a command that overrides the check
+    --   vim.api.nvim_create_user_command('Pioinit', function()
+    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+    --     vim.schedule(function()
+    --       vim.cmd('Pio') -- Trigger the plugin's internal menu
+    --     end)
+    --   end, { desc = 'Force activate PlatformIO' })
+    -- end,
+    -- config = function()
+    --   -- -- 3. Setup happens ONLY when the plugin is loaded
+    --   -- require("platformio").setup({
+    --   --   lspClangd = {
+    --   --     enabled = true,
+    --   --     attach = {
+    --   --       enabled = true,
+    --   --       keymaps = true,
+    --   --     },
+    --   --   },
+    --   -- })
+    --   local pioConfig = {
+    --     lspClangd = {
+    --       -- enabled = false,
+    --       enabled = true,
+    --       attach = {
+    --         enabled = true,
+    --         keymaps = true,
+    --       },
+    --     },
+    --     -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
+    --     -- menu_name = "PlatformIO", -- replace this menu name to your convenience
+    --     -- debug = false,
+    --   }
+    --   local pok, platformio = pcall(require, 'platformio')
+    --   if pok then
+    --     -- print("here" .. vim.inspect(pioConfig))
+    --     platformio.setup(pioConfig)
+    --   end
+    -- end,
     -- cond = function()
     --   -- Check if platformio.ini exists in the current directory
     --   local pio_exists = vim.fn.filereadable('platformio.ini') == 1
@@ -526,26 +575,6 @@ local plugins = {
     --   end
     --   return vim.g.platformioRootDir ~= nil
     -- end,
-    dependencies = {
-      { 'akinsho/toggleterm.nvim' },
-      { 'nvim-telescope/telescope.nvim' },
-      -- {
-      --   'nvim-telescope/telescope.nvim',
-      --   tag = '0.1.8',
-      --   dependencies = { 'nvim-lua/plenary.nvim' },
-      -- },
-      { 'nvim-telescope/telescope-ui-select.nvim' },
-      { 'nvim-lua/plenary.nvim' },
-      { 'folke/which-key.nvim' },
-      {
-        'mason-org/mason-lspconfig.nvim',
-        dependencies = {
-          { 'mason-org/mason.nvim' },
-          { 'folke/trouble.nvim' },
-          { 'j-hui/fidget.nvim' }, -- status bottom right
-        },
-      },
-    },
   },
 }
 ----------------------------------------------------------------------------------------
