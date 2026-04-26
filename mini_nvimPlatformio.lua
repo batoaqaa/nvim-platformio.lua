@@ -310,34 +310,49 @@ local plugins = {
   {
     'batoaqaa/nvim-platformio.lua',
     cond = function()
-      -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
-      local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
-      -- if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
-      vim.g.platformioRootDir = nil
-      if platformioRootDir then
-        -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
-        vim.g.platformioRootDir = platformioRootDir
-      else -- if nvim-platformio.lua installed but disabled, create Pioinit command
-        vim.api.nvim_create_user_command('Pioinit', function() --available only if no platformio.ini and .pio in cwd
-          vim.api.nvim_create_autocmd('User', {
-            pattern = { 'LazyRestore', 'LazyLoad' },
-            once = true,
-            callback = function(args)
-              if args.match == 'LazyRestore' then
-                require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-              elseif args.match == 'LazyLoad' then
-                vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
-                vim.cmd('Pioinit')
-              end
-            end,
-          })
-          -- vim.g.platformioRootDir = vim.fn.getcwd()
-          vim.g.platformioRootDir = vim.uv.cwd()
-          require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
-        end, {})
+      -- Check if platformio.ini exists in the current directory
+      local pio_exists = vim.fn.filereadable('platformio.ini') == 1
+      if pio_exists then
+        return true
       end
-      return vim.g.platformioRootDir ~= nil
+
+      -- If not found, create the :Pioinit command to force load the plugin
+      vim.api.nvim_create_user_command('Pioinit', function()
+        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+        vim.notify('nvim-platformio.lua forced activation')
+      end, { desc = 'Force activate PlatformIO plugin' })
+
+      return false
     end,
+    -- cond = function()
+    --   -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
+    --   local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
+    --   -- if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
+    --   vim.g.platformioRootDir = nil
+    --   if platformioRootDir then
+    --     -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
+    --     vim.g.platformioRootDir = platformioRootDir
+    --   else -- if nvim-platformio.lua installed but disabled, create Pioinit command
+    --     vim.api.nvim_create_user_command('Pioinit', function() --available only if no platformio.ini and .pio in cwd
+    --       vim.api.nvim_create_autocmd('User', {
+    --         pattern = { 'LazyRestore', 'LazyLoad' },
+    --         once = true,
+    --         callback = function(args)
+    --           if args.match == 'LazyRestore' then
+    --             require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+    --           elseif args.match == 'LazyLoad' then
+    --             vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --             vim.cmd('Pioinit')
+    --           end
+    --         end,
+    --       })
+    --       -- vim.g.platformioRootDir = vim.fn.getcwd()
+    --       vim.g.platformioRootDir = vim.uv.cwd()
+    --       require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
+    --     end, {})
+    --   end
+    --   return vim.g.platformioRootDir ~= nil
+    -- end,
     -- cond = function()
     --   -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
     --   local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
