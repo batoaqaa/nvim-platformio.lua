@@ -266,7 +266,7 @@ local plugins = {
     cmd = 'Neotree',
     keys = {
       {
-        '<leader>\\',
+        '\\',
         function()
           require('neo-tree.command').execute({ toggle = true, dir = vim.uv.cwd() })
         end,
