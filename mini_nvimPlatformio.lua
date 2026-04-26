@@ -188,9 +188,10 @@ local data_dir = tmp_root .. '/data'
 local config_dir = tmp_root .. '/config'
 local cache_dir = tmp_root .. '/cache'
 local state_dir = tmp_root .. '/state'
+local lazypath = data_dir .. '/lazy/lazy.nvim'
 
 -- Create directories (handles Windows/Linux)
-for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir }) do
+for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir, lazypath }) do
   if vim.fn.isdirectory(dir) == 0 then
     vim.fn.mkdir(dir, 'p')
   end
@@ -204,10 +205,9 @@ vim.fn.stdpath = (function(orig)
   end
 end)(vim.fn.stdpath)
 
--- 2. Bootstrap lazy.nvim
-local lazypath = data_dir .. '/lazy/lazy.nvim'
-if not vim.uv.fs_stat(lazypath) then
-  vim.fn.system({
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  print('Downloading lazy.nvim... please wait.')
+  local output = vim.fn.system({
     'git',
     'clone',
     '--filter=blob:none',
@@ -215,12 +215,32 @@ if not vim.uv.fs_stat(lazypath) then
     '--branch=stable',
     lazypath,
   })
+  if vim.v.shell_error ~= 0 then
+    print('FATAL: Git clone failed!')
+    print(output)
+    return
+  end
 end
 
 vim.opt.rtp:prepend(lazypath)
+local lua_src = lazypath .. [[/lua]]
+package.path = package.path .. ';' .. lua_src .. [[/?.lua;]] .. lua_src .. [[/?/init.lua]]
+-- 2. Bootstrap lazy.nvim
+-- if not vim.uv.fs_stat(lazypath) then
+--   vim.fn.system({
+--     'git',
+--     'clone',
+--     '--filter=blob:none',
+--     'https://github.com',
+--     '--branch=stable',
+--     lazypath,
+--   })
+-- end
 
-package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
-package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
+vim.opt.rtp:prepend(lazypath)
+
+-- package.path = package.path .. ';' .. lazypath .. '/lua/?.lua'
+-- package.path = package.path .. ';' .. lazypath .. '/lua/?/init.lua'
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
 local plugins = {
@@ -408,7 +428,7 @@ local plugins = {
 -- })
 
 require('lazy').setup(plugins, {
-  root = data_dir .. '/lazy', -- Ensure plugins install in tmp
+  root = data_dir .. [[/lazy]], -- Ensure plugins install in tmp
   install = {
     missing = true,
   },
