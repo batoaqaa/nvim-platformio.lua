@@ -168,25 +168,28 @@ local function pick_library(json_data)
       actions.select_default:replace(function()
         local selection = action_state.get_selected_entry()
         actions.close(prompt_bufnr)
-        
-        -- Fix the table concatenation first
+
+        -- 1. Safe string extraction for pkg_name
         local owner = selection.value.owner
         local owner_name = type(owner) == "table" and (owner.name or owner.username) or tostring(owner)
         local lib_name = tostring(selection.value.name)
         local pkg_name = owner_name .. '/' .. lib_name
 
+        -- 2. Execute with the correct key 'cmd'
         local pio = require('platformio.utils.pio')
         pio.run_sequence({
           {
-            -- CHANGE 'cmnds' to 'cmds'
-            cmds = {'pio pkg install --library "' .. pkg_name .. '"'}, 
-            cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
+            -- Use 'cmd' (singular), not 'cmds' or 'cmnds'
+            cmd = {'pio pkg install --library "' .. pkg_name .. '"'}, 
+            cb = function () 
+              vim.notify('Piolib: Done installing ' .. pkg_name, vim.log.levels.INFO) 
+            end
           },
         })
       end)
       return true
     end,
-
+    --
     previewer = previewers.new_buffer_previewer({
       title = 'Package Info',
       define_preview = function(self, entry, _)
