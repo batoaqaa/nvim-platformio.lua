@@ -409,181 +409,37 @@ local plugins = {
         },
       },
     },
-
-    lazy = true,
-
-    -- 2. Define commands that should trigger the load
-    cmd = { 'Pioinit' },
-
-    init = function()
-      -- 3. Automatic Check: Runs on startup
-      if vim.fn.filereadable('platformio.ini') == 1 then
-        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-      end
-
-      -- 4. Manual Force: This command is now always registered
-      vim.api.nvim_create_user_command('Pioinit', function()
-        vim.api.nvim_create_autocmd('User', {
-          pattern = { 'LazyLoad' },
-          once = true,
-          callback = function(args)
-            if args.match == 'LazyLoad' then
-              vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
-              vim.cmd('Pioinit')
-            end
-          end,
-        })
+    cond = function()
+      -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
+      local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
+      if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
+        -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
+        vim.g.platformioRootDir = platformioRootDir
+      elseif (vim.uv or vim.loop).fs_stat(vim.env.XDG_DATA_HOME .. '/lazy/nvim-platformio.lua') == nil then
+        -- if nvim-platformio not installed, enable plugin to install it first time
+        -- vim.g.platformioRootDir = vim.fn.getcwd()
         vim.g.platformioRootDir = vim.uv.cwd()
-        require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-        -- end)
-      end, { desc = 'Force activate PlatformIO' })
+      else -- if nvim-platformio.lua installed but disabled, create Pioinit command
+        vim.api.nvim_create_user_command('Pioinit', function() --available only if no platformio.ini and .pio in cwd
+          vim.api.nvim_create_autocmd('User', {
+            pattern = { 'LazyRestore', 'LazyLoad' },
+            once = true,
+            callback = function(args)
+              if args.match == 'LazyRestore' then
+                require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
+              elseif args.match == 'LazyLoad' then
+                vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
+                vim.cmd('Pioinit')
+              end
+            end,
+          })
+          -- vim.g.platformioRootDir = vim.fn.getcwd()
+          vim.g.platformioRootDir = vim.uv.cwd()
+          require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
+        end, {})
+      end
+      return vim.g.platformioRootDir ~= nil
     end,
-
-    config = function()
-      -- 5. Standard plugin configuration
-      require('platformio').setup({
-        lspClangd = {
-          enabled = true,
-          attach = { enabled = true, keymaps = true },
-        },
-      })
-    end,
-    -- init = function()
-    --   -- 1. Automatic check: Load if file exists
-    --   if vim.fn.filereadable('platformio.ini') == 1 then
-    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --     vim.g.platformioRootDir = vim.uv.cwd()
-    --   else
-    --     vim.g.platformioRootDir = nil
-    --   end
-    --
-    --   -- 2. Manual Force: Create a command that overrides the check
-    --   vim.api.nvim_create_user_command('Pioinit', function()
-    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --     vim.schedule(function()
-    --       vim.cmd('Pio') -- Trigger the plugin's internal menu
-    --     end)
-    --   end, { desc = 'Force activate PlatformIO' })
-    -- end,
-    -- config = function()
-    --   -- -- 3. Setup happens ONLY when the plugin is loaded
-    --   -- require("platformio").setup({
-    --   --   lspClangd = {
-    --   --     enabled = true,
-    --   --     attach = {
-    --   --       enabled = true,
-    --   --       keymaps = true,
-    --   --     },
-    --   --   },
-    --   -- })
-    --   local pioConfig = {
-    --     lspClangd = {
-    --       -- enabled = false,
-    --       enabled = true,
-    --       attach = {
-    --         enabled = true,
-    --         keymaps = true,
-    --       },
-    --     },
-    --     -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
-    --     -- menu_name = "PlatformIO", -- replace this menu name to your convenience
-    --     -- debug = false,
-    --   }
-    --   local pok, platformio = pcall(require, 'platformio')
-    --   if pok then
-    --     -- print("here" .. vim.inspect(pioConfig))
-    --     platformio.setup(pioConfig)
-    --   end
-    -- end,
-    -- cond = function()
-    --   -- Check if platformio.ini exists in the current directory
-    --   local pio_exists = vim.fn.filereadable('platformio.ini') == 1
-    --   if pio_exists then
-    --     return true
-    --   end
-    --
-    --   -- Create command to load AND open the plugin menu
-    --   vim.api.nvim_create_user_command('Pioinit', function()
-    --     -- 1. Force lazy.nvim to load the plugin
-    --     require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --
-    --     -- 2. Issue the main command to the plugin (opens the Telescope menu)
-    --     -- Use pcall to ensure it doesn't error if setup takes a millisecond to register
-    --     vim.schedule(function()
-    --       vim.cmd('Pio')
-    --       vim.notify('PlatformIO Activated and Menu Opened')
-    --     end)
-    --   end, { desc = 'Force load and open PlatformIO' })
-    --
-    --   return false
-    --   -- If not found, create the :Pioinit command to force load the plugin
-    --   -- vim.api.nvim_create_user_command('Pioinit', function()
-    --   --   require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --   --   vim.notify('nvim-platformio.lua forced activation')
-    --   -- end, { desc = 'Force activate PlatformIO plugin' })
-    --   --
-    --   -- return false
-    -- end,
-    -- cond = function()
-    --   -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
-    --   local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
-    --   -- if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
-    --   vim.g.platformioRootDir = nil
-    --   if platformioRootDir then
-    --     -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
-    --     vim.g.platformioRootDir = platformioRootDir
-    --   else -- if nvim-platformio.lua installed but disabled, create Pioinit command
-    --     vim.api.nvim_create_user_command('Pioinit', function() --available only if no platformio.ini and .pio in cwd
-    --       vim.api.nvim_create_autocmd('User', {
-    --         pattern = { 'LazyRestore', 'LazyLoad' },
-    --         once = true,
-    --         callback = function(args)
-    --           if args.match == 'LazyRestore' then
-    --             require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --           elseif args.match == 'LazyLoad' then
-    --             vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
-    --             vim.cmd('Pioinit')
-    --           end
-    --         end,
-    --       })
-    --       -- vim.g.platformioRootDir = vim.fn.getcwd()
-    --       vim.g.platformioRootDir = vim.uv.cwd()
-    --       require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
-    --     end, {})
-    --   end
-    --   return vim.g.platformioRootDir ~= nil
-    -- end,
-    -- cond = function()
-    --   -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
-    --   local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
-    --   if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
-    --     -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
-    --     vim.g.platformioRootDir = platformioRootDir
-    --   elseif (vim.uv or vim.loop).fs_stat(vim.env.XDG_DATA_HOME .. '/lazy/nvim-platformio.lua') == nil then
-    --     -- if nvim-platformio not installed, enable plugin to install it first time
-    --     -- vim.g.platformioRootDir = vim.fn.getcwd()
-    --     vim.g.platformioRootDir = vim.uv.cwd()
-    --   else -- if nvim-platformio.lua installed but disabled, create Pioinit command
-    --     vim.api.nvim_create_user_command('Pioinit', function() --available only if no platformio.ini and .pio in cwd
-    --       vim.api.nvim_create_autocmd('User', {
-    --         pattern = { 'LazyRestore', 'LazyLoad' },
-    --         once = true,
-    --         callback = function(args)
-    --           if args.match == 'LazyRestore' then
-    --             require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-    --           elseif args.match == 'LazyLoad' then
-    --             vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
-    --             vim.cmd('Pioinit')
-    --           end
-    --         end,
-    --       })
-    --       -- vim.g.platformioRootDir = vim.fn.getcwd()
-    --       vim.g.platformioRootDir = vim.uv.cwd()
-    --       require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
-    --     end, {})
-    --   end
-    --   return vim.g.platformioRootDir ~= nil
-    -- end,
   },
 }
 ----------------------------------------------------------------------------------------
