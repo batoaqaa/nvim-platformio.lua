@@ -377,33 +377,33 @@ require('lazy').setup(plugins, {
 ----------------------------------------------------------------------------------------
 
 -- stylua: ignore
-if vim.fn.has('nvim-0.11') == 1 then
-  -- Create an augroup to manage the autocmd
-  local json_format_group = vim.api.nvim_create_augroup('JsonFormat', { clear = true })
-  vim.api.nvim_create_autocmd('BufWritePre', {
-    group = json_format_group,
-    pattern = '*.json',
-    -- This runs 'python -m json.tool' on the current buffer content
-    -- It updates the buffer in-place before the file is written to disk
-    callback = function() vim.cmd('%!python -m json.tool') end,
-  })
-elseif vim.fn.has('nvim-0.12') == 1 then
-end
+-- if vim.fn.has('nvim-0.11') == 1 then
+--   -- Create an augroup to manage the autocmd
+--   local json_format_group = vim.api.nvim_create_augroup('JsonFormat', { clear = true })
+--   vim.api.nvim_create_autocmd('BufWritePre', {
+--     group = json_format_group,
+--     pattern = '*.json',
+--     -- This runs 'python -m json.tool' on the current buffer content
+--     -- It updates the buffer in-place before the file is written to disk
+--     callback = function() vim.cmd('%!python -m json.tool') end,
+--   })
+-- elseif vim.fn.has('nvim-0.12') == 1 then
+-- end
 
 ----------------------------------------------------------------------------------------
 -- INFO: autocommand to Update lazy.nvim plugins in the background
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'LazyVimStarted', -- Triggers after the UI enters and startup time is calculated
-  desc = 'Update lazy.nvim plugins in the background',
-  callback = function()
-    require('lazy').sync({
-      wait = false, -- Makes the operation asynchronous
-      show = false, -- Prevents the Lazy UI from automatically opening
-    })
-    -- You can add a notification here if you like
-    -- vim.notify("Lazy plugins sync started in background", vim.log.levels.INFO)
-  end,
-})
+-- vim.api.nvim_create_autocmd('User', {
+--   pattern = 'LazyVimStarted', -- Triggers after the UI enters and startup time is calculated
+--   desc = 'Update lazy.nvim plugins in the background',
+--   callback = function()
+--     require('lazy').sync({
+--       wait = false, -- Makes the operation asynchronous
+--       show = false, -- Prevents the Lazy UI from automatically opening
+--     })
+--     -- You can add a notification here if you like
+--     -- vim.notify("Lazy plugins sync started in background", vim.log.levels.INFO)
+--   end,
+-- })
 
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
