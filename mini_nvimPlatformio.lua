@@ -185,37 +185,50 @@ local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 local data_dir = tmp_root .. '/data'
 local lazypath = data_dir .. '/lazy/lazy.nvim'
 
--- 1. Ensure the parent directory exists
+-- 1. Ensure parent exists
 if vim.fn.isdirectory(data_dir .. '/lazy') == 0 then
   vim.fn.mkdir(data_dir .. '/lazy', 'p')
 end
 
--- 2. Improved Git Clone with Error Reporting
+-- 2. Improved Git Clone with the CORRECT URL
 if vim.fn.isdirectory(lazypath) == 0 then
   print('Attempting to download lazy.nvim...')
 
-  -- The full URL is mandatory
-  local repo = 'https://github.com'
-  local cmd = string.format('git clone --filter=blob:none %s --branch=stable "%s"', repo, lazypath)
+  -- MANDATORY: The URL must point to the specific repository
+  -- local repo = 'https://github.com'
+  -- local cmd = string.format('git clone --filter=blob:none %s --branch=stable "%s"', repo, lazypath)
 
-  local output = vim.fn.system(cmd)
+  -- local output = vim.fn.system(cmd)
+  -- if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local output = vim.fn.system({
+    'git',
+    'clone',
+    '--filter=blob:none',
+    'https://github.com/folke/lazy.nvim.git',
+    '--branch=stable',
+    lazypath,
+  })
+  -- end
 
-  -- Check if git actually worked
   if vim.v.shell_error ~= 0 then
     print('GIT ERROR DETECTED:')
-    print(output) -- This will tell you if 'git' is not found or access is denied
-    error("Could not clone lazy.nvim. Please ensure 'git' is installed and accessible.")
+    print(output)
+    -- Delete the failed folder so it can retry next time
+    vim.fn.delete(lazypath, 'rf')
+    error('Could not clone lazy.nvim. Check the URL above.')
   end
 end
 
--- 3. Verify the specific file needed for require('lazy')
+-- 3. Verify and Load
 local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
 if checker then
   checker:close()
+  vim.opt.rtp:prepend(lazypath)
+  package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
 else
-  error('FATAL: Folder exists but /lua/lazy/init.lua is missing at ' .. lazypath)
+  vim.fn.delete(lazypath, 'rf')
+  error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
 end
-
 -- ... rest of your setup ...
 
 -- 4. Environment Setup
