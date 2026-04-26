@@ -193,7 +193,7 @@ local plugins = {
     opts = {
       keymap = { preset = 'default' }, -- 'default', 'super-tab', or 'enter'
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'buffer' },
+        default = { 'path', 'snippets', 'buffer' },
       },
     },
   },
