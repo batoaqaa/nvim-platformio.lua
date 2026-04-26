@@ -313,6 +313,7 @@ local plugins = {
       -- local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.fn.getcwd() or nil
       local platformioRootDir = (vim.fn.filereadable('platformio.ini') == 1) and vim.uv.cwd() or nil
       -- if platformioRootDir and vim.fs.find('.pio', { path = platformioRootDir, type = 'directory' })[1] then
+      vim.g.platformioRootDir = nil
       if platformioRootDir then
         -- if platformio.ini file and .pio folder exist in cwd, enable plugin to install plugin (if not istalled) and load it.
         vim.g.platformioRootDir = platformioRootDir
@@ -334,7 +335,6 @@ local plugins = {
           vim.g.platformioRootDir = vim.uv.cwd()
           require('lazy').restore({ plguins = { 'nvim-platformio.lua' }, show = false })
         end, {})
-        vim.g.platformioRootDir = nil
       end
       return vim.g.platformioRootDir ~= nil
     end,
