@@ -180,64 +180,21 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 --   })
 -- end
 
--- 1. Setup Redirected Paths
-local tmp_root = vim.fn.expand('~/tmp/nvim-tmp'):gsub('\\', '/')
-local data_dir = tmp_root .. '/data'
-local config_dir = tmp_root .. '/config'
-local cache_dir = tmp_root .. '/cache'
-local state_dir = tmp_root .. '/state'
-local nvim_data = data_dir .. '/nvim-data'
 
--- Create directories if they don't exist
-for _, dir in ipairs({ data_dir, config_dir, cache_dir, state_dir, nvim_data }) do
-  if vim.fn.isdirectory(dir) == 0 then
-    vim.fn.mkdir(dir, 'p')
-  end
-end
+local home = os.getenv('USERPROFILE') or os.getenv('HOME')
+local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 
--- Override Neovim's internal paths
-vim.opt.packpath = { data_dir .. '/site' }
-vim.fn.stdpath = (function(orig)
-  return function(what)
-    if what == 'data' then
-      return data_dir
-    end
-    if what == 'config' then
-      return config_dir
-    end
-    if what == 'cache' then
-      return cache_dir
-    end
-    if what == 'state' then
-      return state_dir
-    end
-    return orig(what)
-  end
-end)(vim.fn.stdpath)
+-- Set environment variables so Neovim and plugins use the tmp folder automatically
+vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
+vim.env.XDG_DATA_HOME   = tmp_root .. '/data'
+vim.env.XDG_CACHE_HOME  = tmp_root .. '/cache'
+vim.env.XDG_STATE_HOME  = tmp_root .. '/state'
 
--- local home = os.getenv('USERPROFILE') or os.getenv('HOME')
--- local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
--- local data_dir = tmp_root .. '/data'
-vim.env.XDG_DATA_HOME = data_dir
-print(vim.env.XDG_DATA_HOME)
-local lazypath = data_dir .. '/lazy/lazy.nvim'
-
--- 1. Ensure parent exists
-if vim.fn.isdirectory(data_dir .. '/lazy') == 0 then
-  vim.fn.mkdir(data_dir .. '/lazy', 'p')
-end
-
--- 2. Improved Git Clone with the CORRECT URL
-if vim.fn.isdirectory(lazypath) == 0 then
+local lazypath = vim.fn.stdpath("data") .. '/lazy/lazy.nvim'
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+-- if vim.fn.isdirectory(lazypath) == 0 then
   print('Attempting to download lazy.nvim...')
-
-  -- MANDATORY: The URL must point to the specific repository
-  -- local repo = 'https://github.com'
-  -- local cmd = string.format('git clone --filter=blob:none %s --branch=stable "%s"', repo, lazypath)
-
-  -- local output = vim.fn.system(cmd)
-  -- if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local output = vim.fn.system({
+  vim.fn.system({
     'git',
     'clone',
     '--filter=blob:none',
@@ -245,18 +202,8 @@ if vim.fn.isdirectory(lazypath) == 0 then
     '--branch=stable',
     lazypath,
   })
-  -- end
-
-  if vim.v.shell_error ~= 0 then
-    print('GIT ERROR DETECTED:')
-    print(output)
-    -- Delete the failed folder so it can retry next time
-    vim.fn.delete(lazypath, 'rf')
-    error('Could not clone lazy.nvim. Check the URL above.')
-  end
 end
 
--- 3. Verify and Load
 local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
 if checker then
   checker:close()
@@ -266,9 +213,7 @@ else
   vim.fn.delete(lazypath, 'rf')
   error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
 end
--- ... rest of your setup ...
 
--- 4. Environment Setup
 vim.opt.rtp:prepend(lazypath)
 package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
 
@@ -351,25 +296,66 @@ local plugins = {
     -- config = true is shorthand for config = function() require('bufferline').setup() end
   },
 
-  {
+  -- {
+  --   'nvim-neo-tree/neo-tree.nvim',
+  --   branch = 'v3.x',
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim',
+  --     'MunifTanjim/nui.nvim',
+  --     'nvim-tree/nvim-web-devicons', -- optional, but recommended
+  --   },
+  --   lazy = false, -- neo-tree will lazily load itself
+  --   opts = {
+  --     sources = {
+  --       'filesystem',
+  --       'buffers',
+  --       'git_status',
+  --       'document_symbols', -- Add this line
+  --     },
+  --   },
+  -- },
+
+ {
     'nvim-neo-tree/neo-tree.nvim',
     branch = 'v3.x',
     dependencies = {
       'nvim-lua/plenary.nvim',
+      'nvim-tree/nvim-web-devicons',
       'MunifTanjim/nui.nvim',
-      'nvim-tree/nvim-web-devicons', -- optional, but recommended
     },
-    lazy = false, -- neo-tree will lazily load itself
     opts = {
-      sources = {
-        'filesystem',
-        'buffers',
-        'git_status',
-        'document_symbols', -- Add this line
+      filesystem = {
+        filtered_items = {
+          never_show = { '.cache', '.git' },
+        },
       },
     },
   },
+}
 
+-- 4. Setup lazy.nvim
+require('lazy').setup(plugins, {
+  root = vim.fn.stdpath("data") .. '/lazy',
+  install = { missing = true },
+  ui = { border = 'rounded' },
+})
+
+-- 5. Basic Minimal UI Settings
+vim.opt.termguicolors = true
+vim.opt.number = true
+vim.opt.mouse = 'a'
+
+print("Minimal environment loaded in: " .. tmp_root)
+
+Use code with caution.
+Why this is the correct "Complete" version:
+
+    XDG Variables: By setting XDG_DATA_HOME, you don't need to manually mkdir the nvim-data folder for Neo-tree; Neovim handles it.
+    Correct Git URL: It points to folke/lazy.nvim.git so the download actually works.
+    Package Path: It fixes the module 'lazy' not found error on Windows.
+    Conditional Loading: The PlatformIO plugin remains lazy/disabled until it sees the config file or you run :Pioinit.
+
+Does this version successfully download all plugins without any "module not found" or "log file" errors?
   -- {
   --   'nvim-tree/nvim-tree.lua',
   --   -- version = '*',
@@ -459,11 +445,17 @@ local plugins = {
 -- })
 
 require('lazy').setup(plugins, {
-  root = data_dir .. [[/lazy]], -- Ensure plugins install in tmp
-  install = {
-    missing = true,
-  },
+  root = vim.fn.stdpath("data") .. '/lazy',
+  install = { missing = true },
+  ui = { border = 'rounded' },
 })
+
+-- require('lazy').setup(plugins, {
+--   root = data_dir .. [[/lazy]], -- Ensure plugins install in tmp
+--   install = {
+--     missing = true,
+--   },
+-- })
 
 ----------------------------------------------------------------------------------------
 
