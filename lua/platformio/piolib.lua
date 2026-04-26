@@ -120,17 +120,33 @@ local function pick_library(json_data)
       width = 0.9,          -- Overall width (90%)
       preview_width = 0.60, -- Wider preview (60%)
     },
+
     finder = finders.new_table({
       results = json_data['items'],
       entry_maker = function(entry)
+        -- Safe string conversion to prevent "concatenate table" errors
+        local owner = type(entry.owner) == "string" and entry.owner or tostring(entry.owner or "")
+        local name = type(entry.name) == "string" and entry.name or tostring(entry.name or "")
+
         return {
           value = entry,
           display = make_display,
-          -- Ordinal is used for searching/filtering
-          ordinal = (entry.owner or '') .. ' ' .. (entry.name or ''),
+          ordinal = owner .. ' ' .. name,
         }
       end,
     }),
+
+    -- finder = finders.new_table({
+    --   results = json_data['items'],
+    --   entry_maker = function(entry)
+    --     return {
+    --       value = entry,
+    --       display = make_display,
+    --       -- Ordinal is used for searching/filtering
+    --       ordinal = (entry.owner or '') .. ' ' .. (entry.name or ''),
+    --     }
+    --   end,
+    -- }),
     attach_mappings = function(prompt_bufnr, _)
       actions.select_default:replace(function()
         actions.close(prompt_bufnr)
