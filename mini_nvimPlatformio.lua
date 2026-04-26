@@ -335,6 +335,36 @@ local plugins = {
         end)
       end, { desc = 'Force activate PlatformIO' })
     end,
+    config = function()
+      -- -- 3. Setup happens ONLY when the plugin is loaded
+      -- require("platformio").setup({
+      --   lspClangd = {
+      --     enabled = true,
+      --     attach = {
+      --       enabled = true,
+      --       keymaps = true,
+      --     },
+      --   },
+      -- })
+      local pioConfig = {
+        lspClangd = {
+          -- enabled = false,
+          enabled = true,
+          attach = {
+            enabled = true,
+            keymaps = true,
+          },
+        },
+        -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
+        -- menu_name = "PlatformIO", -- replace this menu name to your convenience
+        -- debug = false,
+      }
+      local pok, platformio = pcall(require, 'platformio')
+      if pok then
+        -- print("here" .. vim.inspect(pioConfig))
+        platformio.setup(pioConfig)
+      end
+    end,
     -- cond = function()
     --   -- Check if platformio.ini exists in the current directory
     --   local pio_exists = vim.fn.filereadable('platformio.ini') == 1
@@ -659,21 +689,21 @@ if tok then
 end
 -- Keymap to open the buffer list
 vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
-local pioConfig = {
-  lspClangd = {
-    -- enabled = false,
-    enabled = true,
-    attach = {
-      enabled = true,
-      keymaps = true,
-    },
-  },
-  -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
-  -- menu_name = "PlatformIO", -- replace this menu name to your convenience
-  -- debug = false,
-}
-local pok, platformio = pcall(require, 'platformio')
-if pok then
-  -- print("here" .. vim.inspect(pioConfig))
-  platformio.setup(pioConfig)
-end
+-- local pioConfig = {
+--   lspClangd = {
+--     -- enabled = false,
+--     enabled = true,
+--     attach = {
+--       enabled = true,
+--       keymaps = true,
+--     },
+--   },
+--   -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
+--   -- menu_name = "PlatformIO", -- replace this menu name to your convenience
+--   -- debug = false,
+-- }
+-- local pok, platformio = pcall(require, 'platformio')
+-- if pok then
+--   -- print("here" .. vim.inspect(pioConfig))
+--   platformio.setup(pioConfig)
+-- end
