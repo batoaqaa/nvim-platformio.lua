@@ -167,7 +167,6 @@ vim.env.XDG_DATA_HOME = tmp_root .. '/data'
 vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
 vim.env.XDG_STATE_HOME = tmp_root .. '/state'
 
-print(tmp_root)
 local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
 -- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
