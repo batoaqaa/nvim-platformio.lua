@@ -423,10 +423,19 @@ local plugins = {
 
       -- 4. Manual Force: This command is now always registered
       vim.api.nvim_create_user_command('Pioinit', function()
+        vim.api.nvim_create_autocmd('User', {
+          pattern = { 'LazyLoad' },
+          once = true,
+          callback = function(args)
+            if args.match == 'LazyLoad' then
+              vim.notify('PlatformIO loaded', vim.log.levels.INFO, { title = 'PlatformIO' })
+              vim.cmd('Pioinit')
+            end
+          end,
+        })
+        vim.g.platformioRootDir = vim.uv.cwd()
         require('lazy').load({ plugins = { 'nvim-platformio.lua' } })
-        vim.schedule(function()
-          vim.cmd('Pioinit') -- Automatically opens the menu after force-loading
-        end)
+        -- end)
       end, { desc = 'Force activate PlatformIO' })
     end,
 
