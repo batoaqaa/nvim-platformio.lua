@@ -662,21 +662,21 @@ if tok then
 end
 -- Keymap to open the buffer list
 vim.keymap.set('n', '<leader>fb', '<cmd>Telescope buffers<cr>', { desc = 'Find Buffers' })
--- local pioConfig = {
---   lspClangd = {
---     -- enabled = false,
---     enabled = true,
---     attach = {
---       enabled = true,
---       keymaps = true,
---     },
---   },
---   -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
---   -- menu_name = "PlatformIO", -- replace this menu name to your convenience
---   -- debug = false,
--- }
--- local pok, platformio = pcall(require, 'platformio')
--- if pok then
---   -- print("here" .. vim.inspect(pioConfig))
---   platformio.setup(pioConfig)
--- end
+local pioConfig = {
+  lspClangd = {
+    -- enabled = false,
+    enabled = true,
+    attach = {
+      enabled = true,
+      keymaps = true,
+    },
+  },
+  -- menu_key = "<leader>\\", -- replace this menu key  to your convenience
+  -- menu_name = "PlatformIO", -- replace this menu name to your convenience
+  -- debug = false,
+}
+local pok, platformio = pcall(require, 'platformio')
+if pok then
+  -- print("here" .. vim.inspect(pioConfig))
+  platformio.setup(pioConfig)
+end
