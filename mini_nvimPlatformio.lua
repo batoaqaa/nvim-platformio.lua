@@ -183,6 +183,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 local home = os.getenv('USERPROFILE') or os.getenv('HOME')
 local tmp_root = home:gsub('\\', '/') .. '/tmp/nvim-temp'
 local data_dir = tmp_root .. '/data'
+vim.env.XDG_DATA_HOME = data_dir
 local lazypath = data_dir .. '/lazy/lazy.nvim'
 
 -- 1. Ensure parent exists
