@@ -3,7 +3,7 @@ local M = {}
 M.selected_framework = ''
 
 local misc = require('platformio.utils.misc')
-local lsp_restart = require('platformio.lsp.tools').lsp_restart
+local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
 
 local term = require('platformio.utils.term')
 -- term.on_stdout_handler = nil

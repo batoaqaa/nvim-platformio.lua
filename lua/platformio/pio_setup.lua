@@ -1,6 +1,6 @@
 M = {}
 
--- local lsp_restart = require('platformio.lsp.tools').lsp_restart
+-- local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
 local boilerplate = require('platformio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
 
@@ -474,9 +474,9 @@ function M.init()
     local metadata = require('platformio.metadata')
     metadata.load_project_config()
 
-    require('platformio.lsp.clangd')
+    require('platformio.lspConfig.clangd')
     if config.lspClangd.attach.enabled then
-      require('platformio.lsp.attach')
+      require('platformio.lspConfig.attach')
     end
 
     -- Always start the watcher so it can catch a future 'pio init'

@@ -10,7 +10,7 @@ M.is_processing = false
 M.queue = {}
 
 local term = require('platformio.utils.term')
-local lsp_restart = require('platformio.lsp.tools').lsp_restart
+local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
 
 -- INFO:
 -- =============================================================================
