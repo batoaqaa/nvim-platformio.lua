@@ -169,6 +169,23 @@ vim.env.XDG_STATE_HOME = tmp .. '/state'
 
 local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
 
+local data_path = vim.env.XDG_DATA_HOME
+local plugins = {
+  nui = data_path .. 'nui.nvim',
+  plenary = data_path .. 'plenary.nvim',
+  neotree = data_path .. 'neo-tree.nvim',
+  pio = data_path .. 'nvim-platformio.lua',
+  telescope = data_path .. 'telescope.nvim',
+  toggleterm = data_path .. 'toggleterm.nvim',
+}
+
+-- 2. Add ALL to runtimepath immediately
+for _, path in pairs(plugins) do
+  if vim.fn.isdirectory(path) == 1 then
+    vim.opt.rtp:append(path)
+  end
+end
+
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   vim.fn.system({
     'git',
