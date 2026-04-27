@@ -162,18 +162,31 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
+--[[
 local app_name = 'nvim-pio' -- pick a temp root
 local home = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
 home = home .. '/' .. app_name
 -- local home = vim.loop.os_tmpdir():gsub('\\', '/') .. '/' .. app_name
 
 -- vim.env.NVIM_APPNAME = app_name --isolated nvim
----[[
 vim.env.XDG_CONFIG_HOME = home -- .. (isWindows and '/config/' or '/.config')
 vim.env.XDG_DATA_HOME = home -- .. (isWindows and '/data/' or '/.local/share/')
 vim.env.XDG_STATE_HOME = home -- .. (isWindows and '/state/' or '/.local/state/')
 vim.env.XDG_CACHE_HOME = home -- .. (isWindows and '/cache/' or '/.cache/')
 --]]
+
+local app_name = 'nvim-pio'
+local base_path = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
+
+-- 1. THE "FLATTENER": Set NVIM_APPNAME to match your root folder name
+vim.env.NVIM_APPNAME = app_name
+
+-- 2. Set XDG variables to the PARENT of where you want the app to live
+-- Neovim will automatically append /nvim-pio to each of these
+vim.env.XDG_CONFIG_HOME = base_path
+vim.env.XDG_DATA_HOME = base_path
+vim.env.XDG_STATE_HOME = base_path
+vim.env.XDG_CACHE_HOME = base_path
 
 -- BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
@@ -391,6 +404,30 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
+-- SELECTIVE CLEANUP ON EXIT (Keeps plugins, deletes temp files)
+-- stylua: ignore
+vim.api.nvim_create_autocmd('VimLeave', {
+  callback = function()
+    -- stdpath("cache") and stdpath("state") point to the isolated folders
+    local folders_to_clean = {
+      vim.fn.stdpath('cache'),
+      vim.fn.stdpath('state'),
+    }
+
+    for _, path in ipairs(folders_to_clean) do
+      if vim.fn.isdirectory(path) == 1 then
+        local cmd = isWindows and string.format('rmdir /s /q "%s"', path:gsub('/', '\\')) or string.format('rm -rf "%s"', path)
+
+        -- Detach so it finishes after Neovim closes
+        vim.fn.jobstart(cmd, { detach = true })
+      end
+    end
+
+    -- Optional: Also delete the .ccl file on every exit
+    local ccl_file = vim.fn.getcwd() .. '/.ccl'
+    if vim.fn.filereadable(ccl_file) == 1 then os.remove(ccl_file) end
+  end,
+})
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
