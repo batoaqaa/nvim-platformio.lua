@@ -167,19 +167,19 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- This acts like the "bash" or "powershell" setup inside Lua
 local app_name = 'nvim-minimal'
 local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
-local home = vim.loop.os_tmpdir():gsub('\\', '/')
--- local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
-local separator = is_windows and '/' or '/'
+-- local home = vim.loop.os_tmpdir():gsub('\\', '/')
+local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
+local sep = is_windows and '/' or '/'
 
 -- Set names for isolation
 vim.env.NVIM_APPNAME = app_name
 
 -- Manually set XDG paths to force isolation on both OS types
 if is_windows then
-  vim.env.XDG_CONFIG_HOME = home .. separator .. app_name
-  vim.env.XDG_DATA_HOME = home .. separator .. app_name .. '-data'
-  vim.env.XDG_STATE_HOME = home .. separator .. app_name .. '-data' .. separator .. 'state'
-  vim.env.XDG_CACHE_HOME = home .. separator .. app_name .. '-data' .. separator .. 'cache'
+  vim.env.XDG_CONFIG_HOME = home .. sep .. app_name
+  vim.env.XDG_DATA_HOME = home .. sep .. app_name .. '-data'
+  vim.env.XDG_STATE_HOME = home .. sep .. app_name .. '-data' .. sep .. 'state'
+  vim.env.XDG_CACHE_HOME = home .. sep .. app_name .. '-data' .. sep .. 'cache'
 else
   vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
