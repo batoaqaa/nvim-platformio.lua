@@ -15,8 +15,8 @@ local libentry_maker = function(opts)
   local displayer = entry_display.create({
     separator = '▏',
     items = {
-      { width = 20 },
-      { width = 20 },
+      { width = 50 },
+      { width = 50 },
       { remaining = true },
     },
   })
@@ -66,10 +66,9 @@ local function pick_library(json_data)
 
         local pio = require('platformio.utils.pio')
         pio.run_sequence({
-          {
             cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
-            cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
-          },
+            cb = pio.handlePiolib
+          --function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
         })
       end)
       return true
