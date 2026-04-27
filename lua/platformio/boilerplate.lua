@@ -179,6 +179,7 @@ CompileFlags:
     - "-xc++"
     - "-std=c++17"
   Remove:
+    - "-Winclude-next-outside-header"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
     - "-fno%%-canonical%%-system%%-headers"
