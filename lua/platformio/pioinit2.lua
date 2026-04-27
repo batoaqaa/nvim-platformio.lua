@@ -70,7 +70,7 @@ local function pick_framework(board_details)
   local opts = require('telescope.themes').get_dropdown({
     prompt_title = 'Select Framework (' .. board_details.id .. ')',
     layout_config = {
-      width = 0.4, -- 40% of screen width
+      width = 0.25, -- 40% of screen width
       height = 0.25, -- Small height for few choices
     },
     previewer = false, -- No preview needed for framework names
@@ -105,7 +105,7 @@ local function pick_board(json_data)
       layout_strategy = 'horizontal',
       layout_config = {
         width = 0.9, -- Overall width of the Telescope window (90% of screen)
-        preview_width = 0.65, -- 65% of the window goes to "Board Details", leaving 25% for results
+        preview_width = 0.70, -- 65% of the window goes to "Board Details", leaving 25% for results
       },
       finder = finders.new_table({
         results = json_data,
@@ -143,7 +143,7 @@ end
 local function start_pio_wizard(json_data)
   local opts = require('telescope.themes').get_dropdown({
     prompt_title = 'Generate Compilation Database (LSP)?',
-    layout_config = { width = 0.4, height = 0.2 },
+    layout_config = { width = 0.2, height = 0.2 },
     previewer = false,
   })
 
