@@ -169,10 +169,10 @@ home = home .. '/' .. app_name
 
 -- vim.env.NVIM_APPNAME = app_name --isolated nvim
 ---[[
-vim.env.XDG_CONFIG_HOME = home .. (isWindows and '/config/' or '/.config')
-vim.env.XDG_DATA_HOME = home --.. (isWindows and '/data/' or '/.local/share/')
-vim.env.XDG_STATE_HOME = home .. (isWindows and '/state/' or '/.local/state/')
-vim.env.XDG_CACHE_HOME = home .. (isWindows and '/cache/' or '/.cache/')
+vim.env.XDG_CONFIG_HOME = home -- .. (isWindows and '/config/' or '/.config')
+vim.env.XDG_DATA_HOME = home -- .. (isWindows and '/data/' or '/.local/share/')
+vim.env.XDG_STATE_HOME = home -- .. (isWindows and '/state/' or '/.local/state/')
+vim.env.XDG_CACHE_HOME = home -- .. (isWindows and '/cache/' or '/.cache/')
 --]]
 
 -- BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
