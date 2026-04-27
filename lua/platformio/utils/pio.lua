@@ -159,7 +159,7 @@ function M.handlePioinitDb(result)
     local boilerplate_gen = boilerplate.boilerplate_gen
 
     boilerplate.core_dir = _G.metadata.core_dir
-    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
 
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
@@ -210,7 +210,7 @@ function M.handlePioinit(result)
     local boilerplate_gen = boilerplate.boilerplate_gen
 
     boilerplate.core_dir = _G.metadata.core_dir
-    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
 
     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
 
