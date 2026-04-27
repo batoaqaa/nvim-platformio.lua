@@ -125,7 +125,7 @@ function M.load_project_config()
         -- We update _pio_metadata directly to avoid triggering
         -- 50+ notifications/restarts during the initial load loop
         for k, v in pairs(table_data) do
-          _pio_metadata[k] = v
+          _G.metadata[k] = v
         end
         last_saved_hash = vim.fn.sha256(json_data)
         return
