@@ -167,8 +167,9 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- This acts like the "bash" or "powershell" setup inside Lua
 local app_name = 'nvim-minimal'
 local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
-local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
-local separator = is_windows and '\\' or '/'
+local home = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
+-- local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
+local separator = is_windows and '/' or '/'
 
 -- Set names for isolation
 vim.env.NVIM_APPNAME = app_name
@@ -217,6 +218,8 @@ end
 -- end
 --
 vim.opt.rtp:prepend(lazypath)
+------------------------------------------------------------------------------------
+
 -- local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
 -- vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
 -- vim.env.XDG_DATA_HOME = tmp_root .. '/data'
