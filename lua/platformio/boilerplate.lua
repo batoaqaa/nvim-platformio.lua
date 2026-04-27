@@ -480,24 +480,26 @@ function M.boilerplate_gen(framework, src_path, filename)
   if vim.uv.fs_stat(file_path) then
     if not entry.rewrite then
       if entry.read then
-        local fr = io.open(file_path, 'r')
-        if fr then return (fr:read('*a')) end
+        local ok, content = vim.misc.readFile(file_path)
+        if ok then return content end
+        -- local fr = io.open(file_path, 'r')
+        -- if fr then return (fr:read('*a')) end
       end
       return ''
     end
   end
-
-  if vim.fn.isdirectory(src_path) == 0 then vim.fn.mkdir(src_path, 'p') end
-
-  local fd = assert(uv.fs_open(file_path, 'w', 420))
-  if not fd then
-    print('failed to create file: ' .. file_path)
-    return ''
-  end
-
+  -- if vim.fn.isdirectory(src_path) == 0 then vim.fn.mkdir(src_path, 'p') end
+  --
+  -- local fd = assert(uv.fs_open(file_path, 'w', 420))
+  -- if not fd then
+  --   print('failed to create file: ' .. file_path)
+  --   return ''
+  -- end
+  --
   local template = type(entry.content) == 'function' and entry:content() or entry.content
-  uv.fs_write(fd, template, 0)
-  uv.fs_close(fd)
+  -- uv.fs_write(fd, template, 0)
+  -- uv.fs_close(fd)
+  vim.misc.writeFile(file_path, template, {})
 
   if entry.read then
     return template

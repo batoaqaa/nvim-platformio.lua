@@ -202,7 +202,7 @@ function M.writeFile(path, data, opts)
   -- 1. Check if file exists and handle overwrite flag
   local stat = uv.fs_stat(path)
   if stat and opts.overwrite == false then
-    return nil, 'writeFile: File already exists and overwrite is disabled'
+    return false, 'writeFile: File already exists and overwrite is disabled'
   end
 
   -- 2. Ensure folder exists (mkdir -p logic)
@@ -219,7 +219,7 @@ function M.writeFile(path, data, opts)
   -- 'w' truncates existing, 'wx' fails if exists (extra safety)
   local flags = opts.overwrite == false and 'wx' or 'w'
   local fd, err = uv.fs_open(path, flags, 438)
-  if not fd then return nil, 'writeFile: Open error: ' .. (err or 'unknown') end
+  if not fd then return false, 'writeFile: Open error: ' .. (err or 'unknown') end
 
   -- 4. Write data
   local _, write_err = uv.fs_write(fd, data, 0)
@@ -227,9 +227,9 @@ function M.writeFile(path, data, opts)
   -- 5. ALWAYS close
   uv.fs_close(fd)
 
-  if write_err then return nil, 'writeFile: Write error: ' .. write_err end
+  if write_err then return false, 'writeFile: Write error: ' .. write_err end
 
-  return true
+  return true, 'writeFile: complete'
 end
 ------------------------------------------------------
 --[[ 
