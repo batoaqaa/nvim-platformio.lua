@@ -40,6 +40,11 @@ _G.metadata = setmetatable({}, {
     if _pio_metadata[key] == value then
       return
     end -- Performance check
+    print('Newindex attempt for: ' .. tostring(key)) -- DEBUG LINE
+    if _pio_metadata[key] == value then
+      print('Value is identical, returning...') -- DEBUG LINE
+      return
+    end
     _pio_metadata[key] = value
 
     -- Trigger background actions
