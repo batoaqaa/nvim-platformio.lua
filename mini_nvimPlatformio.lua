@@ -159,40 +159,81 @@ keymap('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 ----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
+----------------------------------------------------------------------------------------
 -- pick a temp root
-local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
-vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
-vim.env.XDG_DATA_HOME = tmp_root .. '/data'
-vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
-vim.env.XDG_STATE_HOME = tmp_root .. '/state'
+-- 1. CROSS-PLATFORM ENVIRONMENT ISOLATION
+-- This acts like the "bash" or "powershell" setup inside Lua
+local app_name = 'nvim-minimal'
+local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
+local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
+local separator = is_windows and '\\' or '/'
 
-local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
--- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  print('Attempting to download lazy.nvim ...')
+-- Set names for isolation
+vim.env.NVIM_APPNAME = app_name
+
+-- Manually set XDG paths to force isolation on both OS types
+if is_windows then
+  local localappdata = vim.env.LOCALAPPDATA
+  vim.env.XDG_CONFIG_HOME = localappdata .. separator .. app_name
+  vim.env.XDG_DATA_HOME = localappdata .. separator .. app_name .. '-data'
+  vim.env.XDG_STATE_HOME = localappdata .. separator .. app_name .. '-data' .. separator .. 'state'
+  vim.env.XDG_CACHE_HOME = localappdata .. separator .. app_name .. '-data' .. separator .. 'cache'
+else
+  vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
+  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
+  vim.env.XDG_STATE_HOME = home .. '/.local/state/' .. app_name
+  vim.env.XDG_CACHE_HOME = home .. '/.cache/' .. app_name
+end
+
+-- 2. CORE SETTINGS
+
+-- 3. BOOTSTRAP PLUGIN MANAGER (Lazy.nvim)
+local lazypath = vim.fn.stdpath('data') .. separator .. 'lazy' .. separator .. 'lazy.nvim'
+if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     'git',
     'clone',
     '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
+    'https://github.com',
     '--branch=stable',
     lazypath,
   })
 end
-
-local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
-if checker then
-  checker:close()
-  vim.opt.rtp:prepend(lazypath)
-  package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
-else
-  vim.fn.delete(lazypath, 'rf')
-  error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
-end
-
 vim.opt.rtp:prepend(lazypath)
-package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
+-- local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
+-- vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
+-- vim.env.XDG_DATA_HOME = tmp_root .. '/data'
+-- vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
+-- vim.env.XDG_STATE_HOME = tmp_root .. '/state'
+--
+-- local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
+-- -- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+-- if not (vim.uv or vim.loop).fs_stat(lazypath) then
+--   print('Attempting to download lazy.nvim ...')
+--   vim.fn.system({
+--     'git',
+--     'clone',
+--     '--filter=blob:none',
+--     'https://github.com/folke/lazy.nvim.git',
+--     '--branch=stable',
+--     lazypath,
+--   })
+-- end
+--
+-- local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
+-- if checker then
+--   checker:close()
+--   vim.opt.rtp:prepend(lazypath)
+--   package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
+-- else
+--   vim.fn.delete(lazypath, 'rf')
+--   error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
+-- end
+--
+-- vim.opt.rtp:prepend(lazypath)
+-- package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
 
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
