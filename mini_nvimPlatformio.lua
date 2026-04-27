@@ -170,30 +170,30 @@ local sep = is_windows and '\\' or '/'
 -- 1. SET THE APP NAME (This is the key)
 vim.env.NVIM_APPNAME = app_name
 
--- -- 2. ISOLATE ENVIRONMENT
--- if is_windows then
---   -- Point to a unique sandbox root
---   local sandbox = vim.env.USERPROFILE .. '\\AppData\\Local\\' .. app_name .. '-sandbox'
---   vim.env.LOCALAPPDATA = sandbox
--- else
---   local home = vim.env.HOME
---   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name .. '-sandbox'
--- end
+-- 2. ISOLATE ENVIRONMENT
+if is_windows then
+  -- Point to a unique sandbox root
+  local sandbox = vim.env.USERPROFILE .. '\\AppData\\Local\\' .. app_name .. '-sandbox'
+  vim.env.LOCALAPPDATA = sandbox
+else
+  local home = vim.env.HOME
+  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name .. '-sandbox'
+end
 --
 --
 -- 2. ISOLATE ENVIRONMENT
-if is_windows then
-  -- Use AppData/Local to stay clean on Windows
-  local base = vim.env.LOCALAPPDATA .. '/' .. app_name
-  vim.env.XDG_CONFIG_HOME = base .. '/config'
-  vim.env.XDG_DATA_HOME = base .. '/data'
-  vim.env.XDG_STATE_HOME = base .. '/state'
-  vim.env.XDG_CACHE_HOME = base .. '/cache'
-else
-  local home = vim.env.HOME
-  vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
-  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
-end
+-- if is_windows then
+--   -- Use AppData/Local to stay clean on Windows
+--   local base = vim.env.LOCALAPPDATA .. '/' .. app_name
+--   vim.env.XDG_CONFIG_HOME = base .. '/config'
+--   vim.env.XDG_DATA_HOME = base .. '/data'
+--   vim.env.XDG_STATE_HOME = base .. '/state'
+--   vim.env.XDG_CACHE_HOME = base .. '/cache'
+-- else
+--   local home = vim.env.HOME
+--   vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
+--   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
+-- end
 
 -- 3. BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
