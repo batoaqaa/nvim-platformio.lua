@@ -163,10 +163,10 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
 local app_name = 'nvim-pio' -- pick a temp root
-vim.env.NVIM_APPNAME = app_name --isolated nvim
 local home = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
 home = home .. '/' .. app_name
 
+-- vim.env.NVIM_APPNAME = app_name --isolated nvim
 ---[[
 if isWindows then
   -- Use AppData/Local to stay clean on Windows
