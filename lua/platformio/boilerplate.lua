@@ -81,7 +81,7 @@ boilerplate['.clangd_config'] = {
     "--completion-style=detailed",
     "--header-insertion=iwyu",
     "--fallback-style=llvm",
-    "--log=verbose",
+    "--log=error",
     "--pch-storage=memory",
     "--pretty",
     "--ranking-model=decision_forest",
@@ -170,12 +170,14 @@ boilerplate['.clangd_config'] = {
 boilerplate['.clangd'] = {
   rewrite = false,
   read = false,
+  --     - "-std=c++17"
+  -- - "-std=gnu++17"
   -- template = [[
   content = [[
 CompileFlags:
   Add:
     - "-xc++"
-    - "-std=gnu++17"
+    - "-std=c++17"
   Remove:
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
