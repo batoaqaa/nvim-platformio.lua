@@ -91,10 +91,7 @@ local function pick_board(json_data)
     .new({}, {
       prompt_title = 'Select PlatformIO Board',
       layout_strategy = 'horizontal',
-      layout_config = {
-        width = 0.9,
-        preview_width = 0.6,
-      },
+      layout_config = { width = 0.9, preview_width = 0.6 },
       finder = finders.new_table({
         results = json_data,
         entry_maker = function(entry)
@@ -106,15 +103,16 @@ local function pick_board(json_data)
         end,
       }),
       previewer = previewers.new_buffer_previewer({
-        title = 'Full Board Specifications',
+        title = 'Board Specifications',
         define_preview = function(self, entry)
           local val = entry.value
 
-          -- Logic for human-readable sizes
-          local ram = val.ram and (val.ram / 1024 .. ' KB') or 'Unknown'
-          local flash = val.rom and (val.rom / 1024 .. ' KB') or 'Unknown'
-          local mhz = val.fcpu and (val.fcpu / 1000000 .. ' MHz') or 'Unknown'
+          -- Safe conversion for hardware specs
+          local ram = val.ram and (math.floor(val.ram / 1024) .. ' KB') or 'Unknown'
+          local flash = val.rom and (math.floor(val.rom / 1024) .. ' KB') or 'Unknown'
+          local mhz = val.fcpu and (math.floor(val.fcpu / 1000000) .. ' MHz') or 'Unknown'
 
+          -- Build base lines
           local lines = {
             '# ' .. (val.name or val.id),
             '',
@@ -133,8 +131,16 @@ local function pick_board(json_data)
             '',
             '**Available Frameworks**',
             '---',
-            '- ' .. table.concat(val.frameworks, '\n- '),
           }
+
+          -- Correctly append frameworks as separate lines to avoid the newline error
+          if val.frameworks and #val.frameworks > 0 then
+            for _, fw in ipairs(val.frameworks) do
+              table.insert(lines, '- ' .. fw)
+            end
+          else
+            table.insert(lines, '*No frameworks listed*')
+          end
 
           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
           vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
