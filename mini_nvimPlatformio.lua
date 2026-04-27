@@ -162,7 +162,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
---[[
+---[[
 local app_name = 'nvim-pio' -- pick a temp root
 local home = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
 home = home .. '/' .. app_name
@@ -175,6 +175,7 @@ vim.env.XDG_STATE_HOME = home -- .. (isWindows and '/state/' or '/.local/state/'
 vim.env.XDG_CACHE_HOME = home -- .. (isWindows and '/cache/' or '/.cache/')
 --]]
 
+--[[
 local app_name = 'nvim-pio'
 local base_path = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
 
@@ -187,6 +188,7 @@ vim.env.XDG_CONFIG_HOME = base_path
 vim.env.XDG_DATA_HOME = base_path
 vim.env.XDG_STATE_HOME = base_path
 vim.env.XDG_CACHE_HOME = base_path
+--]]
 
 -- BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
