@@ -91,7 +91,10 @@ local function pick_board(json_data)
     .new({}, {
       prompt_title = 'Select PlatformIO Board',
       layout_strategy = 'horizontal',
-      layout_config = { width = 0.9, preview_width = 0.6 },
+      layout_config = {
+        width = 0.9,
+        preview_width = 0.6,
+      },
       finder = finders.new_table({
         results = json_data,
         entry_maker = function(entry)
@@ -103,19 +106,36 @@ local function pick_board(json_data)
         end,
       }),
       previewer = previewers.new_buffer_previewer({
-        title = 'Board Specs',
+        title = 'Full Board Specifications',
         define_preview = function(self, entry)
           local val = entry.value
+
+          -- Logic for human-readable sizes
+          local ram = val.ram and (val.ram / 1024 .. ' KB') or 'Unknown'
+          local flash = val.rom and (val.rom / 1024 .. ' KB') or 'Unknown'
+          local mhz = val.fcpu and (val.fcpu / 1000000 .. ' MHz') or 'Unknown'
+
           local lines = {
             '# ' .. (val.name or val.id),
             '',
-            '**Micro:** ' .. (val.mcu or 'N/A'),
-            '**Vendor:** ' .. (val.vendor or 'N/A'),
-            '**Clock:** ' .. (val.fcpu or 0) / 1000000 .. ' MHz',
-            '**RAM:** ' .. (val.ram or 0) / 1024 .. ' KB',
+            '**Basic Info**',
+            '---',
+            '**Board ID:**    ' .. val.id,
+            '**Vendor:**      ' .. (val.vendor or 'Generic'),
+            '**Platform:**    ' .. (val.platform or 'N/A'),
             '',
-            '**Frameworks:** ' .. table.concat(val.frameworks, ', '),
+            '**Hardware Specs**',
+            '---',
+            '**MCU:**         ' .. (val.mcu or 'N/A'),
+            '**CPU Speed:**   ' .. mhz,
+            '**Flash (ROM):** ' .. flash,
+            '**RAM:**         ' .. ram,
+            '',
+            '**Available Frameworks**',
+            '---',
+            '- ' .. table.concat(val.frameworks, '\n- '),
           }
+
           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
           vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
         end,
@@ -135,6 +155,56 @@ local function pick_board(json_data)
     })
     :find()
 end
+
+-- local function pick_board(json_data)
+--   pickers
+--     .new({}, {
+--       prompt_title = 'Select PlatformIO Board',
+--       layout_strategy = 'horizontal',
+--       layout_config = { width = 0.9, preview_width = 0.6 },
+--       finder = finders.new_table({
+--         results = json_data,
+--         entry_maker = function(entry)
+--           return {
+--             value = entry,
+--             display = string.format('%-25s | %s', entry.id, entry.name),
+--             ordinal = entry.id .. ' ' .. entry.name,
+--           }
+--         end,
+--       }),
+--       previewer = previewers.new_buffer_previewer({
+--         title = 'Board Specs',
+--         define_preview = function(self, entry)
+--           local val = entry.value
+--           local lines = {
+--             '# ' .. (val.name or val.id),
+--             '',
+--             '**Micro:** ' .. (val.mcu or 'N/A'),
+--             '**Vendor:** ' .. (val.vendor or 'N/A'),
+--             '**Clock:** ' .. (val.fcpu or 0) / 1000000 .. ' MHz',
+--             '**RAM:** ' .. (val.ram or 0) / 1024 .. ' KB',
+--             '',
+--             '**Frameworks:** ' .. table.concat(val.frameworks, ', '),
+--           }
+--           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
+--           vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
+--         end,
+--       }),
+--       sorter = telescope_conf.generic_sorter({}),
+--       attach_mappings = function(prompt_bufnr)
+--         actions.select_default:replace(function()
+--           local selection = action_state.get_selected_entry()
+--           actions.close(prompt_bufnr)
+--           if selection then
+--             wizard_data.board_id = selection.value.id
+--             pick_framework(selection.value)
+--           end
+--         end)
+--         return true
+--       end,
+--     })
+--     :find()
+-- end
 
 -- Entry point
 local function launch_pio_project_wizard()
