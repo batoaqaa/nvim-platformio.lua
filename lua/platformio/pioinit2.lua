@@ -86,64 +86,33 @@ local function pick_framework(board_details)
 end
 
 -- Step 1: Board (Entry Point)
+
 local function pick_board(json_data)
   pickers
     .new({}, {
-      prompt_title = 'Select PlatformIO Board',
+      prompt_title = 'Select Board',
+      -- Define the layout behavior
       layout_strategy = 'horizontal',
-      layout_config = { width = 0.9, preview_width = 0.6 },
+      layout_config = {
+        width = 0.9, -- Overall width of the Telescope window (90% of screen)
+        preview_width = 0.70, -- 65% of the window goes to "Board Details", leaving 25% for results
+      },
       finder = finders.new_table({
         results = json_data,
         entry_maker = function(entry)
           return {
             value = entry,
-            display = string.format('%-25s | %s', entry.id, entry.name),
-            ordinal = entry.id .. ' ' .. entry.name,
+            display = entry.name or entry.id,
+            ordinal = (entry.name or '') .. ' ' .. (entry.id or ''),
           }
         end,
       }),
       previewer = previewers.new_buffer_previewer({
-        title = 'Board Specifications',
+        title = 'Board Details',
         define_preview = function(self, entry)
-          local val = entry.value
-
-          -- Safe conversion for hardware specs
-          local ram = val.ram and (math.floor(val.ram / 1024) .. ' KB') or 'Unknown'
-          local flash = val.rom and (math.floor(val.rom / 1024) .. ' KB') or 'Unknown'
-          local mhz = val.fcpu and (math.floor(val.fcpu / 1000000) .. ' MHz') or 'Unknown'
-
-          -- Build base lines
-          local lines = {
-            '# ' .. (val.name or val.id),
-            '',
-            '**Basic Info**',
-            '---',
-            '**Board ID:**    ' .. val.id,
-            '**Vendor:**      ' .. (val.vendor or 'Generic'),
-            '**Platform:**    ' .. (val.platform or 'N/A'),
-            '',
-            '**Hardware Specs**',
-            '---',
-            '**MCU:**         ' .. (val.mcu or 'N/A'),
-            '**CPU Speed:**   ' .. mhz,
-            '**Flash (ROM):** ' .. flash,
-            '**RAM:**         ' .. ram,
-            '',
-            '**Available Frameworks**',
-            '---',
-          }
-
-          -- Correctly append frameworks as separate lines to avoid the newline error
-          if val.frameworks and #val.frameworks > 0 then
-            for _, fw in ipairs(val.frameworks) do
-              table.insert(lines, '- ' .. fw)
-            end
-          else
-            table.insert(lines, '*No frameworks listed*')
-          end
-
-          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
-          vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
+          local content = vim.split(vim.inspect(entry.value), '\n')
+          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, content)
+          vim.api.nvim_set_option_value('filetype', 'lua', { buf = self.state.bufnr })
         end,
       }),
       sorter = telescope_conf.generic_sorter({}),
@@ -151,6 +120,8 @@ local function pick_board(json_data)
         actions.select_default:replace(function()
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
+          -- wizard_data.board_id = selection.value.id
+          -- pick_framework(selection.value) -- Next step
           if selection then
             wizard_data.board_id = selection.value.id
             pick_framework(selection.value)
@@ -161,6 +132,82 @@ local function pick_board(json_data)
     })
     :find()
 end
+
+-- local function pick_board(json_data)
+--   pickers
+--     .new({}, {
+--       prompt_title = 'Select PlatformIO Board',
+--       layout_strategy = 'horizontal',
+--       layout_config = { width = 0.9, preview_width = 0.6 },
+--       finder = finders.new_table({
+--         results = json_data,
+--         entry_maker = function(entry)
+--           return {
+--             value = entry,
+--             display = string.format('%-25s | %s', entry.id, entry.name),
+--             ordinal = entry.id .. ' ' .. entry.name,
+--           }
+--         end,
+--       }),
+--       previewer = previewers.new_buffer_previewer({
+--         title = 'Board Specifications',
+--         define_preview = function(self, entry)
+--           local val = entry.value
+--
+--           -- Safe conversion for hardware specs
+--           local ram = val.ram and (math.floor(val.ram / 1024) .. ' KB') or 'Unknown'
+--           local flash = val.rom and (math.floor(val.rom / 1024) .. ' KB') or 'Unknown'
+--           local mhz = val.fcpu and (math.floor(val.fcpu / 1000000) .. ' MHz') or 'Unknown'
+--
+--           -- Build base lines
+--           local lines = {
+--             '# ' .. (val.name or val.id),
+--             '',
+--             '**Basic Info**',
+--             '---',
+--             '**Board ID:**    ' .. val.id,
+--             '**Vendor:**      ' .. (val.vendor or 'Generic'),
+--             '**Platform:**    ' .. (val.platform or 'N/A'),
+--             '',
+--             '**Hardware Specs**',
+--             '---',
+--             '**MCU:**         ' .. (val.mcu or 'N/A'),
+--             '**CPU Speed:**   ' .. mhz,
+--             '**Flash (ROM):** ' .. flash,
+--             '**RAM:**         ' .. ram,
+--             '',
+--             '**Available Frameworks**',
+--             '---',
+--           }
+--
+--           -- Correctly append frameworks as separate lines to avoid the newline error
+--           if val.frameworks and #val.frameworks > 0 then
+--             for _, fw in ipairs(val.frameworks) do
+--               table.insert(lines, '- ' .. fw)
+--             end
+--           else
+--             table.insert(lines, '*No frameworks listed*')
+--           end
+--
+--           vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
+--           vim.api.nvim_set_option_value('filetype', 'markdown', { buf = self.state.bufnr })
+--         end,
+--       }),
+--       sorter = telescope_conf.generic_sorter({}),
+--       attach_mappings = function(prompt_bufnr)
+--         actions.select_default:replace(function()
+--           local selection = action_state.get_selected_entry()
+--           actions.close(prompt_bufnr)
+--           if selection then
+--             wizard_data.board_id = selection.value.id
+--             pick_framework(selection.value)
+--           end
+--         end)
+--         return true
+--       end,
+--     })
+--     :find()
+-- end
 
 -- local function pick_board(json_data)
 --   pickers
