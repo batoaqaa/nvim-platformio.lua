@@ -166,36 +166,34 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 local app_name = 'nvim-pio'
 local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
-local separator = is_windows and '\\' or '/'
+local sep = is_windows and '\\' or '/'
 -- 1. SET THE APP NAME (This is the key)
 vim.env.NVIM_APPNAME = app_name
 
--- 2. ISOLATE ENVIRONMENT
-if is_windows then
-  -- Point to a unique sandbox root
-  local sandbox = vim.env.USERPROFILE .. '\\AppData\\Local\\' .. app_name .. '-sandbox'
-  vim.env.LOCALAPPDATA = sandbox
-else
-  local home = vim.env.HOME
-  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name .. '-sandbox'
-end
---
--- -- 1. SET NAMES FIRST
--- vim.env.NVIM_APPNAME = app_name
---
 -- -- 2. ISOLATE ENVIRONMENT
 -- if is_windows then
---   -- Use AppData/Local to stay clean on Windows
---   local base = vim.env.LOCALAPPDATA .. '/' .. app_name
---   vim.env.XDG_CONFIG_HOME = base .. '/config'
---   vim.env.XDG_DATA_HOME = base .. '/data'
---   vim.env.XDG_STATE_HOME = base .. '/state'
---   vim.env.XDG_CACHE_HOME = base .. '/cache'
+--   -- Point to a unique sandbox root
+--   local sandbox = vim.env.USERPROFILE .. '\\AppData\\Local\\' .. app_name .. '-sandbox'
+--   vim.env.LOCALAPPDATA = sandbox
 -- else
 --   local home = vim.env.HOME
---   vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
---   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
+--   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name .. '-sandbox'
 -- end
+--
+--
+-- 2. ISOLATE ENVIRONMENT
+if is_windows then
+  -- Use AppData/Local to stay clean on Windows
+  local base = vim.env.LOCALAPPDATA .. '/' .. app_name
+  vim.env.XDG_CONFIG_HOME = base .. '/config'
+  vim.env.XDG_DATA_HOME = base .. '/data'
+  vim.env.XDG_STATE_HOME = base .. '/state'
+  vim.env.XDG_CACHE_HOME = base .. '/cache'
+else
+  local home = vim.env.HOME
+  vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
+  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
+end
 
 -- 3. BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
@@ -237,16 +235,6 @@ print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
 --     lazypath,
 --   })
 -- end
---
--- -- local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
--- -- if checker then
--- --   checker:close()
--- --   vim.opt.rtp:prepend(lazypath)
--- --   package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
--- -- else
--- --   vim.fn.delete(lazypath, 'rf')
--- --   error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
--- -- end
 --
 -- vim.opt.rtp:prepend(lazypath)
 -- print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
