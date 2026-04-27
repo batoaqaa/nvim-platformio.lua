@@ -66,7 +66,7 @@ local function pick_library(json_data)
 
         local pio = require('platformio.utils.pio')
         pio.run_sequence({
-            cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
+            cmnds = {'pio pkg install --library "' .. pkg_name .. '" --no-save'},
             cb = pio.handlePiolib
           --function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
         })
