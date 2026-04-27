@@ -46,6 +46,10 @@ _G.metadata = setmetatable({}, {
     vim.schedule(function()
       -- M.save_project_config(true)
       if key == 'toolchain_root' then
+        local binPath = value .. '/bin'
+        local sep = (vim.fn.has('win32') == 1 and ';' or ':')
+        vim.env.PATH = binPath .. sep .. vim.env.PATH
+        vim.notify('Env: ' .. binPath .. ' added to path', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         -- vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         -- pcall(function()
         --   if _pio_metadata.dbTrigger then
