@@ -155,8 +155,18 @@ end
 -- Handle after pioinit execution
 function M.handlePioinitDb(result)
   if result == 'INIT' then
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    local boilerplate = require('platformio.boilerplate')
+    local boilerplate_gen = boilerplate.boilerplate_gen
+
+    boilerplate.core_dir = _G.metadata.core_dir
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'PASS' then
     commandPassed = commandPassed + 1
@@ -196,8 +206,18 @@ end
 -- Handle after pioinit execution
 function M.handlePioinit(result)
   if result == 'INIT' then
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    local boilerplate = require('platformio.boilerplate')
+    local boilerplate_gen = boilerplate.boilerplate_gen
+
+    boilerplate.core_dir = _G.metadata.core_dir
     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()

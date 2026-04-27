@@ -1,5 +1,7 @@
 M = {}
+
 M.core_dir = ''
+
 local uv = vim.loop
 
 local boilerplate = {}
