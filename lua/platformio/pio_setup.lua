@@ -483,6 +483,7 @@ function M.init()
     -- M.start_pio_watcher()
     M.start_watchers()
 
+    -- boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
       ----------------------------------------------------------------------------------------
@@ -493,7 +494,6 @@ function M.init()
       -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       boilerplate.core_dir = _G.metadata.core_dir
       boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-      boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
       ---------------------------------------------------------------------------------
       -- M.run_compiledb() -- Smart: Auto-update DB if config changes
       M.pio_refresh(function()
