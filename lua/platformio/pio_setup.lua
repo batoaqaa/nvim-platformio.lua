@@ -40,12 +40,12 @@ function M.get_sysroot_triplet(cc_compiler)
 
   -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
   -- Only return data if the sysroot folder actually exists on disk
-  print('sysroot')
   if vim.fn.isdirectory(sysroot) == 1 then
     _G.metadata.triplet = triplet
     _G.metadata.sysroot = sysroot
     _G.metadata.toolchain_root = toolchain_root
     _G.metadata.query_driver = query_driver
+    print('sysroot')
     return {
       triplet = triplet,
       sysroot = sysroot,
