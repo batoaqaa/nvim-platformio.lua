@@ -406,30 +406,46 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
--- SELECTIVE CLEANUP ON EXIT (Keeps plugins, deletes temp files)
--- stylua: ignore
+-- AUTO-CLEANUP ON EXIT
 vim.api.nvim_create_autocmd('VimLeave', {
   callback = function()
-    -- stdpath("cache") and stdpath("state") point to the isolated folders
-    local folders_to_clean = {
-      vim.fn.stdpath('cache'),
-      vim.fn.stdpath('state'),
-    }
+    -- Get the root sandbox directory from our 'home' variable
+    local sandbox_path = home
 
-    for _, path in ipairs(folders_to_clean) do
-      if vim.fn.isdirectory(path) == 1 then
-        local cmd = isWindows and string.format('rmdir /s /q "%s"', path:gsub('/', '\\')) or string.format('rm -rf "%s"', path)
+    if vim.fn.isdirectory(sandbox_path) == 1 then
+      -- Use a system command to recursively delete the folder
+      -- Windows uses 'rmdir /s /q', Linux/macOS uses 'rm -rf'
+      local cmd = isWindows and string.format('rmdir /s /q "%s"', sandbox_path:gsub('/', '\\')) or string.format('rm -rf "%s"', sandbox_path)
 
-        -- Detach so it finishes after Neovim closes
-        vim.fn.jobstart(cmd, { detach = true })
-      end
+      -- Execute the deletion in the background as we exit
+      vim.fn.jobstart(cmd, { detach = true })
     end
-
-    -- Optional: Also delete the .ccl file on every exit
-    local ccl_file = vim.fn.getcwd() .. '/.ccl'
-    if vim.fn.filereadable(ccl_file) == 1 then os.remove(ccl_file) end
   end,
 })
+-- SELECTIVE CLEANUP ON EXIT (Keeps plugins, deletes temp files)
+-- stylua: ignore
+-- vim.api.nvim_create_autocmd('VimLeave', {
+--   callback = function()
+--     -- stdpath("cache") and stdpath("state") point to the isolated folders
+--     local folders_to_clean = {
+--       vim.fn.stdpath('cache'),
+--       vim.fn.stdpath('state'),
+--     }
+--
+--     for _, path in ipairs(folders_to_clean) do
+--       if vim.fn.isdirectory(path) == 1 then
+--         local cmd = isWindows and string.format('rmdir /s /q "%s"', path:gsub('/', '\\')) or string.format('rm -rf "%s"', path)
+--
+--         -- Detach so it finishes after Neovim closes
+--         vim.fn.jobstart(cmd, { detach = true })
+--       end
+--     end
+--
+--     -- Optional: Also delete the .ccl file on every exit
+--     local ccl_file = vim.fn.getcwd() .. '/.ccl'
+--     if vim.fn.filereadable(ccl_file) == 1 then os.remove(ccl_file) end
+--   end,
+-- })
 ----------------------------------------------------------------------------------------
 -- INFO: set up python nvim venv (virtual environment 'nenv'), activaten.
 local platformio_core_dir, pynvim_env, pynvim_python, pynvim_lib, pynvim_bin, pynvim_activate
