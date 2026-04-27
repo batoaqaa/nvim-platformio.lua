@@ -164,57 +164,31 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- pick a temp root
 
--- local app_name = 'nvim-piomini'
--- local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
---
--- -- 1. SET NAMES FIRST
--- vim.env.NVIM_APPNAME = app_name
---
--- -- 2. ISOLATE ENVIRONMENT
--- if is_windows then
---   -- Use AppData/Local to stay clean on Windows
---   local base = vim.env.LOCALAPPDATA .. '/' .. app_name
---   vim.env.XDG_CONFIG_HOME = base .. '/config'
---   vim.env.XDG_DATA_HOME = base .. '/data'
---   vim.env.XDG_STATE_HOME = base .. '/state'
---   vim.env.XDG_CACHE_HOME = base .. '/cache'
--- else
---   local home = vim.env.HOME
---   vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
---   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
--- end
---
--- -- 3. BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
--- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
---
--- if not (vim.uv or vim.loop).fs_stat(lazypath) then
---   print('Installing lazy.nvim to: ' .. lazypath)
---   vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com/folke/lazy.nvim.git',
---     '--branch=stable',
---     lazypath,
---   })
--- end
---
--- -- 4. ADD TO RUNTIME PATH (Crucial: makes 'require("lazy")' work)
--- vim.opt.rtp:prepend(lazypath)
---
--- print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
-------------------------------------------------------------------------------------
+local app_name = 'nvim-pio'
+local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
 
-local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
-vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
-vim.env.XDG_DATA_HOME = tmp_root .. '/data'
-vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
-vim.env.XDG_STATE_HOME = tmp_root .. '/state'
+-- 1. SET NAMES FIRST
+vim.env.NVIM_APPNAME = app_name
 
-local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
--- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+-- 2. ISOLATE ENVIRONMENT
+if is_windows then
+  -- Use AppData/Local to stay clean on Windows
+  local base = vim.env.LOCALAPPDATA .. '/' .. app_name
+  vim.env.XDG_CONFIG_HOME = base .. '/config'
+  vim.env.XDG_DATA_HOME = base .. '/data'
+  vim.env.XDG_STATE_HOME = base .. '/state'
+  vim.env.XDG_CACHE_HOME = base .. '/cache'
+else
+  local home = vim.env.HOME
+  vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
+  vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
+end
+
+-- 3. BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
+local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  print('Attempting to download lazy.nvim ...')
+  print('Installing lazy.nvim to: ' .. lazypath)
   vim.fn.system({
     'git',
     'clone',
@@ -225,18 +199,44 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   })
 end
 
--- local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
--- if checker then
---   checker:close()
---   vim.opt.rtp:prepend(lazypath)
---   package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
--- else
---   vim.fn.delete(lazypath, 'rf')
---   error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
--- end
-
+-- 4. ADD TO RUNTIME PATH (Crucial: makes 'require("lazy")' work)
 vim.opt.rtp:prepend(lazypath)
+
 print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
+------------------------------------------------------------------------------------
+
+-- local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
+-- vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
+-- vim.env.XDG_DATA_HOME = tmp_root .. '/data'
+-- vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
+-- vim.env.XDG_STATE_HOME = tmp_root .. '/state'
+--
+-- local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
+-- -- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+-- if not (vim.uv or vim.loop).fs_stat(lazypath) then
+--   print('Attempting to download lazy.nvim ...')
+--   vim.fn.system({
+--     'git',
+--     'clone',
+--     '--filter=blob:none',
+--     'https://github.com/folke/lazy.nvim.git',
+--     '--branch=stable',
+--     lazypath,
+--   })
+-- end
+--
+-- -- local checker = io.open(lazypath .. '/lua/lazy/init.lua', 'r')
+-- -- if checker then
+-- --   checker:close()
+-- --   vim.opt.rtp:prepend(lazypath)
+-- --   package.path = package.path .. ';' .. lazypath .. '/lua/?.lua;' .. lazypath .. '/lua/?/init.lua'
+-- -- else
+-- --   vim.fn.delete(lazypath, 'rf')
+-- --   error('FATAL: Downloaded folder is corrupted. Retrying next launch.')
+-- -- end
+--
+-- vim.opt.rtp:prepend(lazypath)
+-- print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
 
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
