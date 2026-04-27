@@ -31,6 +31,7 @@ boilerplate['platformio.ini'] = {
 core_dir = %s
 platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
+libdeps_dir = ./external_libs
 
 default_envs = 
 ;default_envs = uno, nodemcu
