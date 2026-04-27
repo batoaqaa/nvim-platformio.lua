@@ -175,21 +175,6 @@ vim.env.XDG_STATE_HOME = home .. (isWindows and '/state/' or '/.local/state/')
 vim.env.XDG_CACHE_HOME = home .. (isWindows and '/cache/' or '/.cache/')
 --]]
 
---[[
-local app_name = 'nvim-pio'
-local base_path = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
-
--- 1. THE "FLATTENER": Set NVIM_APPNAME to match your root folder name
-vim.env.NVIM_APPNAME = app_name
-
--- 2. Set XDG variables to the PARENT of where you want the app to live
--- Neovim will automatically append /nvim-pio to each of these
-vim.env.XDG_CONFIG_HOME = base_path
-vim.env.XDG_DATA_HOME = base_path
-vim.env.XDG_STATE_HOME = base_path
-vim.env.XDG_CACHE_HOME = base_path
---]]
-
 -- BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 
@@ -207,27 +192,6 @@ end
 
 -- ADD TO RUNTIME PATH (Crucial: makes 'require("lazy")' work)
 vim.opt.rtp:prepend(lazypath)
-
-print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
-------------------------------------------------------------------------------------
-
---
--- local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
--- -- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
--- if not (vim.uv or vim.loop).fs_stat(lazypath) then
---   print('Attempting to download lazy.nvim ...')
---   vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com/folke/lazy.nvim.git',
---     '--branch=stable',
---     lazypath,
---   })
--- end
---
--- vim.opt.rtp:prepend(lazypath)
--- print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
 
 ----------------------------------------------------------------------------------------
 -- INFO: define plugins table
