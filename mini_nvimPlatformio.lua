@@ -165,25 +165,17 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 local app_name = 'nvim-pio' -- pick a temp root
 local home = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
 home = home .. '/' .. app_name
+-- local home = vim.loop.os_tmpdir():gsub('\\', '/') .. '/' .. app_name
 
 -- vim.env.NVIM_APPNAME = app_name --isolated nvim
 ---[[
-if isWindows then
-  -- Use AppData/Local to stay clean on Windows
-  vim.env.XDG_CONFIG_HOME = home .. '/config'
-  vim.env.XDG_DATA_HOME = home .. '/data'
-  vim.env.XDG_STATE_HOME = home .. '/state'
-  vim.env.XDG_CACHE_HOME = home .. '/cache'
-else
-  vim.env.XDG_CONFIG_HOME = home .. '/.config/'
-  vim.env.XDG_DATA_HOME = home .. '/.local/share/'
-  vim.env.XDG_STATE_HOME = home .. '/.local/state/'
-  vim.env.XDG_CACHE_HOME = home .. '/.cache/'
-end
+vim.env.XDG_CONFIG_HOME = home .. isWindows and '/config/' or '/.config'
+vim.env.XDG_DATA_HOME = home .. isWindows and '/data/' or '/.local/share/'
+vim.env.XDG_STATE_HOME = home .. isWindows and '/state/' or '/.local/state/'
+vim.env.XDG_CACHE_HOME = home .. isWindows and '/cache/' or '/.cache/'
 --]]
 
 --[[
-local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. app_name
 vim.env.XDG_CONFIG_HOME = tmp_root .. '/config'
 vim.env.XDG_DATA_HOME = tmp_root .. '/data'
 vim.env.XDG_CACHE_HOME = tmp_root .. '/cache'
