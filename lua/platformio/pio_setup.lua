@@ -59,10 +59,9 @@ end
 function M.pio_refresh(callback)
   vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
 
-  -- stylua: ignore
   -- INFO:-------------------------------------------------
   -- get pio project metadata info
-  ---------------------------------------------------------
+  -- stylua: ignore
   local function get_metadata(attempts, env)
     local meta = _G.metadata
     local active_env = env or meta.active_env
@@ -78,7 +77,6 @@ function M.pio_refresh(callback)
 
     ---------------------------------------------------------
     -- INTERNAL PROCESSOR: Applies parsed data to _G.metadata
-    ---------------------------------------------------------
     local function apply_metadata(data, checksum)
       if not data then return false end
 
