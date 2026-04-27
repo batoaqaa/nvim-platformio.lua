@@ -173,7 +173,7 @@ local sep = is_windows and '/' or '/'
 
 -- Set names for isolation
 vim.env.NVIM_APPNAME = app_name
-
+print(home)
 -- Manually set XDG paths to force isolation on both OS types
 if is_windows then
   vim.env.XDG_CONFIG_HOME = home .. sep .. app_name
