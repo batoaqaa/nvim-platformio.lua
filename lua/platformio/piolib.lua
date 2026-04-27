@@ -121,72 +121,33 @@ local function pick_library(json_data)
       preview_width = 0.60, -- Wider preview (60%)
     },
 
+
     finder = finders.new_table({
       results = json_data['items'],
       entry_maker = function(entry)
-        -- Safe string conversion to prevent "concatenate table" errors
-        local owner = type(entry.owner) == "string" and entry.owner or tostring(entry.owner or "")
-        local name = type(entry.name) == "string" and entry.name or tostring(entry.name or "")
-
         return {
           value = entry,
           display = make_display,
-          ordinal = owner .. ' ' .. name,
+          -- Ordinal is used for searching/filtering
+          ordinal = (entry.owner or '') .. ' ' .. (entry.name or ''),
         }
       end,
     }),
-
-    -- finder = finders.new_table({
-    --   results = json_data['items'],
-    --   entry_maker = function(entry)
-    --     return {
-    --       value = entry,
-    --       display = make_display,
-    --       -- Ordinal is used for searching/filtering
-    --       ordinal = (entry.owner or '') .. ' ' .. (entry.name or ''),
-    --     }
-    --   end,
-    -- }),
-    -- attach_mappings = function(prompt_bufnr, _)
-    --   actions.select_default:replace(function()
-    --     actions.close(prompt_bufnr)
-    --     local selection = action_state.get_selected_entry()
-    --     local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
-    --
-    --     local pio = require('platformio.utils.pio')
-    --     pio.run_sequence({
-    --       {
-    --         cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
-    --         cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
-    --       },
-    --     })
-    --   end)
-    --   return true
-    -- end,
-
     attach_mappings = function(prompt_bufnr, _)
       actions.select_default:replace(function()
-        local selection = action_state.get_selected_entry()
         actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
 
-        -- 1. Safe string extraction for pkg_name
-        local owner = selection.value.owner
-        local owner_name = type(owner) == "table" and (owner.name or owner.username) or tostring(owner)
-        local lib_name = tostring(selection.value.name)
-        local pkg_name = owner_name .. '/' .. lib_name
-
-        -- 2. Execute with the correct key 'cmd'
         local pio = require('platformio.utils.pio')
         pio.run_sequence({
-            -- Use 'cmd' (singular), not 'cmds' or 'cmnds'
-            cmnds = {'pio pkg install --library "' .. pkg_name .. '"',},
-            cb = function ()
-              vim.notify('Piolib: Done installing ' .. pkg_name, vim.log.levels.INFO)
-            end
+            cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
+            cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end
         })
       end)
       return true
     end,
+
     --
     previewer = previewers.new_buffer_previewer({
       title = 'Package Info',
