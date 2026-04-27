@@ -358,6 +358,7 @@ function M.start_watchers()
       idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),
       path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
       cb = function(self)
+        print(self.path)
         local _, current_checksum = vim.misc.readFile(self.path)
         if current_checksum and current_checksum ~= '' then
           if current_checksum == _G.metadata.last_checksum then
