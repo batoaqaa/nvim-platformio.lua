@@ -164,7 +164,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- pick a temp root
 
-local app_name = 'nvim-mini-pio'
+local app_name = 'nvim-piomini'
 local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
 
 -- 1. SET NAMES FIRST
@@ -173,7 +173,7 @@ vim.env.NVIM_APPNAME = app_name
 -- 2. ISOLATE ENVIRONMENT
 if is_windows then
   -- Use AppData/Local to stay clean on Windows
-  local base = vim.env.LOCALAPPDATA .. '/' .. app_name .. '-sandbox'
+  local base = vim.env.LOCALAPPDATA .. '/' .. app_name
   vim.env.XDG_CONFIG_HOME = base .. '/config'
   vim.env.XDG_DATA_HOME = base .. '/data'
   vim.env.XDG_STATE_HOME = base .. '/state'
