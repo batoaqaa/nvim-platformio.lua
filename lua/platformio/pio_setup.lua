@@ -493,13 +493,13 @@ function M.init()
       -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       boilerplate.core_dir = _G.metadata.core_dir
       boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+      boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
       ---------------------------------------------------------------------------------
       -- M.run_compiledb() -- Smart: Auto-update DB if config changes
       M.pio_refresh(function()
         -- vim.schedule(function()
         --   lsp_restart('clangd')
         -- end)
-        boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
       end)
     end
   end
