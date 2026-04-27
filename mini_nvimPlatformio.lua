@@ -163,38 +163,32 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
 -- pick a temp root
--- 1. CROSS-PLATFORM ENVIRONMENT ISOLATION
--- This acts like the "bash" or "powershell" setup inside Lua
-local app_name = 'nvim-min-platformio'
-local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
--- local home = vim.loop.os_tmpdir():gsub('\\', '/')
-local home = is_windows and vim.env.USERPROFILE or vim.env.HOME
-local sep = is_windows and '/' or '/'
 
--- Set names for isolation
+local app_name = 'nvim-mini-pio'
+local is_windows = vim.loop.os_uname().sysname == 'Windows_NT'
+
+-- 1. SET NAMES FIRST
 vim.env.NVIM_APPNAME = app_name
-print(home)
--- Manually set XDG paths to force isolation on both OS types
+
+-- 2. ISOLATE ENVIRONMENT
 if is_windows then
-  vim.env.XDG_CONFIG_HOME = home .. sep .. app_name
-  print(vim.XDG_DATA_HOME)
-  vim.env.XDG_DATA_HOME = home .. sep .. app_name .. '-data'
-  vim.env.XDG_STATE_HOME = home .. sep .. app_name .. '-data' .. sep .. 'state'
-  vim.env.XDG_CACHE_HOME = home .. sep .. app_name .. '-data' .. sep .. 'cache'
+  -- Use AppData/Local to stay clean on Windows
+  local base = vim.env.LOCALAPPDATA .. '/' .. app_name .. '-sandbox'
+  vim.env.XDG_CONFIG_HOME = base .. '/config'
+  vim.env.XDG_DATA_HOME = base .. '/data'
+  vim.env.XDG_STATE_HOME = base .. '/state'
+  vim.env.XDG_CACHE_HOME = base .. '/cache'
 else
+  local home = vim.env.HOME
   vim.env.XDG_CONFIG_HOME = home .. '/.config/' .. app_name
   vim.env.XDG_DATA_HOME = home .. '/.local/share/' .. app_name
-  vim.env.XDG_STATE_HOME = home .. '/.local/state/' .. app_name
-  vim.env.XDG_CACHE_HOME = home .. '/.cache/' .. app_name
 end
 
--- 2. CORE SETTINGS
+-- 3. BOOTSTRAP (Use stdpath so it ALWAYS matches Neovim's internal logic)
+local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 
--- 3. BOOTSTRAP PLUGIN MANAGER (Lazy.nvim)
-local lazypath = vim.env.XDG_DATA_HOME .. '/lazy/lazy.nvim'
--- local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  print('Attempting to download lazy.nvim ...')
+  print('Installing lazy.nvim to: ' .. lazypath)
   vim.fn.system({
     'git',
     'clone',
@@ -205,19 +199,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   })
 end
 
--- local lazypath = vim.fn.stdpath('data') .. separator .. 'lazy' .. separator .. 'lazy.nvim'
--- if not vim.loop.fs_stat(lazypath) then
---   vim.fn.system({
---     'git',
---     'clone',
---     '--filter=blob:none',
---     'https://github.com',
---     '--branch=stable',
---     lazypath,
---   })
--- end
---
+-- 4. ADD TO RUNTIME PATH (Crucial: makes 'require("lazy")' work)
 vim.opt.rtp:prepend(lazypath)
+
+print('Minimal environment active at: ' .. vim.fn.stdpath('config'))
 ------------------------------------------------------------------------------------
 
 -- local tmp_root = vim.loop.os_tmpdir():gsub('\\', '/') .. '/nvim-temp'
