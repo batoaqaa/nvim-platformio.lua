@@ -196,6 +196,7 @@ end
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
   opts = opts or {}
+  if #opts == 0 then opts = {overwrite = true, mkdir = true} end
   -- opts.overwrite: boolean (default true)
   -- opts.mkdir: boolean (default true)
 
