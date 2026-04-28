@@ -496,6 +496,7 @@ function M.start_watchers()
           end -- Already updated
 
           vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
+        _G.metadata.isBusy = false
           -- STEP 2: Cache Path (idedata.json exists and checksum changed)
           -- M.pio_refresh(function()
           --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
