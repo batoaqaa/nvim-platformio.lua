@@ -284,7 +284,7 @@ function M.run_compiledb()
     vim.schedule(function()
       if obj.code == 0 then
         M.pio_refresh(function()
-          local dbFix = require('platformio.utils.pio').compile_commandsFix
+          -- local dbFix = require('platformio.utils.pio').compile_commandsFix
           -- dbFix()
           vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- pio_generate_db()
@@ -310,8 +310,12 @@ local function watch_file(full_path, callback)
 
   if handle then
     handle:start( parent_dir, {},
-      function(err, filename, events)
-        if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.rename) then
+      function(err, filename) --, events)
+        if err or filename ~= target_file or _G.metadata.isBusy then --or not events or not (events.change or events.rename) then
+          -- Use vim.schedule to notify so we don't block the loop
+          vim.schedule(function()
+            vim.notify("Watcher error: " .. tostring(err), vim.log.levels.ERROR)
+          end)
           return --handle:stop()
         end
 
