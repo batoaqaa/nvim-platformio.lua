@@ -303,49 +303,115 @@ local uv = vim.uv or vim.loop
 M.watcher_handles = {}
 
 -- stylua: ignore
+-- Use a single, global-ish timer variable to handle debouncing across all events
+local debounce_timer = vim.uv.new_timer()
+
 local function watch_file(full_path, callback)
-  local handle = uv.new_fs_event()
+  -- 1. Nil check input parameters
+  if not full_path or type(callback) ~= 'function' then
+    vim.notify('watch_file: Invalid path or callback', vim.log.levels.ERROR)
+    return nil
+  end
+
+  local handle, init_err = vim.uv.new_fs_event()
+  if not handle then
+    vim.notify('watch_file: Failed to create handle: ' .. tostring(init_err), vim.log.levels.ERROR)
+    return nil
+  end
+
   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
   local target_file = vim.fn.fnamemodify(full_path, ':t')
 
-  if handle then
-    handle:start( parent_dir, {},
-      function(err, filename) --, events)
+  -- Start the watcher on the parent directory
+  handle:start(parent_dir, {}, function(err, filename, events)
+    -- 2. Robust error checking (tostring handles nil err)
+    if err then
+      vim.schedule(function()
+        vim.notify('Watcher system error: ' .. tostring(err), vim.log.levels.ERROR)
+      end)
+      return
+    end
 
-        -- 1. Catch REAL system errors
-        if err then --or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.rename) then
-          -- Use vim.schedule to notify so we don't block the loop
-          vim.schedule(function()
-            vim.notify("Watcher error: " .. tostring(err), vim.log.levels.ERROR)
-          end)
-          return --handle:stop()
-        end
+    -- 3. Guard against nil filename and metadata
+    -- Only proceed if the event is for our target file and we aren't busy
+    local is_target = (filename == target_file)
+    local is_busy = (_G.metadata and _G.metadata.isBusy == true)
 
-        -- if filename == target_file then
-        -- end
+    if not is_target or is_busy then
+      return
+    end
 
-        -- 2. SILENTLY ignore events that aren't our target file
-        -- Or if we are currently busy processing another task
-        if filename ~= target_file or _G.metadata.isBusy then
-          return
-        end
+    if debounce_timer then
+      -- 4. Debounce Logic with Timer Safety
+      -- Stop existing timer if it's currently running (debouncing)
+      if debounce_timer:is_active() then
+        debounce_timer:stop()
+      end
 
-        -- Debounce: Use vim.schedule to ensure we don't fire 
-        -- during the middle of a file-swap operation
-        -- 3. Trigger the callback safely
-        vim.schedule(function()
-          print('file watched')
-            -- Re-verify file exists before calling
-          if vim.loop.fs_stat(full_path) then
-              callback()
+      -- Start/Restart the timer
+      debounce_timer:start(
+        500,
+        0,
+        vim.schedule_wrap(function()
+          -- 5. Final existence check before execution
+          -- Some editors delete/rename files during save (atomic saves)
+          local stat = vim.uv.fs_stat(full_path)
+          if stat and stat.type == 'file' then
+            print('File settled: ' .. target_file)
+            callback()
           end
         end)
-        -- vim.schedule(callback)
-      end
-    )
-    return handle
-  end
+      )
+    end
+  end)
+
+  return handle
 end
+
+
+-- local function watch_file(full_path, callback)
+--   local handle = uv.new_fs_event()
+--   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
+--   local target_file = vim.fn.fnamemodify(full_path, ':t')
+--
+--   if handle then
+--     handle:start( parent_dir, {},
+--       function(err, filename) --, events)
+--
+--         -- 1. Catch REAL system errors
+--         if err then --or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.rename) then
+--           -- Use vim.schedule to notify so we don't block the loop
+--           vim.schedule(function()
+--             vim.notify("Watcher error: " .. tostring(err), vim.log.levels.ERROR)
+--           end)
+--           return --handle:stop()
+--         end
+--
+--         -- if filename == target_file then
+--         -- end
+--
+--         -- 2. SILENTLY ignore events that aren't our target file
+--         -- Or if we are currently busy processing another task
+--         if filename ~= target_file or _G.metadata.isBusy then
+--           return
+--         end
+--
+--         -- Debounce: Use vim.schedule to ensure we don't fire 
+--         -- during the middle of a file-swap operation
+--         -- 3. Trigger the callback safely
+--         vim.schedule(function()
+--           print('file watched')
+--             -- Re-verify file exists before calling
+--           if vim.loop.fs_stat(full_path) then
+--               callback()
+--           end
+--         end)
+--         -- vim.schedule(callback)
+--       end
+--     )
+--     return handle
+--   end
+-- end
 
 -- stylua: ignore
 function M.start_watchers()
