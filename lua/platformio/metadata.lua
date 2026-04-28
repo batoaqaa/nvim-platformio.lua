@@ -2,7 +2,6 @@ local M = {}
 
 -------------------------------------------------------------------------------------------------------
 local last_saved_hash = ''
-local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 
 --INFO:
 -- 1. Internal State & Defaults
@@ -78,6 +77,7 @@ _G.metadata = setmetatable({}, {
   end,
 })
 
+local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 -- -- Add this temporary line in a file where you are coding:
 -- ---@type platformio.utils.misc
 -- local misc = vim.misc
@@ -88,18 +88,19 @@ function M.save_project_config(quiet)
     return
   end
   -- local json_data = pio.pretty_json(_pio_metadata)
-  local ok, json_data = pcall(vim.json.encode, _pio_metadata)
+  local ok, pretty_table = vim.misc.pretty_print(_pio_metadata)
   if not ok then
-    print('Error encoding JSON: ' .. json_data)
+    print('Error formatting metadata')
     return
   end
-  local pretty_json = vim.misc.pretty_print(json_data)
+  local _, pretty_json = pcall(vim.json.encode, pretty_table)
+  -- local pretty_json = vim.misc.pretty_print(json_data)
   local current_hash = vim.fn.sha256(pretty_json)
 
   --   file:write(pio.jsonFormat(json_data))
   if current_hash ~= last_saved_hash then
     -- local status = vim.fn.writefile({ json_data }, config_path)
-    local status, _ = vim.misc.writeFile(json_data, config_path, {})
+    local status, _ = vim.misc.writeFile(pretty_json, config_path, {})
     if status == 0 then
       last_saved_hash = current_hash
       if not quiet then
@@ -110,6 +111,33 @@ function M.save_project_config(quiet)
     end
   end
 end
+-- function M.save_project_config(quiet)
+--   if vim.fn.filereadable('platformio.ini') == 0 then
+--     return
+--   end
+--   -- local json_data = pio.pretty_json(_pio_metadata)
+--   local ok, json_data = pcall(vim.json.encode, _pio_metadata)
+--   if not ok then
+--     print('Error encoding JSON: ' .. json_data)
+--     return
+--   end
+--   local pretty_json = vim.misc.pretty_print(json_data)
+--   local current_hash = vim.fn.sha256(pretty_json)
+--
+--   --   file:write(pio.jsonFormat(json_data))
+--   if current_hash ~= last_saved_hash then
+--     -- local status = vim.fn.writefile({ json_data }, config_path)
+--     local status, _ = vim.misc.writeFile(json_data, config_path, {})
+--     if status == 0 then
+--       last_saved_hash = current_hash
+--       if not quiet then
+--         vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
+--       end
+--     else
+--       vim.notify('Could not open file for writing')
+--     end
+--   end
+-- end
 
 --INFO:
 -- 4. Load Logic (Populates proxy safely)
