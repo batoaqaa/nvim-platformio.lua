@@ -285,17 +285,17 @@ function M.run_compiledb()
       _G.metadata.isBusy = false
       if obj.code == 0 then
         -- 1. Sync the checksum manually so the second watcher ignores this change
-        local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
-        local ok, new_checksum = vim.misc.readFile(checksum_path)
-        if ok then
-          _G.metadata.last_checksum = new_checksum
-        end
+        -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
+        -- local ok, new_checksum = vim.misc.readFile(checksum_path)
+        -- if ok then
+        --   _G.metadata.last_checksum = new_checksum
+        -- end
 
         -- 2. Refresh
         -- M.pio_refresh(function()
         --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
         --   -- dbFix()
-        --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+          vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
         --   -- pio_generate_db()
         --   -- lsp_restart('clangd')
         -- end)
