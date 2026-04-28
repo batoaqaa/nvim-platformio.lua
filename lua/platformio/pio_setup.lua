@@ -288,18 +288,9 @@ function M.run_compiledb()
           -- dbFix()
           vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- pio_generate_db()
-          -- M.run_compiledb()
           -- lsp_restart('clangd')
           _G.metadata.isBusy = false
         end)
-        -- Use pcall in case M.refresh is defined elsewhere
-        -- pio_refresh(function()
-        -- boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir) --require('platformio.utils.pio').get_pio_dir('core')) --vim.env.PLATFORMIO_CORE_DIR)
-        -- pio_generate_db()
-        -- lsp_restart('clangd')
-        -- end)
-        --
       else
         vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
       end
@@ -323,7 +314,7 @@ local function watch_file(full_path, callback)
         -- handle:start(parent_dir, {}, function(err, filename)
         -- if err then
         if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
-          return handle:stop()
+          return --handle:stop()
         end
 
         if filename == target_file then
