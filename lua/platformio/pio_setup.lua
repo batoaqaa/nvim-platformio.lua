@@ -617,7 +617,7 @@ function M.init()
 
     -- Always start the watcher so it can catch a future 'pio init'
     -- M.start_pio_watcher()
-    M.start_watchers()
+    -- M.start_watchers()
 
     -- boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
     -- If the file already exists, do an initial sync
