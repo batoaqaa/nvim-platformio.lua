@@ -292,13 +292,13 @@ function M.run_compiledb()
         end
 
         -- 2. Refresh
-        M.pio_refresh(function()
-          -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-          -- dbFix()
-          vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- pio_generate_db()
-          -- lsp_restart('clangd')
-        end)
+        -- M.pio_refresh(function()
+        --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+        --   -- dbFix()
+        --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+        --   -- pio_generate_db()
+        --   -- lsp_restart('clangd')
+        -- end)
       else
         -- If pio failed, check obj.stderr to see why
         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
