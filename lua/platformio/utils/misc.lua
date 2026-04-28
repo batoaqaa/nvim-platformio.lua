@@ -118,34 +118,70 @@ end
 ------------------------------------------------------
 --INFO:
 -- recursion 50ms
--- stylua: ignore
+--- stylua: ignore
 -- local function pretty_print(data) -- 48ms
 function M.pretty_print(data) -- 48ms
   -- Force input into a table if it's just a single string
-  local insert = table.insert
   local buffer = {}
   local function format_item(item, current_level)
+    local insert = table.insert
     local indent = string.rep('  ', current_level)
     local next_indent = string.rep('  ', current_level + 1)
+
     if type(item) == 'table' then
+      -- Check if table is empty
+      if next(item) == nil then
+        insert(buffer, #item > 0 and '[]' or '{}')
+        return
+      end
+
       local is_array = #item > 0
       local opener = is_array and '[' or '{'
       local closer = is_array and ']' or '}'
+
       insert(buffer, opener .. '\n')
       local first = true
       for k, v in pairs(item) do
-        if not first then insert(buffer, ',\n') end
+        if not first then
+          insert(buffer, ',\n')
+        end
         insert(buffer, next_indent)
-        if not is_array then insert(buffer, '"' .. k .. '": ') end
+        if not is_array then
+          insert(buffer, '"' .. k .. '": ')
+        end
         format_item(v, current_level + 1)
         first = false
       end
       insert(buffer, '\n' .. indent .. closer)
     elseif type(item) == 'string' then
-      -- Basic escaping for the string content
       insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
-    else insert(buffer, tostring(item)) end
+    else
+      insert(buffer, tostring(item))
+    end
   end
+  -- local function format_item(item, current_level)
+  --   local indent = string.rep('  ', current_level)
+  --   local next_indent = string.rep('  ', current_level + 1)
+  --   if type(item) == 'table' then
+  --     local is_array = #item > 0
+  --     local opener = is_array and '[' or '{'
+  --     local closer = is_array and ']' or '}'
+  --     insert(buffer, opener .. '\n')
+  --     local first = true
+  --     for k, v in pairs(item) do
+  --       if not first then insert(buffer, ',\n') end
+  --       insert(buffer, next_indent)
+  --       if not is_array then insert(buffer, '"' .. k .. '": ') end
+  --       format_item(v, current_level + 1)
+  --       first = false
+  --     end
+  --     insert(buffer, '\n' .. indent .. closer)
+  --   elseif type(item) == 'string' then
+  --     -- Basic escaping for the string content
+  --     insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
+  --   else insert(buffer, tostring(item)) end
+  -- end
+
   format_item(data, 0)
   return table.concat(buffer)
 end
@@ -196,7 +232,7 @@ end
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
   opts = opts or {}
-  if #opts == 0 then opts = {overwrite = true, mkdir = true} end
+  if next(opts) == nil then opts = {overwrite = true, mkdir = true} end
   -- opts.overwrite: boolean (default true)
   -- opts.mkdir: boolean (default true)
 
