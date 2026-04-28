@@ -290,7 +290,7 @@ function M.run_compiledb()
           -- pio_generate_db()
           -- M.run_compiledb()
           -- lsp_restart('clangd')
-          -- _G.metadata.isBusy = false
+          _G.metadata.isBusy = false
         end)
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_refresh(function()
