@@ -485,27 +485,27 @@ function M.start_watchers()
         end
       end,
     },
-    { -- watcher for ./.pio/build/projct.checksum
-      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
-      path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
-      cb = function(self)
-        local _, current_checksum = vim.misc.readFile(self.path)
-        if current_checksum and current_checksum ~= '' then
-          if current_checksum == _G.metadata.last_checksum then
-            return
-          end -- Already updated
-
-          vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
-        _G.metadata.isBusy = false
-          -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-          -- M.pio_refresh(function()
-          --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-          --   -- dbFix()
-          --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- end)
-        end
-      end,
-    },
+    -- { -- watcher for ./.pio/build/projct.checksum
+    --   idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
+    --   path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
+    --   cb = function(self)
+    --     local _, current_checksum = vim.misc.readFile(self.path)
+    --     if current_checksum and current_checksum ~= '' then
+    --       if current_checksum == _G.metadata.last_checksum then
+    --         return
+    --       end -- Already updated
+    --
+    --       vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --     _G.metadata.isBusy = false
+    --       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
+    --       -- M.pio_refresh(function()
+    --       --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+    --       --   -- dbFix()
+    --       --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --       -- end)
+    --     end
+    --   end,
+    -- },
   }
   targets[1].current_ini_hash = get_hash(targets[1].path) or ''
 
