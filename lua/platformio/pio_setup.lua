@@ -134,6 +134,7 @@ function M.pio_refresh(callback)
       if content then
         local ok, decoded = pcall(vim.json.decode, content)
         if ok and apply_metadata(decoded, current_checksum) then
+          metadata.save_project_config()
           vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)
           return
         end
