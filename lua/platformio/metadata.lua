@@ -70,8 +70,6 @@ _G.metadata = setmetatable({}, {
         -- end)
       elseif key == 'last_projectChecksum' then
       elseif key == 'active_env' then
-        -- Force global statusline so it doesn't get pushed around by Trouble or splits
-        vim.o.laststatus = 3
       end
     end)
   end,
