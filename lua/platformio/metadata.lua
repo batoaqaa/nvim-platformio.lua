@@ -101,7 +101,7 @@ function M.save_project_config(quiet)
   if current_hash ~= last_saved_hash then
     -- local status = vim.fn.writefile({ json_data }, config_path)
     local status, _ = vim.misc.writeFile(pretty_json, config_path, {})
-    if status == 0 then
+    if status then
       last_saved_hash = current_hash
       if not quiet then
         vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
