@@ -315,32 +315,29 @@ end
 local uv = vim.uv or vim.loop
 M.watcher_handles = {}
 
+-- stylua: ignore
 local function watch_file(full_path, callback)
   local handle = uv.new_fs_event()
   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
   local target_file = vim.fn.fnamemodify(full_path, ':t')
 
   if handle then
-    handle:start(
-      parent_dir,
-      {},
+    handle:start( parent_dir, {},
       vim.schedule_wrap(function(err, filename, events)
         -- handle:start(parent_dir, {}, function(err, filename)
         -- if err then
         if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
           return handle:stop()
-          -- return
         end
 
-        if filename == target_file then
-          vim.schedule(callback)
-        end
+        if filename == target_file then vim.schedule(callback) end
       end)
     )
     return handle
   end
 end
 
+-- stylua: ignore
 function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
   M.stop_watchers()
@@ -358,7 +355,6 @@ function M.start_watchers()
           self.current_ini_hash = new_hash
           M.run_compiledb() -- Smart: Auto-update DB if config changes
         end
-        -- fetch_config()
       end,
     },
     { -- watcher for ./.pio/build/projct.checksum
@@ -382,21 +378,16 @@ function M.start_watchers()
     },
   }
   targets[1].current_ini_hash = get_hash(targets[1].path) or ''
-  -- targets[1].current_ini_hash = get_hash(targets[1].path) or ''
-  -- targets[1].path = vim.misc.joinPath(project_root, 'platformio.ini')
-  -- targets[2].path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum') --checksum_path
-  -- targets[2].idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json')
 
   for _, target in ipairs(targets) do
-    local h = watch_file(target.path, target.cb)
+    local h = watch_file(target.path, function() target.cb(target) end)
     table.insert(M.watcher_handles, h)
   end
 end
 
+-- stylua: ignore
 function M.stop_watchers()
-  for _, handle in ipairs(M.watcher_handles) do
-    handle:stop()
-  end
+  for _, handle in ipairs(M.watcher_handles) do handle:stop() end
   M.watcher_handles = {}
 end
 
