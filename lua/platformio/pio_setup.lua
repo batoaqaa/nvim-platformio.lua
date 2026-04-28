@@ -74,8 +74,8 @@ function M.pio_refresh(callback)
     -- Set up file paths
     local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build')
     local build_env_dir = vim.misc.joinPath(build_dir, active_env)
-    local checksum_path = vim.misc.joinPath(build_dir, 'project.checksum')
-    local idedata_path = vim.misc.joinPath(build_env_dir, 'idedata.json')
+    local checksum_file = vim.misc.joinPath(build_dir, 'project.checksum')
+    local idedata_file = vim.misc.joinPath(build_env_dir, 'idedata.json')
 
     ---------------------------------------------------------
     -- INTERNAL PROCESSOR: Applies parsed data to _G.metadata
@@ -120,12 +120,15 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 1: Fast Checksum Check
     ---------------------------------------------------------
-    local _, current_checksum = vim.misc.readFile(checksum_path)
+    local _, current_checksum = vim.misc.readFile(checksum_file)
     if current_checksum and current_checksum ~= '' then
-      if current_checksum == meta.last_projectChecksum then return end -- Already updated
+      if current_checksum == meta.last_projectChecksum then
+        vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
+        return
+      end -- Already updated
 
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-      local _, content = vim.misc.readFile(idedata_path)
+      local _, content = vim.misc.readFile(idedata_file)
       if content then
         local ok, decoded = pcall(vim.json.decode, content)
         if ok and apply_metadata(decoded, current_checksum) then
