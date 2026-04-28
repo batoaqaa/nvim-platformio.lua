@@ -84,9 +84,9 @@ local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 --INFO:
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
-  if vim.fn.filereadable('platformio.ini') == 0 then
-    return
-  end
+  -- if vim.fn.filereadable('platformio.ini') == 0 then
+  --   return
+  -- end
   -- local json_data = pio.pretty_json(_pio_metadata)
   local ok, pretty_table = vim.misc.pretty_print(_pio_metadata)
   if not ok then
