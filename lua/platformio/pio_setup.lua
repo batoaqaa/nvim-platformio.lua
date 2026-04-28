@@ -276,11 +276,13 @@ end
 -- stylua: ignore
 function M.run_compiledb()
   if _G.metadata.isBusy then return end
+
   _G.metadata.isBusy = true
   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
+      _G.metadata.isBusy = false
       if obj.code == 0 then
         -- 1. Sync the checksum manually so the second watcher ignores this change
         local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
@@ -294,7 +296,6 @@ function M.run_compiledb()
           -- local dbFix = require('platformio.utils.pio').compile_commandsFix
           -- dbFix()
           vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-          _G.metadata.isBusy = false
           -- pio_generate_db()
           -- lsp_restart('clangd')
         end)
@@ -303,7 +304,6 @@ function M.run_compiledb()
         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
         vim.notify('Build Failed: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
         -- vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
-        _G.metadata.isBusy = false
       end
     end)
   end)
