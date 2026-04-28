@@ -118,47 +118,94 @@ end
 ------------------------------------------------------
 --INFO:
 -- recursion 50ms
---- stylua: ignore
+-- stylua: ignore
 -- local function pretty_print(data) -- 48ms
 function M.pretty_print(data) -- 48ms
   -- Force input into a table if it's just a single string
   local buffer = {}
+
   local function format_item(item, current_level)
     local insert = table.insert
     local indent = string.rep('  ', current_level)
     local next_indent = string.rep('  ', current_level + 1)
 
     if type(item) == 'table' then
-      -- Check if table is empty
+      -- 1. TRULY EMPTY CHECK
       if next(item) == nil then
-        insert(buffer, #item > 0 and '[]' or '{}')
+        -- In PIO metadata, most empty fields are intended to be arrays []
+        -- But we use {} as a safe JSON default for generic tables.
+        insert(buffer, '{}')
         return
       end
 
-      local is_array = #item > 0
+      -- 2. DETERMINE IF ARRAY OR OBJECT
+      -- A table is an array if it has a value at index 1
+      local is_array = item[1] ~= nil
       local opener = is_array and '[' or '{'
       local closer = is_array and ']' or '}'
 
       insert(buffer, opener .. '\n')
+
+      -- 3. SORT KEYS (Crucial for consistent SHA256 hashes)
+      local keys = {}
+      for k in pairs(item) do table.insert(keys, k) end
+      if not is_array then table.sort(keys) end
+
       local first = true
-      for k, v in pairs(item) do
-        if not first then
-          insert(buffer, ',\n')
-        end
+      for _, k in ipairs(keys) do
+        local v = item[k]
+        if not first then insert(buffer, ',\n') end
         insert(buffer, next_indent)
-        if not is_array then
-          insert(buffer, '"' .. k .. '": ')
-        end
+
+        if not is_array then insert(buffer, '"' .. tostring(k) .. '": ') end
+
         format_item(v, current_level + 1)
         first = false
       end
       insert(buffer, '\n' .. indent .. closer)
     elseif type(item) == 'string' then
-      insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
-    else
-      insert(buffer, tostring(item))
-    end
+      -- Escape backslashes for Windows paths and quotes
+      insert(buffer, '"' .. item:gsub('[\\]+', '/'):gsub('"', '\\"') .. '"')
+    else insert(buffer, tostring(item)) end
   end
+
+  -- local function format_item(item, current_level)
+  --   local insert = table.insert
+  --   local indent = string.rep('  ', current_level)
+  --   local next_indent = string.rep('  ', current_level + 1)
+  --
+  --   if type(item) == 'table' then
+  --     -- Check if table is empty
+  --     if next(item) == nil then
+  --       insert(buffer, #item > 0 and '[]' or '{}')
+  --       return
+  --     end
+  --
+  --     local is_array = #item > 0
+  --     local opener = is_array and '[' or '{'
+  --     local closer = is_array and ']' or '}'
+  --
+  --     insert(buffer, opener .. '\n')
+  --     local first = true
+  --     for k, v in pairs(item) do
+  --       if not first then
+  --         insert(buffer, ',\n')
+  --       end
+  --       insert(buffer, next_indent)
+  --       if not is_array then
+  --         insert(buffer, '"' .. k .. '": ')
+  --       end
+  --       format_item(v, current_level + 1)
+  --       first = false
+  --     end
+  --     insert(buffer, '\n' .. indent .. closer)
+  --   elseif type(item) == 'string' then
+  --     insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
+  --   else
+  --     insert(buffer, tostring(item))
+  --   end
+  -- end
+
   -- local function format_item(item, current_level)
   --   local indent = string.rep('  ', current_level)
   --   local next_indent = string.rep('  ', current_level + 1)
@@ -231,8 +278,8 @@ end
 ---@param opts table
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
-  opts = opts or {}
-  if next(opts) == nil then opts = {overwrite = true, mkdir = true} end
+  opts = opts or {overwrite = true, mkdir = true}
+
   -- opts.overwrite: boolean (default true)
   -- opts.mkdir: boolean (default true)
 
@@ -245,7 +292,8 @@ function M.writeFile(path, data, opts)
   -- 2. Ensure folder exists (mkdir -p logic)
   if opts.mkdir ~= false then
     local parent = vim.fn.fnamemodify(path, ':h')
-    if uv.fs_stat(parent) == nil then
+    -- if uv.fs_stat(parent) == nil then
+    if vim.fn.isdirectory(parent) == 0 then
       -- 448 is octal 0700 (user read/write/execute)
       -- Using vim.fn.mkdir is easier for recursive creation
       vim.fn.mkdir(parent, 'p')
@@ -254,17 +302,16 @@ function M.writeFile(path, data, opts)
 
   -- 3. Open file for writing
   -- 'w' truncates existing, 'wx' fails if exists (extra safety)
-  local flags = opts.overwrite == false and 'wx' or 'w'
-  local fd, err = uv.fs_open(path, flags, 438)
+  local fd, err = uv.fs_open(path, 'w', 438)
   if not fd then return false, 'writeFile: Open error: ' .. (err or 'unknown') end
 
   -- 4. Write data
-  local _, write_err = uv.fs_write(fd, data, 0)
+  local success, write_err = uv.fs_write(fd, data, 0)
 
   -- 5. ALWAYS close
   uv.fs_close(fd)
 
-  if write_err then return false, 'writeFile: Write error: ' .. write_err end
+  if not success then return false, 'writeFile: Write error: ' .. write_err end
 
   return true, 'writeFile: complete'
 end

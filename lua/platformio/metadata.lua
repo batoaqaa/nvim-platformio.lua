@@ -96,7 +96,7 @@ function M.save_project_config(quiet)
 
   -- 2. Only write if the content actually changed
   if current_hash ~= last_saved_hash then
-    local status, err = vim.misc.writeFile(pretty_json, config_path, {})
+    local status, err = vim.misc.writeFile(config_path, pretty_json, {})
 
     if status then
       last_saved_hash = current_hash
