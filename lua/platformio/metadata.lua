@@ -84,33 +84,31 @@ local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 --INFO:
 -- 3. Save Logic (Uses sha256 for stability)
 function M.save_project_config(quiet)
-  -- if vim.fn.filereadable('platformio.ini') == 0 then
-  --   return
-  -- end
-  -- local json_data = pio.pretty_json(_pio_metadata)
-  local ok, pretty_table = vim.misc.pretty_print(_pio_metadata)
-  if not ok then
+  -- 1. Generate the formatted string directly, pretty_print already returns a string!
+  local ok, pretty_json = pcall(vim.misc.pretty_print, _pio_metadata)
+
+  if not ok or not pretty_json then
     print('Error formatting metadata')
     return
   end
-  local _, pretty_json = pcall(vim.json.encode, pretty_table)
-  -- local pretty_json = vim.misc.pretty_print(json_data)
+
   local current_hash = vim.fn.sha256(pretty_json)
 
-  --   file:write(pio.jsonFormat(json_data))
+  -- 2. Only write if the content actually changed
   if current_hash ~= last_saved_hash then
-    -- local status = vim.fn.writefile({ json_data }, config_path)
-    local status, _ = vim.misc.writeFile(pretty_json, config_path, {})
+    local status, err = vim.misc.writeFile(pretty_json, config_path, {})
+
     if status then
       last_saved_hash = current_hash
       if not quiet then
         vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
       end
     else
-      vim.notify('Could not open file for writing')
+      vim.notify('Write failed: ' .. (err or 'unknown error'), vim.log.levels.ERROR)
     end
   end
 end
+
 -- function M.save_project_config(quiet)
 --   if vim.fn.filereadable('platformio.ini') == 0 then
 --     return
