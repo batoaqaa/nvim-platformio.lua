@@ -241,28 +241,21 @@ end
 -- stylua: ignore
 ---@param path string
 function M.readFile(path)
-  local uv = vim.uv or vim.loop -- Support older and newer Neovim versions
+  local uv = vim.uv or vim.loop
 
-  -- 1. Open the file (r = read-only)
-  -- 438 is the octal for 0666 (standard permissions)
+  -- 1. Check if file exists before opening to avoid "noisy" errors
+  local stat = uv.fs_stat(path)
+  if not stat then return false, 'File does not exist' end
+
+  -- 2. Open the file
   local fd, err = uv.fs_open(path, 'r', 438)
-  if not fd or err then return false, 'readFile: Open error: ' .. err end
+  if not fd then return false, err end
 
-  -- 2. Get file stats to find out how many bytes to read
-  local stat, stat_err = uv.fs_fstat(fd)
-  if not stat or stat_err then
-    uv.fs_close(fd)
-    return false, 'readFile: Stat error: ' .. stat_err
-  end
-
-  -- 3. Read the entire content
-  -- fd, length, offset
+  -- 3. Read the content (using stat.size from our check above)
   local content, read_err = uv.fs_read(fd, stat.size, 0)
-
-  -- 4. ALWAYS close the file descriptor
   uv.fs_close(fd)
 
-  if read_err then return false, 'readFile: Read error: ' .. read_err end
+  if read_err then return false, read_err end
 
   return true, content
 end
@@ -276,45 +269,93 @@ end
 ---@param path string
 ---@param data string
 ---@param opts table
+-- function M.writeFile(path, data, opts)
+--   local uv = vim.uv or vim.loop
+--
+--   opts = opts or {overwrite = true, mkdir = true}
+--
+--   -- 1. Check if file exists and handle overwrite flag
+--   local stat = uv.fs_stat(path)
+--   if stat and opts.overwrite == false then
+--     return false, 'writeFile: File already exists and overwrite is disabled'
+--   end
+--
+--   -- 2. Ensure folder exists (mkdir -p logic)
+--   if opts.mkdir ~= false then
+--     local parent = vim.fn.fnamemodify(path, ':h')
+--     if not stat or stat.type ~= 'directory' then
+--       -- Using vim.fn.mkdir is easier for recursive creation
+--       vim.fn.mkdir(parent, 'p', '0700')
+--     end
+--   end
+--
+--   -- 3. Open file for writing
+--   local fd, err = uv.fs_open(path, 'w', 438)
+--   if not fd then return false, 'writeFile: Open error: ' .. (err or 'unknown') end
+--
+--   -- 4. Write data
+--   local success, write_err = uv.fs_write(fd, data, 0)
+--
+--   -- 5. ALWAYS close
+--   uv.fs_close(fd)
+--
+--   if not success then return false, 'writeFile: Write error: ' .. write_err end
+--
+--   return true, 'writeFile: complete'
+-- end
+
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
-  opts = opts or {overwrite = true, mkdir = true}
 
   -- opts.overwrite: boolean (default true)
   -- opts.mkdir: boolean (default true)
+  opts = opts or { overwrite = true, mkdir = true }
 
-  -- 1. Check if file exists and handle overwrite flag
   local stat = uv.fs_stat(path)
-  if stat and opts.overwrite == false then
-    return false, 'writeFile: File already exists and overwrite is disabled'
+  -- 1. Overwrite protection
+  if opts.overwrite == false and stat then
+    return false, 'writeFile: File already exists'
   end
 
-  -- 2. Ensure folder exists (mkdir -p logic)
+  -- 2. Recursive directory creation
   if opts.mkdir ~= false then
     local parent = vim.fn.fnamemodify(path, ':h')
-    -- if uv.fs_stat(parent) == nil then
-    if vim.fn.isdirectory(parent) == 0 then
-      -- 448 is octal 0700 (user read/write/execute)
-      -- Using vim.fn.mkdir is easier for recursive creation
-      vim.fn.mkdir(parent, 'p')
+    if not stat or stat.type ~= 'directory' then
+      vim.fn.mkdir(parent, 'p', '0700')
     end
   end
 
-  -- 3. Open file for writing
-  -- 'w' truncates existing, 'wx' fails if exists (extra safety)
+  --[[
+      Octal	Decimal	Permission
+      0700	  448	    Owner only (Full)
+      0755	  493	    Owner (Full), Others (Read/Execute)
+      0666	  438	    Everyone (Read/Write) - Not recommended for folders
+     'w' truncates existing, 'wx' fails if exists (extra safety)
+  ]]
+  -- 3. Open for writing ('w' flag truncates automatically)
   local fd, err = uv.fs_open(path, 'w', 438)
   if not fd then return false, 'writeFile: Open error: ' .. (err or 'unknown') end
 
-  -- 4. Write data
-  local success, write_err = uv.fs_write(fd, data, 0)
+  -- 4. Robust Write Loop
+  -- Loop ensures all data is written even if it takes multiple chunks
+  local offset = 0
+  while offset < #data do
+    local bytes_written, w_err = uv.fs_write(fd, data:sub(offset + 1), offset)
+    if w_err then
+      uv.fs_close(fd)
+      return false, 'writeFile: Write error: ' .. w_err
+    end
+    offset = offset + bytes_written
+  end
 
-  -- 5. ALWAYS close
+  -- 5. Force Sync (Crucial for your project.checksum watcher)
+  uv.fs_fsync(fd)
   uv.fs_close(fd)
 
-  if not success then return false, 'writeFile: Write error: ' .. write_err end
-
-  return true, 'writeFile: complete'
+  return true, 'Success'
 end
+
+
 ------------------------------------------------------
 --[[ 
 Targets Windows paths, normalizes slashes, and fixes smashed PlatformIO paths.
