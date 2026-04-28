@@ -282,6 +282,7 @@ function M.run_compiledb()
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
+      _G.metadata.isBusy = false
       if obj.code == 0 then
         M.pio_refresh(function()
           -- local dbFix = require('platformio.utils.pio').compile_commandsFix
@@ -289,11 +290,12 @@ function M.run_compiledb()
           vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- pio_generate_db()
           -- lsp_restart('clangd')
-          _G.metadata.isBusy = false
         end)
       else
-        vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
-        _G.metadata.isBusy = false
+        -- If pio failed, check obj.stderr to see why
+        local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
+        vim.notify('Build Failed: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
+        -- vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
       end
     end)
   end)
