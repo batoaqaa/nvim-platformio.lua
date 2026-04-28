@@ -62,7 +62,7 @@ function M.pio_refresh(callback)
   -- INFO:-------------------------------------------------
   -- get pio project metadata info
   -- stylua: ignore
-  local function get_metadata(attempts, env)
+  local function fetch_metadata(attempts, env)
     local meta = _G.metadata
     local active_env = env or meta.active_env
     if not active_env or active_env == '' then
@@ -146,7 +146,7 @@ function M.pio_refresh(callback)
     --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
     --     vim.schedule(function()
     --       if obj.code == 0 thenl
-    --         get_metadata(attempts, active_env) -- Recursive call after files created
+    --         fetch_metadata(attempts, active_env) -- Recursive call after files created
     --       else
     --         vim.notify('PIO: Initialization failed. Build project manually.', vim.log.levels.ERROR)
     --       end
@@ -163,7 +163,7 @@ function M.pio_refresh(callback)
       vim.schedule(function()
         if obj.code ~= 0 then
           if attempts > 0 then
-            vim.defer_fn(function() get_metadata(attempts - 1, env) end, 500)
+            vim.defer_fn(function() fetch_metadata(attempts - 1, env) end, 500)
             return
           end
           return vim.notify('PIO Metadata Error: ' .. (obj.stderr or 'Unknown'), vim.log.levels.WARN)
@@ -250,7 +250,7 @@ function M.pio_refresh(callback)
         -- 6. Trigger next step
         if meta.active_env ~= "" then
           vim.notify('PIO: Config sync successful', vim.log.levels.INFO)
-          get_metadata(1, meta.active_env)
+          fetch_metadata(1, meta.active_env)
         else
           vim.notify('PIO: No [env:] found. Please add a board.', vim.log.levels.ERROR)
         end
@@ -328,7 +328,10 @@ local function watch_file(full_path, callback)
           return handle:stop()
         end
 
-        if filename == target_file then vim.schedule(callback) end
+        if filename == target_file then
+          print('file watched')
+          vim.schedule(callback)
+        end
       end)
     )
     return handle
