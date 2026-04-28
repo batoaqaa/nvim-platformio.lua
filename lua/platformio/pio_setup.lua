@@ -282,29 +282,30 @@ function M.run_compiledb()
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      _G.metadata.isBusy = false
-      if obj.code == 0 then
-        -- 1. Sync the checksum manually so the second watcher ignores this change
-        -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
-        -- local ok, new_checksum = vim.misc.readFile(checksum_path)
-        -- if ok then
-        --   _G.metadata.last_checksum = new_checksum
-        -- end
-
-        -- 2. Refresh
-        -- M.pio_refresh(function()
-        --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-        --   -- dbFix()
-          vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-        --   -- pio_generate_db()
-        --   -- lsp_restart('clangd')
-        -- end)
-      else
-        -- If pio failed, check obj.stderr to see why
+      -- 1. Check Execution
+      if obj.code ~= 0 then
+        _G.metadata.isBusy = false
         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
-        vim.notify('Build Failed: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
-        -- vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
+        -- vim.notify('PIO run_compiledb Error: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
+        -- local msg = obj.code == 127 and "'pio' not found" or (obj.stderr or "Unknown Error")
+        return vim.notify("PIO run_compiledb Error: " .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
       end
+      -- 1. Sync the checksum manually so the second watcher ignores this change
+      -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
+      -- local ok, new_checksum = vim.misc.readFile(checksum_path)
+      -- if ok then
+      --   _G.metadata.last_checksum = new_checksum
+      -- end
+
+      -- 2. Refresh
+      -- M.pio_refresh(function()
+      --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+      --   -- dbFix()
+      vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+      --   -- pio_generate_db()
+      --   -- lsp_restart('clangd')
+      -- end)
+      _G.metadata.isBusy = false
     end)
   end)
 end
