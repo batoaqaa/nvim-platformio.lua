@@ -284,7 +284,6 @@ function M.run_compiledb()
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      _G.metadata.isBusy = false
       if obj.code == 0 then
         M.pio_refresh(function()
           local dbFix = require('platformio.utils.pio').compile_commandsFix
@@ -293,6 +292,7 @@ function M.run_compiledb()
           -- pio_generate_db()
           -- M.run_compiledb()
           -- lsp_restart('clangd')
+          _G.metadata.isBusy = false
         end)
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_refresh(function()
