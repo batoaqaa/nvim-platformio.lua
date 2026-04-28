@@ -273,8 +273,6 @@ local function get_hash(path)
 end
 
 -- _G.metadata.isBusy = false
--- 2. Smart Save/Load: Uses JSON and Hashing
--- 3. Robust Execution: Mutes watcher and handles LSP restart
 function M.run_compiledb()
   if _G.metadata.isBusy then
     return
@@ -292,7 +290,7 @@ function M.run_compiledb()
           -- pio_generate_db()
           -- M.run_compiledb()
           -- lsp_restart('clangd')
-          _G.metadata.isBusy = false
+          -- _G.metadata.isBusy = false
         end)
         -- Use pcall in case M.refresh is defined elsewhere
         -- pio_refresh(function()
@@ -343,6 +341,7 @@ function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
   M.stop_watchers()
 
+  _G.metadata.isBusy = false
   local project_root = vim.uv.cwd() -- Use dynamic CWD instead of hardcoded path
   local active_env = _G.metadata.active_env or 'default'
 
