@@ -310,18 +310,25 @@ local function watch_file(full_path, callback)
 
   if handle then
     handle:start( parent_dir, {},
-      vim.schedule_wrap(function(err, filename, events)
-        -- handle:start(parent_dir, {}, function(err, filename)
-        -- if err then
-        if err or filename ~= target_file or _G.metadata.isBusy then ---or not events or not (events.change or events.rename) then
+      function(err, filename, events)
+        if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.rename) then
           return --handle:stop()
         end
 
         if filename == target_file then
-          print('file watched')
-          vim.schedule(callback)
+
+        -- Debounce: Use vim.schedule to ensure we don't fire 
+        -- during the middle of a file-swap operation
+          vim.schedule(function()
+            print('file watched')
+              -- Re-verify file exists before calling
+            if vim.loop.fs_stat(full_path) then
+                callback()
+            end
+          end)
+          -- vim.schedule(callback)
         end
-      end)
+      end
     )
     return handle
   end
