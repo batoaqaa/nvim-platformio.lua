@@ -284,7 +284,7 @@ function M.run_compiledb()
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      -- _G.metadata.isBusy = false
+      _G.metadata.isBusy = false
       if obj.code == 0 then
         M.pio_refresh(function()
           local dbFix = require('platformio.utils.pio').compile_commandsFix
