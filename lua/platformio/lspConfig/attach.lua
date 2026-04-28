@@ -17,7 +17,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end
         vim.api.nvim_buf_create_user_command(bufnr, 'LspClangdSwitchSourceHeader', function()
           local params = vim.lsp.util.make_text_document_params(bufnr)
-          client.request('textDocument/switchSourceHeader', params, function(err, result)
+          client:request('textDocument/switchSourceHeader', params, function(err, result)
             if err then
               vim.notify('Clangd Error: ' .. tostring(err), vim.log.levels.ERROR)
               return
@@ -28,7 +28,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
             end
             -- Use vim.schedule to ensure we aren't editing while the LSP is in a callback
             vim.schedule(function()
-              vim.cmd.edit(vim.uri_to_fname(result))
+              local target = type(result) == 'string' and result or result.uri
+              local fname = vim.uri_to_fname(target)
+              vim.cmd.edit(vim.uri_to_fname(fname))
             end)
           end, bufnr)
         end, { desc = 'Switch between source/header' })

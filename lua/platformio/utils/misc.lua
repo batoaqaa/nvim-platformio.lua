@@ -20,12 +20,8 @@ end
 -- stylua: ignore
 function M.jsonFormat(root_data)
   local buffer = {}
-
-  -- Force input into a table if it's just a single string
-  local patterns = type(root_data) == "table" and root_data or { root_data }
-
-  -- The stack stores: { value = current_item, level = depth, stage = "start"|"items" }
-  local stack = { { val = patterns, lvl = 0, stage = 'start' } }
+  -- Stack stores: { val = item, lvl = depth, stage = "start"|"items", keys = {}, index = 0 }
+  local stack = { { val = root_data, lvl = 0, stage = 'start' } }
 
   local function get_indent(lvl) return string.rep('  ', lvl) end
 
@@ -35,46 +31,50 @@ function M.jsonFormat(root_data)
     local indent = get_indent(lvl)
 
     if type(val) == 'table' then
-      local is_array = (#val > 0 or next(val) == nil)
+      -- 1. Determine if Array or Object
+      local is_array = (#val > 0) or (next(val) == nil)
 
       if curr.stage == 'start' then
         table.insert(buffer, (is_array and '[' or '{') .. '\n')
         curr.stage = 'items'
         curr.keys = {}
-        -- Collect keys to iterate deterministically
-        if is_array then
-          for i = #val, 1, -1 do table.insert(curr.keys, i) end
+
+        -- 2. Collect and Sort Keys (CRITICAL for SHA256 stability)
+        if is_array then for i = 1, #val do table.insert(curr.keys, i) end
         else
-          for k, _ in pairs(val) do table.insert(curr.keys, k) end
+          for k in pairs(val) do table.insert(curr.keys, k) end
+          table.sort(curr.keys, function(a, b) return tostring(a) < tostring(b) end)
         end
-        curr.index = #curr.keys
+        curr.total = #curr.keys
+        curr.cursor = 1 -- Point to the first key
       elseif curr.stage == 'items' then
-        if curr.index > 0 then
-          local key = curr.keys[curr.index]
+        if curr.cursor <= curr.total then
+          local key = curr.keys[curr.cursor]
           local item = val[key]
 
-          -- Add comma if not the first item
-          if curr.index < #curr.keys then table.insert(buffer, ',\n') end
+          -- Add comma for all but the first item
+          if curr.cursor > 1 then table.insert(buffer, ',\n') end
 
           table.insert(buffer, get_indent(lvl + 1))
           if not is_array then table.insert(buffer, '"' .. tostring(key) .. '": ') end
 
-          curr.index = curr.index - 1
-          -- Push next item to stack
+          curr.cursor = curr.cursor + 1
+          -- Push next item to process
           table.insert(stack, { val = item, lvl = lvl + 1, stage = 'start' })
         else
-          -- No more items, close the block
+          -- 3. Close the block
           table.insert(buffer, '\n' .. indent .. (is_array and ']' or '}'))
           table.remove(stack)
         end
       end
     else
-      -- Primitive values (String, Number, Bool)
+      -- 4. Primitives (String, Number, Bool, Nil)
       local output = ''
-      if type(val) == 'string' then
-        -- output = '"' .. val:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+      if val == nil then output = 'null'
+      elseif type(val) == 'boolean' then output = tostring(val)
+      elseif type(val) == 'string' then
+        -- Normalize Windows paths to Unix for cross-platform checksums
         output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
-        -- output = '"' .. val:gsub('"', '\\"') .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
@@ -168,66 +168,6 @@ function M.pretty_print(data) -- 48ms
       insert(buffer, '"' .. item:gsub('[\\]+', '/'):gsub('"', '\\"') .. '"')
     else insert(buffer, tostring(item)) end
   end
-
-  -- local function format_item(item, current_level)
-  --   local insert = table.insert
-  --   local indent = string.rep('  ', current_level)
-  --   local next_indent = string.rep('  ', current_level + 1)
-  --
-  --   if type(item) == 'table' then
-  --     -- Check if table is empty
-  --     if next(item) == nil then
-  --       insert(buffer, #item > 0 and '[]' or '{}')
-  --       return
-  --     end
-  --
-  --     local is_array = #item > 0
-  --     local opener = is_array and '[' or '{'
-  --     local closer = is_array and ']' or '}'
-  --
-  --     insert(buffer, opener .. '\n')
-  --     local first = true
-  --     for k, v in pairs(item) do
-  --       if not first then
-  --         insert(buffer, ',\n')
-  --       end
-  --       insert(buffer, next_indent)
-  --       if not is_array then
-  --         insert(buffer, '"' .. k .. '": ')
-  --       end
-  --       format_item(v, current_level + 1)
-  --       first = false
-  --     end
-  --     insert(buffer, '\n' .. indent .. closer)
-  --   elseif type(item) == 'string' then
-  --     insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
-  --   else
-  --     insert(buffer, tostring(item))
-  --   end
-  -- end
-
-  -- local function format_item(item, current_level)
-  --   local indent = string.rep('  ', current_level)
-  --   local next_indent = string.rep('  ', current_level + 1)
-  --   if type(item) == 'table' then
-  --     local is_array = #item > 0
-  --     local opener = is_array and '[' or '{'
-  --     local closer = is_array and ']' or '}'
-  --     insert(buffer, opener .. '\n')
-  --     local first = true
-  --     for k, v in pairs(item) do
-  --       if not first then insert(buffer, ',\n') end
-  --       insert(buffer, next_indent)
-  --       if not is_array then insert(buffer, '"' .. k .. '": ') end
-  --       format_item(v, current_level + 1)
-  --       first = false
-  --     end
-  --     insert(buffer, '\n' .. indent .. closer)
-  --   elseif type(item) == 'string' then
-  --     -- Basic escaping for the string content
-  --     insert(buffer, '"' .. item:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"')
-  --   else insert(buffer, tostring(item)) end
-  -- end
 
   format_item(data, 0)
   return table.concat(buffer)

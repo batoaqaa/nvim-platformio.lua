@@ -243,14 +243,6 @@ local yamlls = {
 }
 vim.lsp.config('yamlls', yamlls)
 
--- local stylua = {
---   cmd = { 'stylua', '--search-parent-directories', '--stdin-filepath', '$FILENAME', '-' },
---   filetypes = { 'lua' },
---   root_markers = { 'stylua.toml', '.stylua.toml', '.git' },
--- }
--- vim.lsp.config('stylua', stylua)
--- vim.lsp.enable('stylua')
-
 local pyrefly = {
   name = 'pyrefly',
   cmd = { 'pyrefly', 'lsp' },

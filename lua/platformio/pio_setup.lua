@@ -356,7 +356,7 @@ function M.start_watchers()
       end,
     },
     { -- watcher for ./.pio/build/projct.checksum
-      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),
+      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
       path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
       cb = function(self)
         local _, current_checksum = vim.misc.readFile(self.path)
@@ -378,6 +378,8 @@ function M.start_watchers()
   targets[1].current_ini_hash = get_hash(targets[1].path) or ''
 
   for _, target in ipairs(targets) do
+    --[[ wrap the callback in a small anonymous function,
+        so it passes the target (self) back into it.]]
     local h = watch_file(target.path, function() target.cb(target) end)
     table.insert(M.watcher_handles, h)
   end
