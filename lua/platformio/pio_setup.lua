@@ -313,7 +313,7 @@ local function watch_file(full_path, callback)
       vim.schedule_wrap(function(err, filename, events)
         -- handle:start(parent_dir, {}, function(err, filename)
         -- if err then
-        if err or filename ~= target_file or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
+        if err or filename ~= target_file or _G.metadata.isBusy then ---or not events or not (events.change or events.rename) then
           return --handle:stop()
         end
 
