@@ -293,13 +293,13 @@ function M.run_compiledb()
         end)
       else
         vim.notify('Build Failed', vim.log.levels.ERROR, { title = 'PlatformIO' })
+        _G.metadata.isBusy = false
       end
     end)
   end)
 end
 
 -- Store handles globally within the module so we can stop them
-local uv = vim.uv or vim.loop
 M.watcher_handles = {}
 
 -- stylua: ignore
