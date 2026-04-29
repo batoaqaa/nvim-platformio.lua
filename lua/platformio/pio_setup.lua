@@ -317,29 +317,16 @@ local debounce_timer = uv.new_timer()
 --INFO:
 -- 2.stop_watchers 
 function M.stop_watchers()
-  if not M.watcher_handles then return end
-  for _, item in ipairs(M.watcher_handles) do
-    if type(item.stop) == "function" then
-      item.stop() -- Call the stop function returned by vim._watch
+  if not M.watcher_handles or (type(M.watcher_handles) ~= 'table') then M.watcher_handles = {} return end
+
+  for _, handle in ipairs(M.watcher_handles) do
+    if handle and not handle:is_closing() then
+      handle:stop()
+      handle:close() -- CRITICAL: This allows Neovim to quit instantly
     end
   end
   M.watcher_handles = {}
 end
-
-
-
-
--- function M.stop_watchers()
---   if not M.watcher_handles or (type(M.watcher_handles) ~= 'table') then M.watcher_handles = {} return end
---
---   for _, handle in ipairs(M.watcher_handles) do
---     if handle and not handle:is_closing() then
---       handle:stop()
---       handle:close() -- CRITICAL: This allows Neovim to quit instantly
---     end
---   end
---   M.watcher_handles = {}
--- end
 
 -- =============================================================================
 -- stylua: ignore
@@ -367,49 +354,23 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 -- 4. watch_file
 -- stylua: ignore
 local function watch_file(target, callback)
-  -- vim._watch is the modern, shared way to watch files in Neovim
-  -- It plays much better with other plugins like neo-tree
-  local w = require('vim._watch')
+  local handle = uv.new_fs_poll()
+  if not handle then return end
 
-  local stop_watch = w.watch(target.path, {
-    debounce = 500, -- Built-in debouncing!
-  }, function(path, _)
-    -- 1. Standard guards
-    if not path or (target and target.isBusy) then return end
-
-    -- 2. Schedule the callback
-    vim.schedule(function()
-      -- Double check file exists to handle neo-tree's temporary locks
-      if vim.uv.fs_stat(target.path) then
+  -- Poll every 1000ms. This is light on CPU and ignores "save noise".
+  handle:start(target.path, 1000, function(err, stat)
+    if err or not stat or (target and target.isBusy) then return end
+    vim.schedule(function ()
+      local current_stat = vim.uv.fs_stat(target.path)
+      if current_stat then
         callback(target)
       end
     end)
   end)
 
-  -- The return value of vim._watch.watch is a 'stop' function, 
-  -- so we store that instead of a handle.
-  table.insert(M.watcher_handles, { stop = stop_watch })
-  return stop_watch
+  table.insert(M.watcher_handles, handle)
+  return handle
 end
-
-
-
-
--- local function watch_file(target, callback)
---   local handle = uv.new_fs_poll()
---   if not handle then return end
---
---   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
---   handle:start(target.path, 1000, function(err, stat)
---     if err or not stat or (target and target.isBusy) then return end
---     vim.schedule(function ()
---       callback(target)
---     end)
---   end)
---
---   table.insert(M.watcher_handles, handle)
---   return handle
--- end
 
 
 -- =============================================================================
