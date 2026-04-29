@@ -273,10 +273,10 @@ local function get_hash(path)
 end
 
 function M.run_compiledb()
-  if _G.metadata.isBusy then
-    return
-  end
-  _G.metadata.isBusy = true
+  -- if _G.metadata.isBusy then
+  --   return
+  -- end
+  -- _G.metadata.isBusy = true
 
   -- Use pcall to catch immediate 'command not found' errors
   local ok, result = pcall(function()
@@ -546,14 +546,18 @@ function M.start_watchers()
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.current_ini_hash then
           self.current_ini_hash = new_hash
-          -- M.run_compiledb() -- Smart: Auto-update DB if config changes
-          local pio = require('platformio.utils.pio')
-          pio.run_sequence({
-            cmnds = {
-              'pio run -t compiledb',
-            },
-            cb = pio.handlePiodb,
-          })
+          if _G.metadata.isBusy then
+            return
+          end
+          _G.metadata.isBusy = true
+          M.run_compiledb() -- Smart: Auto-update DB if config changes
+          -- local pio = require('platformio.utils.pio')
+          -- pio.run_sequence({
+          --   cmnds = {
+          --     'pio run -t compiledb',
+          --   },
+          --   cb = pio.handlePiodb,
+          -- })
         end
       end,
     },
@@ -561,6 +565,10 @@ function M.start_watchers()
       idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
       path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
       cb = function(self)
+        if _G.metadata.isBusy then
+          return
+        end
+        _G.metadata.isBusy = true
         local _, current_checksum = vim.misc.readFile(self.path)
         if current_checksum and current_checksum ~= '' then
           if current_checksum == _G.metadata.last_projectChecksum then
@@ -568,13 +576,13 @@ function M.start_watchers()
           end -- Already updated
 
           vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
-        _G.metadata.isBusy = false
           -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-          -- M.pio_refresh(function()
-          --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-          --   -- dbFix()
-          --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- end)
+          M.pio_refresh(function()
+            _G.metadata.isBusy = false
+            -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+            -- dbFix()
+            vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+          end)
         end
       end,
     },
@@ -591,14 +599,29 @@ end
 
 -- stylua: ignore
 function M.stop_watchers()
-  -- Safety: Ensure it's a table before looping
-  M.watcher_handles = M.watcher_handles or {}
+  if type(M.watcher_handles) ~= "table" then
+    M.watcher_handles = {}
+    return
+  end
 
   for _, handle in ipairs(M.watcher_handles) do
-    if handle and not handle:is_closing() then handle:stop() end
+    if handle and not handle:is_closing() then
+      handle:stop()
+      handle:close() -- CRITICAL: Releases the handle so Neovim can quit fast
+    end
   end
   M.watcher_handles = {}
 end
+
+-- function M.stop_watchers()
+--   -- Safety: Ensure it's a table before looping
+--   M.watcher_handles = M.watcher_handles or {}
+--
+--   for _, handle in ipairs(M.watcher_handles) do
+--     if handle and not handle:is_closing() then handle:stop() end
+--   end
+--   M.watcher_handles = {}
+-- end
 
 -- local dir_path = vim.uv.cwd()
 -- local ini_file = vim.misc.joinPath(dir_path, 'platformio.ini')
@@ -713,4 +736,21 @@ function M.init()
   end
 end
 
+-- Define it here so all functions in this file can access it
+local debounce_timer = uv.new_timer()
+-- Add this to your main pio_setup.lua
+function M.cleanup()
+  M.stop_watchers()
+  if debounce_timer and not debounce_timer:is_closing() then
+    debounce_timer:stop()
+    debounce_timer:close()
+  end
+end
+
+-- Force cleanup when leaving Neovim to prevent :qa lag
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    M.cleanup()
+  end,
+})
 return M
