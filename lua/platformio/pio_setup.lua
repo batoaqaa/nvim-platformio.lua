@@ -288,7 +288,7 @@ function M.run_compiledb()
         local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
 
         -- local ok, new_checksum = vim.misc.readFile(checksum_path)
-        if ok then
+        -- if ok then
           -- _G.metadata.last_projectChecksum = new_checksum -- Sync the state
 
           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
@@ -297,11 +297,11 @@ function M.run_compiledb()
           --   _G.metadata.isBusy = false
           --   M.start_watchers() -- 4. Re-enable watchers for future changes
           -- end)
-        else
+        -- else
           -- If we can't read the checksum, something is wrong with the build output
           _G.metadata.isBusy = false
           -- M.start_watchers()
-        end
+        -- end
       else
         vim.notify('Build Failed', vim.log.levels.ERROR)
         _G.metadata.isBusy = false
