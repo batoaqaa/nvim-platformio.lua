@@ -426,7 +426,7 @@ function M.start_watchers()
               self.isBusy = false
               vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
             end)
-          end, 500)
+          end, 1500)
         end
       end
     },
