@@ -293,8 +293,10 @@ function M.run_compiledb(target)
         if obj.code == 0 then
           vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- Trigger refresh (LSP restart, etc.)
-          M.pio_refresh(function()
-            vim.notify('PIO: after platformio.ini Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+          vim.schedule(function ()
+            M.pio_refresh(function()
+              vim.notify('PIO: after platformio.ini Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+            end)
           end)
         else
           local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
