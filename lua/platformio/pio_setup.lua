@@ -278,38 +278,77 @@ function M.run_compiledb()
   if _G.metadata.isBusy then return end
   _G.metadata.isBusy = true
 
-  M.stop_watchers() -- Kill watchers so they don't fire during the build
-  vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
+  M.stop_watchers() -- 1. Silence watchers to prevent the loop
+  vim.notify('Building DB...', vim.log.levels.INFO)
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
     vim.schedule(function()
-      -- 1. Check Execution
-      if obj.code ~= 0 then
-        _G.metadata.isBusy = false
-        M.start_watchers() -- 2. RESTART after success
-        local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
-        return vim.notify("PIO run_compiledb Error: " .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
-      end
-      -- 1. Sync the checksum manually so the second watcher ignores this change
-      -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
-      -- local ok, new_checksum = vim.misc.readFile(checksum_path)
-      -- if ok then
-      --   _G.metadata.last_checksum = new_checksum
-      -- end
+      if obj.code == 0 then
+        -- 2. PERFORM CHECKSUM ACTIONS MANUALLY
+        local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
+        local ok, new_checksum = vim.misc.readFile(checksum_path)
 
-      -- 2. Refresh
-      M.pio_refresh(function()
-        -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-        -- dbFix()
-        vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+        if ok then
+          _G.metadata.last_checksum = new_checksum -- Sync the state
+
+          -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
+          M.pio_refresh(function()
+            vim.notify('DB & Cache Updated', vim.log.levels.INFO)
+            _G.metadata.isBusy = false
+            M.start_watchers() -- 4. Re-enable watchers for future changes
+          end)
+        else
+          -- If we can't read the checksum, something is wrong with the build output
+          _G.metadata.isBusy = false
+          M.start_watchers()
+        end
+      else
+        vim.notify('Build Failed', vim.log.levels.ERROR)
         _G.metadata.isBusy = false
-        M.start_watchers() -- 2. RESTART after success
-        -- pio_generate_db()
-        -- lsp_restart('clangd')
-      end)
+        M.start_watchers()
+      end
     end)
   end)
 end
+
+
+
+-- function M.run_compiledb()
+--   if _G.metadata.isBusy then return end
+--   _G.metadata.isBusy = true
+--
+--   M.stop_watchers() -- Kill watchers so they don't fire during the build
+--   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
+--
+--   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
+--     vim.schedule(function()
+--       -- 1. Check Execution
+--       if obj.code ~= 0 then
+--         _G.metadata.isBusy = false
+--         M.start_watchers() -- 2. RESTART after success
+--         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
+--         return vim.notify("PIO run_compiledb Error: " .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
+--       end
+--       -- 1. Sync the checksum manually so the second watcher ignores this change
+--       -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
+--       -- local ok, new_checksum = vim.misc.readFile(checksum_path)
+--       -- if ok then
+--       --   _G.metadata.last_checksum = new_checksum
+--       -- end
+--
+--       -- 2. Refresh
+--       M.pio_refresh(function()
+--         -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+--         -- dbFix()
+--         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+--         _G.metadata.isBusy = false
+--         M.start_watchers() -- 2. RESTART after success
+--         -- pio_generate_db()
+--         -- lsp_restart('clangd')
+--       end)
+--     end)
+--   end)
+-- end
 
 -- Store handles globally within the module so we can stop them
 
