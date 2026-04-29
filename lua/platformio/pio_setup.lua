@@ -293,7 +293,7 @@ function M.run_compiledb()
 
           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
           -- M.pio_refresh(function()
-          --   vim.notify('DB & Cache Updated', vim.log.levels.INFO)
+            vim.notify('DB & Cache Updated', vim.log.levels.INFO)
           --   _G.metadata.isBusy = false
           --   M.start_watchers() -- 4. Re-enable watchers for future changes
           -- end)
