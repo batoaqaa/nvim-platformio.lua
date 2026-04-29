@@ -275,7 +275,7 @@ end
 
 -- =============================================================================
 -- stylua: ignore
--- INFO:
+--INFO:
 -- 1.run_compiledb
 function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
@@ -314,7 +314,7 @@ function M.run_compiledb(target)
 end
 
 -- =============================================================================
--- INFO:
+--INFO:
 -- Ensure this is at the TOP of your file, outside any functions
 local uv = vim.uv or vim.loop
 M.watcher_handles = {}
@@ -322,7 +322,7 @@ local debounce_timer = uv.new_timer()
 
 -- =============================================================================
 -- stylua: ignore
--- INFO:
+--INFO:
 -- 2.stop_watchers 
 function M.stop_watchers()
   if not M.watcher_handles or (type(M.watcher_handles) ~= 'table') then M.watcher_handles = {} return end
@@ -338,7 +338,7 @@ end
 
 -- =============================================================================
 -- stylua: ignore
--- INFO:
+--INFO:
 -- 3.watcher cleanup
 function M.cleanup()
   M.stop_watchers()
@@ -347,18 +347,26 @@ function M.cleanup()
     debounce_timer:close()
   end
 end
+-- =============================================================================
+--INFO:
+-- Force cleanup when leaving Neovim to prevent :qa lag
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    M.cleanup()
+  end,
+})
 
 -- =============================================================================
 -- stylua: ignore
--- INFO:
+--INFO:
 -- 4. watch_file
 -- stylua: ignore
-local function watch_file(full_path, callback, target)
+local function watch_file(target, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
-  handle:start(full_path, 1000, function(err, stat)
+  handle:start(target.path, 1000, function(err, stat)
     if err or not stat or (target and target.isBusy) then return end
     vim.schedule(function ()
       callback(target)
@@ -369,18 +377,10 @@ local function watch_file(full_path, callback, target)
   return handle
 end
 
--- =============================================================================
--- INFO:
--- 5.Force cleanup when leaving Neovim to prevent :qa lag
-vim.api.nvim_create_autocmd('VimLeavePre', {
-  callback = function()
-    M.cleanup()
-  end,
-})
 
 -- =============================================================================
 -- stylua: ignore
--- INFO:
+--INFO:
 -- 5. start_watches
 function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
@@ -435,14 +435,13 @@ function M.start_watchers()
   for _, target in ipairs(targets) do
     --[[ wrap the callback in a small anonymous function,
         so it passes the target (self) back into it.]]
-    local handle = watch_file(target.path, function() target.cb(target) end, target)
-    if handle then  table.insert(M.watcher_handles, handle) end
+    watch_file(target, target.cb)
   end
 end
 
 -- =============================================================================
 -- stylua: ignore
--- INFO: 7.  Exported setup function
+--INFO: 6.  Exported setup function
 function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then
@@ -464,7 +463,7 @@ function M.init()
     -- If the file already exists, do an initial sync
     if vim.fn.filereadable(vim.uv.cwd() .. '/platformio.ini') == 1 then
       ----------------------------------------------------------------------------------------
-      -- INFO: create clangd required files
+      --INFO: create clangd required files
       -----------------------------------------------------------------------------------------
       boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
       -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
