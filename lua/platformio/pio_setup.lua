@@ -286,27 +286,29 @@ function M.run_compiledb(target)
 
   -- 2. Run the command asynchronously
   -- 'pio run -t compiledb' updates compile_commands.json
-  vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
-    vim.schedule(function()
-      -- 3. Release the lock immediately when the process returns
-      target.isBusy = false
+  vim.schedule(function ()
+    vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
+      vim.schedule(function()
+        -- 3. Release the lock immediately when the process returns
+        target.isBusy = false
 
-      if obj.code == 0 then
-        -- Optional: Sync the hash of platformio.ini so the watcher doesn't refire
-        -- (Assuming targets[1] is the ini watcher)
-        -- targets[1].last_hash = get_hash(targets[1].path)
+        if obj.code == 0 then
+          -- Optional: Sync the hash of platformio.ini so the watcher doesn't refire
+          -- (Assuming targets[1] is the ini watcher)
+          -- targets[1].last_hash = get_hash(targets[1].path)
 
-        vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
+          vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
 
-        -- Trigger refresh (LSP restart, etc.)
-        M.pio_refresh(function()
-          -- Post-refresh logic here
-        end)
-      else
-        -- 4. Handle errors (missing pio, syntax error in config, etc.)
-        local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
-        vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
-      end
+          -- Trigger refresh (LSP restart, etc.)
+          M.pio_refresh(function()
+            -- Post-refresh logic here
+          end)
+        else
+          -- 4. Handle errors (missing pio, syntax error in config, etc.)
+          local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
+          vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
+        end
+      end)
     end)
   end)
 end
@@ -382,9 +384,7 @@ function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
   if next(M.watcher_handles) then M.stop_watchers() end
 
-  _G.metadata.isBusy = false
   local project_root = vim.uv.cwd() -- Use dynamic CWD instead of hardcoded path
-  local active_env = _G.metadata.active_env or 'default'
 
   local targets = {
     { -- watcher for platformio.ini
