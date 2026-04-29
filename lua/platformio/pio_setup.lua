@@ -422,15 +422,30 @@ function M.start_watchers()
             return
           end
 
-          while _G.metadata.isBusy do
-            self.isBusy = true
-            vim.defer_fn(function ()
-              M.pio_refresh('PIO checksum: ',function()
-                self.isBusy = false
-                vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
-              end)
-            end, 1500)
+          local attempts = 0
+          local function run_when_ready()
+              if _G.metadata.isBusy and attempts < 50 then -- Timeout after 5 seconds
+                  attempts = attempts + 1
+                  vim.defer_fn(run_when_ready, 100)
+                  return
+              end
+              self.isBusy = true
+              vim.defer_fn(function()
+                  M.pio_refresh('PIO checksum: ', function()
+                      self.isBusy = false
+                      vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+                  end)
+              end, 500)
           end
+          run_when_ready()
+
+          -- self.isBusy = true
+          -- vim.defer_fn(function ()
+          --   M.pio_refresh('PIO checksum: ',function()
+          --     self.isBusy = false
+          --     vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+          --   end)
+          -- end, 500)
         end
       end
     },
