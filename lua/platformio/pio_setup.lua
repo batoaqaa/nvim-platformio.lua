@@ -497,13 +497,15 @@ local function watch_file(full_path, callback)
   if not handle then return nil end
   handle:start(parent_dir, {}, function(err, filename, events)
     -- 1. Catch REAL system errors
-    if err or filename ~= target_file or (_G.metadata and _G.metadata.isBusy) or (events and not (events.change or events.rename)) then
-      if err then
+    -- if err or filename ~= target_file or (_G.metadata and _G.metadata.isBusy) or (events and not (events.change or events.rename)) then
+    if err then
       -- Use vim.schedule to notify so we don't block the loop
-        vim.schedule(function()
-          vim.notify('Watcher error: ' .. tostring(err), vim.log.levels.ERROR)
-        end)
-      end
+      vim.schedule(function()
+        vim.notify('Watcher error: ' .. tostring(err), vim.log.levels.ERROR)
+      end)
+      return --handle:stop()
+    end
+    if filename ~= target_file or (_G.metadata and _G.metadata.isBusy) then
       return --handle:stop()
     end
 
