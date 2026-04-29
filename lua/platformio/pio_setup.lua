@@ -286,7 +286,7 @@ function M.run_compiledb(target)
 
   -- 2. Run the command asynchronously
   -- 'pio run -t compiledb' updates compile_commands.json
-  -- vim.schedule(function()
+  vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
       vim.schedule(function()
         -- 3. Release the lock immediately when the process returns
@@ -310,7 +310,7 @@ function M.run_compiledb(target)
         end
       end)
     end)
-  -- end)
+  end)
 end
 
 -- =============================================================================
