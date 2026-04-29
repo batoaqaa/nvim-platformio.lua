@@ -273,20 +273,28 @@ local function get_hash(path)
 end
 
 function M.run_compiledb()
-  -- if _G.metadata.isBusy then
-  --   return
-  -- end
-  -- _G.metadata.isBusy = true
+  -- Use a local reference to the global table for speed/clarity
+  local meta = _G.metadata
+  if not meta then
+    return
+  end
 
-  -- Use pcall to catch immediate 'command not found' errors
+  if meta.isBusy then
+    return
+  end
+  meta.isBusy = true
+
+  vim.notify('Building Compilation DB...', vim.log.levels.INFO)
+
   local ok, result = pcall(function()
     return vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
       vim.schedule(function()
-        _G.metadata.isBusy = false
+        -- 1. Reset flag IMMEDIATELY when process returns
+        meta.isBusy = false
+
         if obj.code == 0 then
           vim.notify('DB Updated', vim.log.levels.INFO)
         else
-          -- Check stderr if code is non-zero
           local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Exit code ' .. obj.code
           vim.notify('PIO Error: ' .. err, vim.log.levels.ERROR)
         end
@@ -296,10 +304,9 @@ function M.run_compiledb()
 
   if not ok then
     vim.notify('Failed to start PIO: ' .. tostring(result), vim.log.levels.ERROR)
-    _G.metadata.isBusy = false
+    meta.isBusy = false
   end
 end
-
 
 -- _G.metadata.isBusy = false
 -- stylua: ignore
@@ -587,10 +594,6 @@ function M.start_watchers()
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.current_ini_hash then
           self.current_ini_hash = new_hash
-          if _G.metadata.isBusy then
-            return
-          end
-          _G.metadata.isBusy = true
           M.run_compiledb() -- Smart: Auto-update DB if config changes
           -- local pio = require('platformio.utils.pio')
           -- pio.run_sequence({
@@ -605,27 +608,44 @@ function M.start_watchers()
     { -- watcher for ./.pio/build/projct.checksum
       idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
       path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
+
       cb = function(self)
-        if _G.metadata.isBusy then
+        if _G.metadata.isBusy then return end
+        _G.metadata.isBusy = true
+
+        local ok, current_checksum = vim.misc.readFile(self.path)
+
+        -- Check if we should exit early
+        if not ok or current_checksum == '' or current_checksum == _G.metadata.last_projectChecksum then
+          _G.metadata.isBusy = false -- CRITICAL: Unlock before returning!
           return
         end
-        _G.metadata.isBusy = true
-        local _, current_checksum = vim.misc.readFile(self.path)
-        if current_checksum and current_checksum ~= '' then
-          if current_checksum == _G.metadata.last_projectChecksum then
-            return
-          end -- Already updated
 
-          vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-          M.pio_refresh(function()
-            _G.metadata.isBusy = false
-            -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-            -- dbFix()
-            vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-          end)
-        end
-      end,
+        _G.metadata.last_projectChecksum = current_checksum -- Update the state
+        M.pio_refresh(function()
+          _G.metadata.isBusy = false -- Unlock after refresh
+          vim.notify('DB Updated', vim.log.levels.INFO)
+        end)
+      end
+      -- cb = function(self)
+      --   if _G.metadata.isBusy then return end
+      --   _G.metadata.isBusy = true
+      --   local _, current_checksum = vim.misc.readFile(self.path)
+      --   if current_checksum and current_checksum ~= '' then
+      --     if current_checksum == _G.metadata.last_projectChecksum then
+      --       return
+      --     end -- Already updated
+      --
+      --     vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
+      --     -- STEP 2: Cache Path (idedata.json exists and checksum changed)
+      --     M.pio_refresh(function()
+      --       _G.metadata.isBusy = false
+      --       -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+      --       -- dbFix()
+      --       vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+      --     end)
+      --   end
+      -- end,
     },
   }
   targets[1].current_ini_hash = get_hash(targets[1].path) or ''
