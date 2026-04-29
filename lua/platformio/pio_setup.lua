@@ -388,7 +388,7 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 -- 5. start_watches
 function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
-  M.stop_watchers()
+  if next(M.watcher_handles) then M.stop_watchers() end
 
   _G.metadata.isBusy = false
   local project_root = vim.uv.cwd() -- Use dynamic CWD instead of hardcoded path
