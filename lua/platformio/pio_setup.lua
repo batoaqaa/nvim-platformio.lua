@@ -284,33 +284,25 @@ function M.run_compiledb(target)
 
   vim.notify('PIO: Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
-  -- 2. Run the command asynchronously
-  -- 'pio run -t compiledb' updates compile_commands.json
-  vim.schedule(function()
+  -- vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
       vim.schedule(function()
-        -- 3. Release the lock immediately when the process returns
+
         target.isBusy = false
 
         if obj.code == 0 then
-          -- Optional: Sync the hash of platformio.ini so the watcher doesn't refire
-          -- (Assuming targets[1] is the ini watcher)
-          -- targets[1].last_hash = get_hash(targets[1].path)
-
           vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
-
           -- Trigger refresh (LSP restart, etc.)
           M.pio_refresh(function()
-            -- Post-refresh logic here
+            vim.notify('PIO: after platformio.ini Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
           end)
         else
-          -- 4. Handle errors (missing pio, syntax error in config, etc.)
           local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
           vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
         end
       end)
     end)
-  end)
+  -- end)
 end
 
 -- =============================================================================
