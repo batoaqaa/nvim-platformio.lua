@@ -59,7 +59,6 @@ end
 -- stylua: ignore
 function M.pio_refresh(callback)
   vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
-
   -- INFO:-------------------------------------------------
   -- get pio project metadata info
   -- stylua: ignore
@@ -278,13 +277,10 @@ end
 -- stylua: ignore
 -- INFO:
 -- 1.run_compiledb
-function M.run_compiledb()
+function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
-  if _G.metadata.isBusy then
-    return
-  end
-  _G.metadata.isBusy = true
-  M.stop_watchers()
+  if target.isBusy then return end
+  target.isBusy = true
 
   vim.notify('PIO: Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
@@ -293,7 +289,7 @@ function M.run_compiledb()
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
     vim.schedule(function()
       -- 3. Release the lock immediately when the process returns
-      _G.metadata.isBusy = false
+      target.isBusy = false
 
       if obj.code == 0 then
         -- Optional: Sync the hash of platformio.ini so the watcher doesn't refire
@@ -301,19 +297,15 @@ function M.run_compiledb()
         -- targets[1].last_hash = get_hash(targets[1].path)
 
         vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
-        M.start_watchers()
 
         -- Trigger refresh (LSP restart, etc.)
-        -- if M.pio_refresh then
-        --   M.pio_refresh(function()
-        --     -- Post-refresh logic here
-        --   end)
-        -- end
+        M.pio_refresh(function()
+          -- Post-refresh logic here
+        end)
       else
         -- 4. Handle errors (missing pio, syntax error in config, etc.)
         local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
         vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
-        M.start_watchers()
       end
     end)
   end)
@@ -397,41 +389,42 @@ function M.start_watchers()
   local targets = {
     { -- watcher for platformio.ini
       name = 'ini',
+      isBusy = false,
       last_hash = '',
       path = vim.misc.joinPath(project_root, 'platformio.ini'),
       cb = function(self)
+        if self.isBusy then return end
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.last_hash then
           self.last_hash = new_hash
           vim.schedule(function()
-            M.run_compiledb() -- Smart: Auto-update DB if config changes
-            -- local pio = require('platformio.utils.pio')
-            -- pio.run_sequence({
-            --   cmnds = {
-            --     'pio run -t compiledb',
-            --   },
-            --   cb = pio.handlePiodb,
-            -- })
+            M.run_compiledb(self) -- Smart: Auto-update DB if config changes
           end)
         end
       end,
     },
     { -- watcher for ./.pio/build/projct.checksum
       name = 'checksum',
+      isBusy = false,
       path = vim.misc.joinPath(project_root, '.pio', 'build', 'project.checksum'), --checksum_path
-      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
       cb = function(self)
+        if self.isBusy then return end
         local ok, current_checksum = vim.misc.readFile(self.path)
 
         -- Check if we should exit early
-        if not ok or current_checksum == '' or current_checksum == _G.metadata.last_projectChecksum then
-          return
-        end
+        if ok and type(current_checksum) == 'string' and current_checksum ~= '' then
+          if current_checksum == _G.metadata.last_projectChecksum then
+            return
+          end
 
-        _G.metadata.last_projectChecksum = current_checksum -- Update the state
-        M.pio_refresh(function()
-          vim.notify('PIO: Metadata synced from cache, checksum', vim.log.levels.INFO)
-        end)
+          self.isBusy = true
+          vim.schedule(function ()
+            M.pio_refresh(function()
+              self.isBusy = false
+              vim.notify('PIO: Metadata synced from cache, checksum', vim.log.levels.INFO)
+            end)
+          end)
+        end
       end
     },
   }
