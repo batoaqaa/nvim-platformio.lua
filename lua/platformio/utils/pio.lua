@@ -185,7 +185,7 @@ function M.handlePioinitDb(result)
       M.queue = {}
       term.stdout_callback = nil
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh(function()
+      pio_refresh('PIO init+db: ', function()
         vim.misc.gitignore_lsp_configs('compile_commands.json')
         lsp_restart('clangd')
         -- _G.metadata.dbTrigger = true
@@ -223,7 +223,7 @@ function M.handlePioinit(result)
     vim.schedule(function()
       vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh(function()
+      pio_refresh('PIO init: ', function()
         vim.misc.gitignore_lsp_configs('compile_commands.json')
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)

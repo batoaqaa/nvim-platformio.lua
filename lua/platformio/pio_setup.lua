@@ -57,8 +57,9 @@ end
 
 -- =============================================================================
 -- stylua: ignore
-function M.pio_refresh(callback)
-  vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
+function M.pio_refresh(from, callback)
+  local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
+  vim.notify(msg ..'Config sync ...', vim.log.levels.INFO)
   -- INFO:-------------------------------------------------
   -- get pio project metadata info
   -- stylua: ignore
@@ -121,7 +122,7 @@ function M.pio_refresh(callback)
     local ok, current_checksum = vim.misc.readFile(checksum_file)
     if ok and (type(current_checksum) == 'string' and current_checksum ~= '') then
       if current_checksum == meta.last_projectChecksum then
-        vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
+        vim.notify(msg .. 'Metadata synced with cache', vim.log.levels.INFO)
         -- if callback then callback() end
         if callback then vim.schedule(callback) end
         return true
@@ -134,7 +135,7 @@ function M.pio_refresh(callback)
         if cok and apply_metadata(decoded, current_checksum) then
           local metadata = require('platformio.metadata')
           metadata.save_project_config()
-          vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)
+          vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
           if callback then vim.schedule(callback) end
           return true
         end
@@ -145,13 +146,13 @@ function M.pio_refresh(callback)
     -- STEP 3: Auto-Initialize (If files are missing)
     ---------------------------------------------------------
     -- if not current_checksum then
-    --   vim.notify('PIO: Initializing project metadata...', vim.log.levels.WARN)
+    --   vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
     --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
     --     vim.schedule(function()
     --       if obj.code == 0 thenl
     --         fetch_metadata(attempts, active_env) -- Recursive call after files created
     --       else
-    --         vim.notify('PIO: Initialization failed. Build project manually.', vim.log.levels.ERROR)
+    --         vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
     --       end
     --     end)
     --   end)
@@ -161,7 +162,7 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 4: Standard CLI Fallback (The Slow Path)
     ---------------------------------------------------------
-    vim.notify('PIO: Metadata sync ...', vim.log.levels.INFO)
+    vim.notify(msg .. 'Metadata sync ...', vim.log.levels.INFO)
     vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(obj)
       vim.schedule(function()
         if obj.code ~= 0 then
@@ -169,17 +170,17 @@ function M.pio_refresh(callback)
             vim.defer_fn(function() fetch_metadata(attempts - 1, env) end, 500)
             return
           end
-          return vim.notify('PIO Metadata Error: ' .. (obj.stderr or 'Unknown'), vim.log.levels.WARN)
+          return vim.notify(msg .. 'Metadata Error: ' .. (obj.stderr or 'Unknown'), vim.log.levels.WARN)
         end
 
         local ook, raw_data = pcall(vim.json.decode, obj.stdout or '')
         local _, data = next(raw_data or {})
 
         if ook and apply_metadata(data, current_checksum) then
-          vim.notify('PIO: Metadata synced from CLI', vim.log.levels.INFO)
+          vim.notify(msg .. 'Metadata synced from CLI', vim.log.levels.INFO)
           if callback then vim.schedule(callback) end
         else
-          vim.notify('PIO: Failed to parse metadata output', vim.log.levels.WARN)
+          vim.notify(msg .. 'Failed to parse metadata output', vim.log.levels.WARN)
         end
       end)
     end)
@@ -198,14 +199,14 @@ function M.pio_refresh(callback)
       vim.schedule(function()
         -- 1. Check Execution
         if obj.code ~= 0 then
-          local msg = obj.code == 127 and "'pio' not found" or (obj.stderr or "Unknown Error")
-          return vim.notify("PIO Config Error: " .. msg, vim.log.levels.ERROR)
+          local errmsg = obj.code == 127 and "'pio' not found" or (obj.stderr or "Unknown Error")
+          return vim.notify(msg .. "Config Error: " .. errmsg, vim.log.levels.ERROR)
         end
 
         -- 2. Decode JSON safely
         local ok, decoded = pcall(vim.json.decode, obj.stdout or "")
         if not ok or type(decoded) ~= "table" then
-          return vim.notify("PIO: Failed to decode config JSON", vim.log.levels.ERROR)
+          return vim.notify(msg .. "Failed to decode config JSON", vim.log.levels.ERROR)
         end
 
         -- Reset core structure
@@ -253,10 +254,10 @@ function M.pio_refresh(callback)
 
         -- 6. Trigger next step
         if meta.active_env ~= "" then
-          vim.notify('PIO: Config sync successful', vim.log.levels.INFO)
+          vim.notify(msg .. 'Config sync successful', vim.log.levels.INFO)
           fetch_metadata(1, meta.active_env)
         else
-          vim.notify('PIO: No [env:] found. Please add a board.', vim.log.levels.ERROR)
+          vim.notify(msg .. 'No [env:] found. Please add a board.', vim.log.levels.ERROR)
         end
       end)
     end)
@@ -298,8 +299,8 @@ function M.run_compiledb(target)
           -- vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- Trigger refresh (LSP restart, etc.)
           -- vim.schedule(function ()
-            -- M.pio_refresh(function()
-              vim.notify('PIO: after platformio.ini Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+            -- M.pio_refresh('PIO platformio.ini  change: ', function()
+              vim.notify('PIO platformio.ini change: after Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
             -- end)
           -- end)
         else
@@ -421,9 +422,9 @@ function M.start_watchers()
 
           self.isBusy = true
           vim.schedule(function ()
-            M.pio_refresh(function()
+            M.pio_refresh('PIO checksum: ',function()
               self.isBusy = false
-              vim.notify('PIO: Metadata synced from cache, checksum', vim.log.levels.INFO)
+              vim.notify('PIO checksum: Metadata synced from cache, checksum', vim.log.levels.INFO)
             end)
           end)
         end
@@ -472,7 +473,7 @@ function M.init()
       boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
       ---------------------------------------------------------------------------------
       -- M.run_compiledb() -- Smart: Auto-update DB if config changes
-      M.pio_refresh(function()
+      M.pio_refresh('PIO start: ', function()
         -- vim.schedule(function()
         --   lsp_restart('clangd')
         -- end)
