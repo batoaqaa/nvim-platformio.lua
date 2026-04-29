@@ -120,20 +120,16 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     local _, current_checksum = vim.misc.readFile(checksum_file)
     if current_checksum and current_checksum ~= '' then
-      vim.notify('PIO:checksum 1', vim.log.levels.INFO)
       if current_checksum == meta.last_projectChecksum then
         vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
         return
       end -- Already updated
 
-      vim.notify('PIO:checksum 2', vim.log.levels.INFO)
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
       local _, content = vim.misc.readFile(idedata_file)
       if content then
-      vim.notify('PIO:checksum 3', vim.log.levels.INFO)
         local ok, decoded = pcall(vim.json.decode, content)
         if ok and apply_metadata(decoded, current_checksum) then
-          vim.notify('PIO:checksum 4', vim.log.levels.INFO)
           local metadata = require('platformio.metadata')
           metadata.save_project_config()
           vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)
@@ -282,7 +278,7 @@ function M.run_compiledb()
   if _G.metadata.isBusy then return end
   _G.metadata.isBusy = true
 
-  M.stop_watchers() -- 1. Silence watchers to prevent the loop
+  -- M.stop_watchers() -- 1. Silence watchers to prevent the loop
   vim.notify('Building DB...', vim.log.levels.INFO)
 
   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
@@ -290,26 +286,26 @@ function M.run_compiledb()
       if obj.code == 0 then
         -- 2. PERFORM CHECKSUM ACTIONS MANUALLY
         local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
-        local ok, new_checksum = vim.misc.readFile(checksum_path)
 
+        -- local ok, new_checksum = vim.misc.readFile(checksum_path)
         if ok then
-          _G.metadata.last_projectChecksum = new_checksum -- Sync the state
+          -- _G.metadata.last_projectChecksum = new_checksum -- Sync the state
 
           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
-          M.pio_refresh(function()
-            vim.notify('DB & Cache Updated', vim.log.levels.INFO)
-            _G.metadata.isBusy = false
-            M.start_watchers() -- 4. Re-enable watchers for future changes
-          end)
+          -- M.pio_refresh(function()
+          --   vim.notify('DB & Cache Updated', vim.log.levels.INFO)
+          --   _G.metadata.isBusy = false
+          --   M.start_watchers() -- 4. Re-enable watchers for future changes
+          -- end)
         else
           -- If we can't read the checksum, something is wrong with the build output
           _G.metadata.isBusy = false
-          M.start_watchers()
+          -- M.start_watchers()
         end
       else
         vim.notify('Build Failed', vim.log.levels.ERROR)
         _G.metadata.isBusy = false
-        M.start_watchers()
+        -- M.start_watchers()
       end
     end)
   end)
