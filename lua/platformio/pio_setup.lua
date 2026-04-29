@@ -286,8 +286,8 @@ function M.run_compiledb(target)
 
   -- 2. Run the command asynchronously
   -- 'pio run -t compiledb' updates compile_commands.json
-  vim.schedule(function ()
-    vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
+  -- vim.schedule(function()
+    vim.system({ 'pio', 'run', '-t', 'compiledb', '--skip-project-check' }, { detach = true, text = true }, function(obj)
       vim.schedule(function()
         -- 3. Release the lock immediately when the process returns
         target.isBusy = false
@@ -310,7 +310,7 @@ function M.run_compiledb(target)
         end
       end)
     end)
-  end)
+  -- end)
 end
 
 -- =============================================================================
@@ -353,14 +353,16 @@ end
 -- INFO:
 -- 4. watch_file
 -- stylua: ignore
-local function watch_file(full_path, callback)
+local function watch_file(full_path, callback, target)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
   handle:start(full_path, 1000, function(err, stat)
-    if err or not stat or (_G.metadata and _G.metadata.isBusy) then return end
-    vim.schedule(callback)
+    if err or not stat or (target and target.isBusy) then return end
+    vim.schedule(function ()
+      callback(target)
+    end)
   end)
 
   table.insert(M.watcher_handles, handle)
@@ -433,7 +435,7 @@ function M.start_watchers()
   for _, target in ipairs(targets) do
     --[[ wrap the callback in a small anonymous function,
         so it passes the target (self) back into it.]]
-    local handle = watch_file(target.path, function() target.cb(target) end)
+    local handle = watch_file(target.path, function() target.cb(target) end, target)
     if handle then  table.insert(M.watcher_handles, handle) end
   end
 end
