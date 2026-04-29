@@ -291,7 +291,7 @@ function M.run_compiledb()
         local ok, new_checksum = vim.misc.readFile(checksum_path)
 
         if ok then
-          _G.metadata.last_checksum = new_checksum -- Sync the state
+          _G.metadata.last_projectChecksum = new_checksum -- Sync the state
 
           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
           M.pio_refresh(function()
@@ -313,10 +313,10 @@ function M.run_compiledb()
   end)
 end
 
-
-
 -- function M.run_compiledb()
---   if _G.metadata.isBusy then return end
+--   if _G.metadata.isBusy then
+--     return
+--   end
 --   _G.metadata.isBusy = true
 --
 --   M.stop_watchers() -- Kill watchers so they don't fire during the build
@@ -329,13 +329,13 @@ end
 --         _G.metadata.isBusy = false
 --         M.start_watchers() -- 2. RESTART after success
 --         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
---         return vim.notify("PIO run_compiledb Error: " .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
+--         return vim.notify('PIO run_compiledb Error: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
 --       end
 --       -- 1. Sync the checksum manually so the second watcher ignores this change
 --       -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
 --       -- local ok, new_checksum = vim.misc.readFile(checksum_path)
 --       -- if ok then
---       --   _G.metadata.last_checksum = new_checksum
+--       _G.metadata.last_projectChecksum = new_checksum
 --       -- end
 --
 --       -- 2. Refresh
@@ -531,27 +531,27 @@ function M.start_watchers()
         end
       end,
     },
-    -- { -- watcher for ./.pio/build/projct.checksum
-    --   idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
-    --   path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
-    --   cb = function(self)
-    --     local _, current_checksum = vim.misc.readFile(self.path)
-    --     if current_checksum and current_checksum ~= '' then
-    --       if current_checksum == _G.metadata.last_checksum then
-    --         return
-    --       end -- Already updated
-    --
-    --       vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
-    --     _G.metadata.isBusy = false
-    --       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-    --       -- M.pio_refresh(function()
-    --       --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-    --       --   -- dbFix()
-    --       --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-    --       -- end)
-    --     end
-    --   end,
-    -- },
+    { -- watcher for ./.pio/build/projct.checksum
+      idedata_path = vim.misc.joinPath(project_root, '.pio/build', active_env, 'idedata.json'),--idedata.json path
+      path = vim.misc.joinPath(project_root, '.pio/build', 'project.checksum'), --checksum_path
+      cb = function(self)
+        local _, current_checksum = vim.misc.readFile(self.path)
+        if current_checksum and current_checksum ~= '' then
+          if current_checksum == _G.metadata.last_projectChecksum then
+            return
+          end -- Already updated
+
+          vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
+        _G.metadata.isBusy = false
+          -- STEP 2: Cache Path (idedata.json exists and checksum changed)
+          -- M.pio_refresh(function()
+          --   -- local dbFix = require('platformio.utils.pio').compile_commandsFix
+          --   -- dbFix()
+          --   vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
+          -- end)
+        end
+      end,
+    },
   }
   targets[1].current_ini_hash = get_hash(targets[1].path) or ''
 
