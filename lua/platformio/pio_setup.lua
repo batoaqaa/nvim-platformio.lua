@@ -119,6 +119,8 @@ function M.pio_refresh(callback)
     -- STEP 1: Fast Checksum Check
     ---------------------------------------------------------
     local _, current_checksum = vim.misc.readFile(checksum_file)
+    print('f=' .. current_checksum)
+    print('g=' .. meta.last_projectChecksum)
     if current_checksum and current_checksum ~= '' then
       if current_checksum == meta.last_projectChecksum then
         vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
