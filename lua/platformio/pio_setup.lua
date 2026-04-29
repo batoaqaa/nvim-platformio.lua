@@ -286,6 +286,7 @@ function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
   if target.isBusy then return end
   target.isBusy = true
+  _G.metadata.isBusy = true
 
   vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
@@ -307,6 +308,7 @@ function M.run_compiledb(target)
           local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
           vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
         end
+        _G.metadata.isBusy = false
       end)
     end)
   -- end)
@@ -420,13 +422,15 @@ function M.start_watchers()
             return
           end
 
-          self.isBusy = true
-          vim.defer_fn(function ()
-            M.pio_refresh('PIO checksum: ',function()
-              self.isBusy = false
-              vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
-            end)
-          end, 1500)
+          while _G.metadata.isBusy do
+            self.isBusy = true
+            vim.defer_fn(function ()
+              M.pio_refresh('PIO checksum: ',function()
+                self.isBusy = false
+                vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+              end)
+            end, 1500)
+          end
         end
       end
     },
