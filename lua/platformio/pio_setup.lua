@@ -408,7 +408,7 @@ function M.start_watchers()
             local pio = require('platformio.utils.pio')
             pio.run_sequence({
               cmnds = {
-                'pio run -t build',
+                'pio run -t compiledb',
               },
               cb = pio.handlePiodb,
             })
