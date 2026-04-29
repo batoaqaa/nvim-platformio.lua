@@ -50,7 +50,7 @@ _G.metadata = setmetatable({}, {
         local binPath = value .. '/bin'
         local sep = (vim.fn.has('win32') == 1 and ';' or ':')
         vim.env.PATH = binPath .. sep .. vim.env.PATH
-        vim.notify('Env: ' .. binPath .. ' added to path', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
+        vim.notify('PIO env: ' .. binPath .. ' added to path', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         -- vim.notify('Env: ' .. value, vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         -- pcall(function()
         --   if _pio_metadata.dbTrigger then
@@ -85,7 +85,6 @@ function M.save_project_config(quiet)
   -- 1. Generate the formatted string directly, pretty_print already returns a string!
   local ok, pretty_json = pcall(vim.misc.pretty_print, _pio_metadata)
 
-  vim.notify('PIO:checksum 5', vim.log.levels.INFO)
   if not ok or not pretty_json then
     print('Error formatting metadata')
     return
@@ -100,10 +99,10 @@ function M.save_project_config(quiet)
     if status then
       last_saved_hash = current_hash
       if not quiet then
-        vim.notify('Config synced', vim.log.levels.INFO, { title = 'PlatformIO' })
+        vim.notify('PIO save config: success', vim.log.levels.INFO, { title = 'PlatformIO' })
       end
     else
-      vim.notify('Write failed: ' .. (err or 'unknown error'), vim.log.levels.ERROR)
+      vim.notify('PIO save config: failed==> ' .. (err or 'unknown error'), vim.log.levels.ERROR)
     end
   end
 end

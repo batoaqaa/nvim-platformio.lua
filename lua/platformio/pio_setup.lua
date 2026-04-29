@@ -287,7 +287,7 @@ function M.run_compiledb(target)
   if target.isBusy then return end
   target.isBusy = true
 
-  vim.notify('PIO: Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
+  vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   -- vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
@@ -300,7 +300,7 @@ function M.run_compiledb(target)
           -- Trigger refresh (LSP restart, etc.)
           -- vim.schedule(function ()
             -- M.pio_refresh('PIO platformio.ini  change: ', function()
-              vim.notify('PIO platformio.ini change: after Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+              vim.notify('PIO platformio.ini change: Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
             -- end)
           -- end)
         else
