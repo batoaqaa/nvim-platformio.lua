@@ -291,7 +291,8 @@ function M.run_compiledb(target)
   vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   -- vim.schedule(function()
-    vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
+    vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
+    -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
       vim.schedule(function()
 
         target.isBusy = false
