@@ -120,16 +120,20 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     local _, current_checksum = vim.misc.readFile(checksum_file)
     if current_checksum and current_checksum ~= '' then
+      vim.notify('PIO:checksum 1', vim.log.levels.INFO)
       if current_checksum == meta.last_projectChecksum then
         vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
         return
       end -- Already updated
 
+      vim.notify('PIO:checksum 2', vim.log.levels.INFO)
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
       local _, content = vim.misc.readFile(idedata_file)
       if content then
+      vim.notify('PIO:checksum 3', vim.log.levels.INFO)
         local ok, decoded = pcall(vim.json.decode, content)
         if ok and apply_metadata(decoded, current_checksum) then
+          vim.notify('PIO:checksum 4', vim.log.levels.INFO)
           local metadata = require('platformio.metadata')
           metadata.save_project_config()
           vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)

@@ -85,6 +85,7 @@ function M.save_project_config(quiet)
   -- 1. Generate the formatted string directly, pretty_print already returns a string!
   local ok, pretty_json = pcall(vim.misc.pretty_print, _pio_metadata)
 
+  vim.notify('PIO:checksum 5', vim.log.levels.INFO)
   if not ok or not pretty_json then
     print('Error formatting metadata')
     return
