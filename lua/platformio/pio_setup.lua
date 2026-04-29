@@ -331,7 +331,7 @@ local debounce_timer = uv.new_timer()
 -- INFO:
 -- 2.stop_watchers 
 function M.stop_watchers()
-  if type(M.watcher_handles) ~= 'table' then M.watcher_handles = {} return end
+  if not M.watcher_handles or (type(M.watcher_handles) ~= 'table') then M.watcher_handles = {} return end
 
   for _, handle in ipairs(M.watcher_handles) do
     if handle and not handle:is_closing() then
@@ -374,6 +374,15 @@ local function watch_file(full_path, callback)
 end
 
 -- =============================================================================
+-- INFO:
+-- 5.Force cleanup when leaving Neovim to prevent :qa lag
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    M.cleanup()
+  end,
+})
+
+-- =============================================================================
 -- stylua: ignore
 -- INFO:
 -- 5. start_watches
@@ -394,14 +403,14 @@ function M.start_watchers()
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.last_hash then
           self.last_hash = new_hash
-          M.run_compiledb() -- Smart: Auto-update DB if config changes
-          -- local pio = require('platformio.utils.pio')
-          -- pio.run_sequence({
-          --   cmnds = {
-          --     'pio run -t compiledb',
-          --   },
-          --   cb = pio.handlePiodb,
-          -- })
+          -- M.run_compiledb() -- Smart: Auto-update DB if config changes
+          local pio = require('platformio.utils.pio')
+          pio.run_sequence({
+            cmnds = {
+              'pio run -t compiledb',
+            },
+            cb = pio.handlePiodb,
+          })
         end
       end,
     },
@@ -436,7 +445,7 @@ end
 
 -- =============================================================================
 -- stylua: ignore
--- INFO: 6.  Exported setup function
+-- INFO: 7.  Exported setup function
 function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then
@@ -476,10 +485,4 @@ function M.init()
   end
 end
 
--- Force cleanup when leaving Neovim to prevent :qa lag
-vim.api.nvim_create_autocmd('VimLeavePre', {
-  callback = function()
-    M.cleanup()
-  end,
-})
 return M
