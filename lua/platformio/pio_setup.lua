@@ -546,14 +546,14 @@ function M.start_watchers()
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.current_ini_hash then
           self.current_ini_hash = new_hash
-          M.run_compiledb() -- Smart: Auto-update DB if config changes
-          -- local pio = require('platformio.utils.pio')
-          -- pio.run_sequence({
-          --   cmnds = {
-          --     'pio run -t compiledb',
-          --   },
-          --   cb = pio.handlePiodb,
-          -- })
+          -- M.run_compiledb() -- Smart: Auto-update DB if config changes
+          local pio = require('platformio.utils.pio')
+          pio.run_sequence({
+            cmnds = {
+              'pio run -t compiledb',
+            },
+            cb = pio.handlePiodb,
+          })
         end
       end,
     },
