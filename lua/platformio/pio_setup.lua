@@ -272,44 +272,72 @@ local function get_hash(path)
   return (ok and data) and vim.fn.sha256(data) or ''
 end
 
--- _G.metadata.isBusy = false
--- stylua: ignore
 function M.run_compiledb()
-  if _G.metadata.isBusy then return end
+  if _G.metadata.isBusy then
+    return
+  end
   _G.metadata.isBusy = true
 
-  -- M.stop_watchers() -- 1. Silence watchers to prevent the loop
-  vim.notify('Building DB...', vim.log.levels.INFO)
-
-  vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
-    vim.schedule(function()
-      if obj.code == 0 then
-        -- 2. PERFORM CHECKSUM ACTIONS MANUALLY
-        local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
-
-        -- local ok, new_checksum = vim.misc.readFile(checksum_path)
-        -- if ok then
-          -- _G.metadata.last_projectChecksum = new_checksum -- Sync the state
-
-          -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
-          -- M.pio_refresh(function()
-            vim.notify('DB & Cache Updated', vim.log.levels.INFO)
-          --   _G.metadata.isBusy = false
-          --   M.start_watchers() -- 4. Re-enable watchers for future changes
-          -- end)
-        -- else
-          -- If we can't read the checksum, something is wrong with the build output
-          _G.metadata.isBusy = false
-          -- M.start_watchers()
-        -- end
-      else
-        vim.notify('Build Failed', vim.log.levels.ERROR)
+  -- Use pcall to catch immediate 'command not found' errors
+  local ok, result = pcall(function()
+    return vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
+      vim.schedule(function()
         _G.metadata.isBusy = false
-        -- M.start_watchers()
-      end
+        if obj.code == 0 then
+          vim.notify('DB Updated', vim.log.levels.INFO)
+        else
+          -- Check stderr if code is non-zero
+          local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Exit code ' .. obj.code
+          vim.notify('PIO Error: ' .. err, vim.log.levels.ERROR)
+        end
+      end)
     end)
   end)
+
+  if not ok then
+    vim.notify('Failed to start PIO: ' .. tostring(result), vim.log.levels.ERROR)
+    _G.metadata.isBusy = false
+  end
 end
+
+
+-- _G.metadata.isBusy = false
+-- stylua: ignore
+-- function M.run_compiledb()
+--   if _G.metadata.isBusy then return end
+--   _G.metadata.isBusy = true
+--
+--   M.stop_watchers() -- 1. Silence watchers to prevent the loop
+--   vim.notify('Building DB...', vim.log.levels.INFO)
+--
+--   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
+--     vim.schedule(function()
+--       if obj.code == 0 then
+--         -- 2. PERFORM CHECKSUM ACTIONS MANUALLY
+--         local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
+--         local ok, new_checksum = vim.misc.readFile(checksum_path)
+--         if ok then
+--           _G.metadata.last_projectChecksum = new_checksum -- Sync the state
+--
+--           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
+--           M.pio_refresh(function()
+--             vim.notify('DB & Cache Updated', vim.log.levels.INFO)
+--             _G.metadata.isBusy = false
+--             M.start_watchers() -- 4. Re-enable watchers for future changes
+--           end)
+--         else
+--           -- If we can't read the checksum, something is wrong with the build output
+--           _G.metadata.isBusy = false
+--           M.start_watchers()
+--         end
+--       else
+--         vim.notify('Build Failed', vim.log.levels.ERROR)
+--         _G.metadata.isBusy = false
+--         M.start_watchers()
+--       end
+--     end)
+--   end)
+-- end
 
 -- function M.run_compiledb()
 --   if _G.metadata.isBusy then
