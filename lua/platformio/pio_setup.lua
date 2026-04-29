@@ -404,13 +404,15 @@ function M.start_watchers()
         if new_hash and new_hash ~= self.last_hash then
           self.last_hash = new_hash
           -- M.run_compiledb() -- Smart: Auto-update DB if config changes
-          local pio = require('platformio.utils.pio')
-          pio.run_sequence({
-            cmnds = {
-              'pio run -t build',
-            },
-            cb = pio.handlePiodb,
-          })
+          vim.schedule(function()
+            local pio = require('platformio.utils.pio')
+            pio.run_sequence({
+              cmnds = {
+                'pio run -t build',
+              },
+              cb = pio.handlePiodb,
+            })
+          end)
         end
       end,
     },
