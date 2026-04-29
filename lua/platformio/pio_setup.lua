@@ -55,6 +55,7 @@ function M.get_sysroot_triplet(cc_compiler)
   return nil
 end
 
+-- =============================================================================
 -- stylua: ignore
 function M.pio_refresh(callback)
   vim.notify('PIO: Config sync ...', vim.log.levels.INFO)
@@ -260,6 +261,7 @@ function M.pio_refresh(callback)
   fetch_config()
 end
 
+-- =============================================================================
 -- INFO:
 -- 1. Helper: Unified hashing for change detection
 local function get_hash(path)
@@ -272,17 +274,17 @@ local function get_hash(path)
   return (ok and data) and vim.fn.sha256(data) or ''
 end
 
-local uv = vim.uv or vim.loop
-M.watcher_handles = {}
--- Define it here so all functions in this file can access it
-local debounce_timer = uv.new_timer()
-
+-- =============================================================================
+-- stylua: ignore
+-- INFO:
+-- 1.run_compiledb
 function M.run_compiledb()
   -- 1. Prevent overlapping builds
   if _G.metadata.isBusy then
     return
   end
   _G.metadata.isBusy = true
+  M.stop_watchers()
 
   vim.notify('PIO: Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
@@ -299,6 +301,7 @@ function M.run_compiledb()
         -- targets[1].last_hash = get_hash(targets[1].path)
 
         vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
+        M.start_watchers()
 
         -- Trigger refresh (LSP restart, etc.)
         -- if M.pio_refresh then
@@ -315,232 +318,46 @@ function M.run_compiledb()
   end)
 end
 
-
--- function M.run_compiledb()
---   -- Use a local reference to the global table for speed/clarity
---   local meta = _G.metadata
---   if not meta then
---     return
---   end
---
---   if meta.isBusy then
---     return
---   end
---   meta.isBusy = true
---
---   vim.notify('Building Compilation DB...', vim.log.levels.INFO)
---
---   local ok, result = pcall(function()
---     return vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, shell = true, timeout = 30000 }, function(obj)
---       vim.schedule(function()
---         -- 1. Reset flag IMMEDIATELY when process returns
---         meta.isBusy = false
---
---         if obj.code == 0 then
---           vim.notify('DB Updated', vim.log.levels.INFO)
---         else
---           local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Exit code ' .. obj.code
---           vim.notify('PIO Error: ' .. err, vim.log.levels.ERROR)
---         end
---       end)
---     end)
---   end)
---
---   if not ok then
---     vim.notify('Failed to start PIO: ' .. tostring(result), vim.log.levels.ERROR)
---     meta.isBusy = false
---   end
--- end
-
--- _G.metadata.isBusy = false
--- stylua: ignore
--- function M.run_compiledb()
---   if _G.metadata.isBusy then return end
---   _G.metadata.isBusy = true
---
---   M.stop_watchers() -- 1. Silence watchers to prevent the loop
---   vim.notify('Building DB...', vim.log.levels.INFO)
---
---   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
---     vim.schedule(function()
---       if obj.code == 0 then
---         -- 2. PERFORM CHECKSUM ACTIONS MANUALLY
---         local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
---         local ok, new_checksum = vim.misc.readFile(checksum_path)
---         if ok then
---           _G.metadata.last_projectChecksum = new_checksum -- Sync the state
---
---           -- 3. Run the refresh logic (The "Action" normally taken by the watcher)
---           M.pio_refresh(function()
---             vim.notify('DB & Cache Updated', vim.log.levels.INFO)
---             _G.metadata.isBusy = false
---             M.start_watchers() -- 4. Re-enable watchers for future changes
---           end)
---         else
---           -- If we can't read the checksum, something is wrong with the build output
---           _G.metadata.isBusy = false
---           M.start_watchers()
---         end
---       else
---         vim.notify('Build Failed', vim.log.levels.ERROR)
---         _G.metadata.isBusy = false
---         M.start_watchers()
---       end
---     end)
---   end)
--- end
-
--- function M.run_compiledb()
---   if _G.metadata.isBusy then
---     return
---   end
---   _G.metadata.isBusy = true
---
---   M.stop_watchers() -- Kill watchers so they don't fire during the build
---   vim.notify('Building Compilation DB...', vim.log.levels.INFO, { title = 'PlatformIO' })
---
---   vim.system({ 'pio', 'run', '-t', 'compiledb' }, {}, function(obj)
---     vim.schedule(function()
---       -- 1. Check Execution
---       if obj.code ~= 0 then
---         _G.metadata.isBusy = false
---         M.start_watchers() -- 2. RESTART after success
---         local msg = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check pio logs'
---         return vim.notify('PIO run_compiledb Error: ' .. msg, vim.log.levels.ERROR, { title = 'PlatformIO' })
---       end
---       -- 1. Sync the checksum manually so the second watcher ignores this change
---       -- local checksum_path = vim.misc.joinPath(vim.uv.cwd(), '.pio/build', 'project.checksum')
---       -- local ok, new_checksum = vim.misc.readFile(checksum_path)
---       -- if ok then
---       _G.metadata.last_projectChecksum = new_checksum
---       -- end
---
---       -- 2. Refresh
---       M.pio_refresh(function()
---         -- local dbFix = require('platformio.utils.pio').compile_commandsFix
---         -- dbFix()
---         vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
---         _G.metadata.isBusy = false
---         M.start_watchers() -- 2. RESTART after success
---         -- pio_generate_db()
---         -- lsp_restart('clangd')
---       end)
---     end)
---   end)
--- end
-
--- Store handles globally within the module so we can stop them
-
--- stylua: ignore
--- local timer = uv.new_timer()
---
--- local function watch_file(full_path, callback)
---   local handle = uv.new_fs_event()
---   local target_file = vim.fn.fnamemodify(full_path, ':t')
---   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
---
---   if not handle then
---     return nil
---   end
---
---   handle:start(parent_dir, {}, function(err, filename)
---     -- 1. Strict Filter: Only process if it's our file and we aren't already busy
---     if err or filename ~= target_file or (_G.metadata and _G.metadata.isBusy) then
---       return
---     end
---
---     -- 2. Debounce: Reset the timer on every event
---     -- Only after 500ms of "silence" will the actual callback run
---     if timer then
---       timer:stop()
---       timer:start(
---         500,
---         0,
---         vim.schedule_wrap(function()
---           -- 3. Final Check: Ensure file exists before running heavy logic
---           local stat = uv.fs_stat(full_path)
---           if stat and stat.type == 'file' then
---             callback()
---           end
---         end)
---       )
---     end
---   end)
---   return handle
--- end
-
-
-
-
--- Use a single, global-ish timer variable to handle debouncing across all events
--- local debounce_timer = vim.uv.new_timer()
---
--- local function watch_file(full_path, callback)
---   -- 1. Nil check input parameters
---   if not full_path or type(callback) ~= 'function' then
---     vim.notify('watch_file: Invalid path or callback', vim.log.levels.ERROR)
---     return nil
---   end
---
---   local handle, init_err = vim.uv.new_fs_event()
---   if not handle then
---     vim.notify('watch_file: Failed to create handle: ' .. tostring(init_err), vim.log.levels.ERROR)
---     return nil
---   end
---
---   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
---   local target_file = vim.fn.fnamemodify(full_path, ':t')
---
---   -- Start the watcher on the parent directory
---   handle:start(parent_dir, {}, function(err, filename, events)
---     -- 2. Robust error checking (tostring handles nil err)
---     if err then
---       vim.schedule(function()
---         vim.notify('Watcher system error: ' .. tostring(err), vim.log.levels.ERROR)
---       end)
---       return
---     end
---
---     -- 3. Guard against nil filename and metadata
---     -- Only proceed if the event is for our target file and we aren't busy
---     local is_target = (filename == target_file)
---     local is_busy = (_G.metadata and _G.metadata.isBusy == true)
---
---     if not is_target or is_busy then
---       return
---     end
---
---     if debounce_timer then
---       -- 4. Debounce Logic with Timer Safety
---       -- Stop existing timer if it's currently running (debouncing)
---       if debounce_timer:is_active() then
---         debounce_timer:stop()
---       end
---
---       -- Start/Restart the timer
---       debounce_timer:start(
---         500,
---         0,
---         vim.schedule_wrap(function()
---           -- 5. Final existence check before execution
---           -- Some editors delete/rename files during save (atomic saves)
---           local stat = vim.uv.fs_stat(full_path)
---           if stat and stat.type == 'file' then
---             print('File settled: ' .. target_file)
---             callback()
---           end
---         end)
---       )
---     end
---   end)
---
---   return handle
--- end
-
--- stylua: ignore
-
+-- =============================================================================
+-- INFO:
 -- Ensure this is at the TOP of your file, outside any functions
+local uv = vim.uv or vim.loop
+M.watcher_handles = {}
+local debounce_timer = uv.new_timer()
 
+-- =============================================================================
+-- stylua: ignore
+-- INFO:
+-- 2.stop_watchers 
+function M.stop_watchers()
+  if type(M.watcher_handles) ~= 'table' then M.watcher_handles = {} return end
+
+  for _, handle in ipairs(M.watcher_handles) do
+    if handle and not handle:is_closing() then
+      handle:stop()
+      handle:close() -- CRITICAL: This allows Neovim to quit instantly
+    end
+  end
+  M.watcher_handles = {}
+end
+
+-- =============================================================================
+-- stylua: ignore
+-- INFO:
+-- 3.watcher cleanup
+function M.cleanup()
+  M.stop_watchers()
+  if debounce_timer and not debounce_timer:is_closing() then
+    debounce_timer:stop()
+    debounce_timer:close()
+  end
+end
+
+-- =============================================================================
+-- stylua: ignore
+-- INFO:
+-- 4. watch_file
+-- stylua: ignore
 local function watch_file(full_path, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
@@ -555,104 +372,10 @@ local function watch_file(full_path, callback)
   return handle
 end
 
-function M.stop_watchers()
-  if type(M.watcher_handles) ~= 'table' then
-    M.watcher_handles = {}
-    return
-  end
-
-  for _, handle in ipairs(M.watcher_handles) do
-    if handle and not handle:is_closing() then
-      handle:stop()
-      handle:close() -- CRITICAL: This allows Neovim to quit instantly
-    end
-  end
-  M.watcher_handles = {}
-  -- if M.watcher_handles then
-  --   for _, h in ipairs(M.watcher_handles) do
-  --     if h and not h:is_closing() then
-  --       h:stop()
-  --       h:close() -- CRITICAL: This stops Neovim from freezing on exit
-  --     end
-  --   end
-  -- end
-  -- M.watcher_handles = {}
-  -- local handle = vim.uv.new_fs_event()
-  -- local parent_dir = vim.fn.fnamemodify(full_path, ':h')
-  -- local target_file = vim.fn.fnamemodify(full_path, ':t')
-  --
-  -- if not handle then return nil end
-  --
-  -- handle:start(parent_dir, {}, function(err, filename)
-  --   if err or filename ~= target_file or (_G.metadata and _G.metadata.isBusy) then
-  --     return
-  --   end
-  --
-  --   -- 1. Check if timer exists and is valid
-  --   if debounce_timer then
-  --     -- 2. STOP the existing countdown (this is the "debounce")
-  --     debounce_timer:stop()
-  --
-  --     -- 3. START a new 500ms countdown
-  --     debounce_timer:start(500, 0, vim.schedule_wrap(function()
-  --       -- This block now ONLY runs once, 500ms after the LAST event
-  --       if vim.uv.fs_stat(full_path) then
-  --         print('File settled: ' .. target_file)
-  --         callback()
-  --       end
-  --     end))
-  --   end
-  -- end)
-  -- return handle
-end
-
-
-
-
-
--- local function watch_file(full_path, callback)
---   local handle = uv.new_fs_event()
---   local parent_dir = vim.fn.fnamemodify(full_path, ':h')
---   local target_file = vim.fn.fnamemodify(full_path, ':t')
---
---   if not handle then return nil end
---   handle:start(parent_dir, {}, function(err, filename, events)
---     -- 1. Catch REAL system errors
---     -- if err or filename ~= target_file or (_G.metadata and _G.metadata.isBusy) or (events and not (events.change or events.rename)) then
---     if err then
---       -- Use vim.schedule to notify so we don't block the loop
---       vim.schedule(function()
---         vim.notify('Watcher error: ' .. tostring(err), vim.log.levels.ERROR)
---       end)
---       return --handle:stop()
---     end
---     if filename ~= target_file or (_G.metadata and _G.metadata.isBusy) then
---       return --handle:stop()
---     end
---
---     -- if filename == target_file then
---     -- end
---
---     -- 2. SILENTLY ignore events that aren't our target file
---     -- Or if we are currently busy processing another task
---     -- if filename ~= target_file or _G.metadata.isBusy then
---     --   return
---     -- end
---
---     -- Debounce: Use vim.schedule to ensure we don't fire
---     -- during the middle of a file-swap operation
---     -- 3. Trigger the callback safely
---     vim.defer_fn(function()
---       print('file watched')
---       -- Re-verify file exists before calling
---       if vim.loop.fs_stat(full_path) then callback() end
---     end, 500)
---     -- vim.schedule(callback)
---   end)
---   return handle
--- end
-
+-- =============================================================================
 -- stylua: ignore
+-- INFO:
+-- 5. start_watches
 function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
   M.stop_watchers()
@@ -698,25 +421,6 @@ function M.start_watchers()
           vim.notify('PIO: Metadata synced from cache, checksum', vim.log.levels.INFO)
         end)
       end
-      -- cb = function(self)
-      --   if _G.metadata.isBusy then return end
-      --   _G.metadata.isBusy = true
-      --   local _, current_checksum = vim.misc.readFile(self.path)
-      --   if current_checksum and current_checksum ~= '' then
-      --     if current_checksum == _G.metadata.last_projectChecksum then
-      --       return
-      --     end -- Already updated
-      --
-      --     vim.notify('Checksum change', vim.log.levels.INFO, { title = 'PlatformIO' })
-      --     -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-      --     M.pio_refresh(function()
-      --       _G.metadata.isBusy = false
-      --       -- local dbFix = require('platformio.utils.pio').compile_commandsFix
-      --       -- dbFix()
-      --       vim.notify('DB Updated', vim.log.levels.INFO, { title = 'PlatformIO' })
-      --     end)
-      --   end
-      -- end,
     },
   }
   -- targets[1].last_hash = get_hash(targets[1].path) or ''
@@ -729,105 +433,8 @@ function M.start_watchers()
   end
 end
 
+-- =============================================================================
 -- stylua: ignore
--- function M.stop_watchers()
---   if type(M.watcher_handles) ~= "table" then
---     M.watcher_handles = {}
---     return
---   end
---
---   for _, handle in ipairs(M.watcher_handles) do
---     if handle and not handle:is_closing() then
---       handle:stop()
---       handle:close() -- CRITICAL: Releases the handle so Neovim can quit fast
---     end
---   end
---   M.watcher_handles = {}
--- end
-
--- function M.stop_watchers()
---   -- Safety: Ensure it's a table before looping
---   M.watcher_handles = M.watcher_handles or {}
---
---   for _, handle in ipairs(M.watcher_handles) do
---     if handle and not handle:is_closing() then handle:stop() end
---   end
---   M.watcher_handles = {}
--- end
-
--- local dir_path = vim.uv.cwd()
--- local ini_file = vim.misc.joinPath(dir_path, 'platformio.ini')
--- -- INFO:
--- -- 4. Simple Watcher: Only triggers if the FILE CONTENT changed
--- function M.start_watcher()
---   if not dir_path or vim.fn.filereadable(ini_file) == 0 then
---     return
---   end
---   local current_ini_hash = get_hash(ini_file)
---   _G.metadata.isBusy = false
---
---   local handle = vim.uv.new_fs_event()
---   if handle then
---     handle:start(
---       dir_path,
---       { recursive = false },
---       vim.schedule_wrap(function(err, fname, events)
---         if err or fname ~= 'platformio.ini' or _G.metadata.isBusy or not events or not (events.change or events.renamce) then
---           return handle:stop()
---         end
---
---         if _G.metadata.isBusy then
---           return
---         end
---
---         local new_hash = get_hash(ini_file)
---         if new_hash and new_hash ~= current_ini_hash then
---           current_ini_hash = new_hash
---           M.run_compiledb() -- Smart: Auto-update DB if config changes
---         end
---       end)
---     )
---   end
--- end
-
-----------------------------------------------------------------------------------------------
--- local function start_pio_watcher()
---   local dir_path = vim.uv.cwd()
---   if not dir_path then return end
---
---   -- Create a directory watcher
---   local handle = vim.uv.new_fs_event()
---   if not handle then return end
---
---   -- local last_trigger = 0
---   -- Watch the directory for platformio.ini creation or changes
---   handle:start(
---     dir_path,
---     {
---       watch_entry = false, -- watch the file/dir itself
---       stat = false,        -- use stat to detect changes (slower but more reliable on some FS)
---       recursive = false,   -- watch subdirectories (if path is a directory)
---     },
---     vim.schedule_wrap(function(err, filename, events)
---       if err or not events or not events.change then return end
---       -- Trigger only if the changed file is platformio.ini
---       if filename == 'platformio.ini' and (events.change or events.rename) then
---         if debounce_timer then
---           debounce_timer:stop()
---           debounce_timer:start(
---             500,
---             0,
---             vim.schedule_wrap(function()
---               pio_refresh(function()
---                 boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
---                 boilerplate_gen([[.clangd]], _G.metadata.core_dir)
---                 -- boilerplate_gen([[.clangd]], vim.env.XDG_CONFIG_HOME .. '/clangd', 'config.yaml')
---                 pio_generate_db()
---                 lsp_restart('clangd')
---                 -- end)
---   end) end)) end end end))
--- end
-------------------------------------------------------------------------------------------------------
 -- INFO: 6.  Exported setup function
 function M.init()
   local config = require('platformio').config
@@ -865,15 +472,6 @@ function M.init()
         -- end)
       end)
     end
-  end
-end
-
--- Add this to your main pio_setup.lua
-function M.cleanup()
-  M.stop_watchers()
-  if debounce_timer and not debounce_timer:is_closing() then
-    debounce_timer:stop()
-    debounce_timer:close()
   end
 end
 
