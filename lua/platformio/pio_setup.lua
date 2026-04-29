@@ -272,6 +272,11 @@ local function get_hash(path)
   return (ok and data) and vim.fn.sha256(data) or ''
 end
 
+local uv = vim.uv or vim.loop
+M.watcher_handles = {}
+-- Define it here so all functions in this file can access it
+local debounce_timer = uv.new_timer()
+
 function M.run_compiledb()
   -- 1. Prevent overlapping builds
   if _G.metadata.isBusy then
@@ -283,7 +288,7 @@ function M.run_compiledb()
 
   -- 2. Run the command asynchronously
   -- 'pio run -t compiledb' updates compile_commands.json
-  vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
+  vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
     vim.schedule(function()
       -- 3. Release the lock immediately when the process returns
       _G.metadata.isBusy = false
@@ -296,11 +301,11 @@ function M.run_compiledb()
         vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
 
         -- Trigger refresh (LSP restart, etc.)
-        if M.pio_refresh then
-          M.pio_refresh(function()
-            -- Post-refresh logic here
-          end)
-        end
+        -- if M.pio_refresh then
+        --   M.pio_refresh(function()
+        --     -- Post-refresh logic here
+        --   end)
+        -- end
       else
         -- 4. Handle errors (missing pio, syntax error in config, etc.)
         local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
@@ -466,10 +471,6 @@ end
 
 
 
-local uv = vim.uv or vim.loop
-M.watcher_handles = {}
--- Define it here so all functions in this file can access it
-local debounce_timer = uv.new_timer()
 
 -- Use a single, global-ish timer variable to handle debouncing across all events
 -- local debounce_timer = vim.uv.new_timer()
@@ -544,29 +545,38 @@ local function watch_file(full_path, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
-  -- Poll every 1000ms (1 second). Efficient and ignores "noise".
+  -- Poll every 1000ms. This is light on CPU and ignores "save noise".
   handle:start(full_path, 1000, function(err, stat)
-    if err or not stat or (_G.metadata and _G.metadata.isBusy) then
-      return
-    end
-
-    -- For platformio.ini, we still check the hash to be sure it actually changed
+    if err or not stat or (_G.metadata and _G.metadata.isBusy) then return end
     vim.schedule(callback)
   end)
 
+  table.insert(M.watcher_handles, handle)
   return handle
 end
 
 function M.stop_watchers()
-  if M.watcher_handles then
-    for _, h in ipairs(M.watcher_handles) do
-      if h and not h:is_closing() then
-        h:stop()
-        h:close() -- CRITICAL: This stops Neovim from freezing on exit
-      end
+  if type(M.watcher_handles) ~= 'table' then
+    M.watcher_handles = {}
+    return
+  end
+
+  for _, handle in ipairs(M.watcher_handles) do
+    if handle and not handle:is_closing() then
+      handle:stop()
+      handle:close() -- CRITICAL: This allows Neovim to quit instantly
     end
   end
   M.watcher_handles = {}
+  -- if M.watcher_handles then
+  --   for _, h in ipairs(M.watcher_handles) do
+  --     if h and not h:is_closing() then
+  --       h:stop()
+  --       h:close() -- CRITICAL: This stops Neovim from freezing on exit
+  --     end
+  --   end
+  -- end
+  -- M.watcher_handles = {}
   -- local handle = vim.uv.new_fs_event()
   -- local parent_dir = vim.fn.fnamemodify(full_path, ':h')
   -- local target_file = vim.fn.fnamemodify(full_path, ':t')
