@@ -118,18 +118,19 @@ function M.pio_refresh(callback)
     ---------------------------------------------------------
     -- STEP 1: Fast Checksum Check
     ---------------------------------------------------------
-    local _, current_checksum = vim.misc.readFile(checksum_file)
-    if current_checksum and current_checksum ~= '' then
+    local ok, current_checksum = vim.misc.readFile(checksum_file)
+    if ok and (type(current_checksum) == 'string' and current_checksum ~= '') then
       if current_checksum == meta.last_projectChecksum then
         vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
-        return
+        if callback then callback() end
+        return true
       end -- Already updated
 
       -- STEP 2: Cache Path (idedata.json exists and checksum changed)
-      local _, content = vim.misc.readFile(idedata_file)
-      if content then
-        local ok, decoded = pcall(vim.json.decode, content)
-        if ok and apply_metadata(decoded, current_checksum) then
+      local idok, content = vim.misc.readFile(idedata_file)
+      if idok and (type(content) == 'string' and content ~= '') then
+        local cok, decoded = pcall(vim.json.decode, content)
+        if cok and apply_metadata(decoded, current_checksum) then
           local metadata = require('platformio.metadata')
           metadata.save_project_config()
           vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)
@@ -169,10 +170,10 @@ function M.pio_refresh(callback)
           return vim.notify('PIO Metadata Error: ' .. (obj.stderr or 'Unknown'), vim.log.levels.WARN)
         end
 
-        local ok, raw_data = pcall(vim.json.decode, obj.stdout or '')
+        local ook, raw_data = pcall(vim.json.decode, obj.stdout or '')
         local _, data = next(raw_data or {})
 
-        if ok and apply_metadata(data, current_checksum) then
+        if ook and apply_metadata(data, current_checksum) then
           vim.notify('PIO: Metadata synced from CLI', vim.log.levels.INFO)
         else
           vim.notify('PIO: Failed to parse metadata output', vim.log.levels.WARN)
@@ -270,7 +271,7 @@ local function get_hash(path)
   -- local ok, data = pcall(vim.fn.readfile, path) -- readfile is safer than io.open
   -- return ok and vim.fn.sha256(table.concat(data, '\n')) or nil
   local ok, data = vim.misc.readFile(path) -- readfile is safer than io.open
-  return (ok and data) and vim.fn.sha256(data) or ''
+  return (ok and type(data) == 'string' and data ~= '') and vim.fn.sha256(data) or ''
 end
 
 -- =============================================================================
@@ -409,7 +410,6 @@ function M.start_watchers()
       cb = function(self)
         if self.isBusy then return end
         local ok, current_checksum = vim.misc.readFile(self.path)
-
         -- Check if we should exit early
         if ok and type(current_checksum) == 'string' and current_checksum ~= '' then
           if current_checksum == _G.metadata.last_projectChecksum then
