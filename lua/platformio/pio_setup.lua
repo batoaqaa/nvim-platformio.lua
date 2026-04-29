@@ -421,12 +421,12 @@ function M.start_watchers()
           end
 
           self.isBusy = true
-          vim.schedule(function ()
+          vim.defer_fn(function ()
             M.pio_refresh('PIO checksum: ',function()
               self.isBusy = false
               vim.notify('PIO checksum: Metadata synced from cache, checksum', vim.log.levels.INFO)
             end)
-          end)
+          end, 500)
         end
       end
     },
@@ -446,7 +446,7 @@ end
 function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then
-    vim.notify('PIO setup initialize', vim.log.levels.INFO)
+    vim.notify('PIO start: initialize', vim.log.levels.INFO)
 
     -- activate meta save and upload and env switch
     local metadata = require('platformio.metadata')
