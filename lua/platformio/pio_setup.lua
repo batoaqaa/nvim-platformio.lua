@@ -216,16 +216,11 @@ function M.pio_refresh(from, callback)
         -- 3. Parse Sections
         for _, section in ipairs(decoded) do
           local name, data = section[1], section[2]
-          if name == 'platformio' then
-            for _, kv in ipairs(data) do
-              meta[kv[1]] = kv[2]
-            end
+          if name == 'platformio' then for _, kv in ipairs(data) do meta[kv[1]] = kv[2] end
           elseif name:match('^env:') then
             local env_name = name:match('^env:(.+)')
             meta.envs[env_name] = {}
-            for _, kv in ipairs(data) do
-              meta.envs[env_name][kv[1]] = kv[2]
-            end
+            for _, kv in ipairs(data) do meta.envs[env_name][kv[1]] = kv[2] end
           end
         end
 
@@ -242,9 +237,7 @@ function M.pio_refresh(from, callback)
         for _, item in ipairs(path_map) do
           local val = meta[item.key]
           -- Fallback chain
-          if not val or val == "" then
-            val = os.getenv(item.env) or (home .. item.sub)
-          end
+          if not val or val == "" then val = os.getenv(item.env) or (home .. item.sub) end
           -- Expand variables and Normalize
           if type(val) == "string" then
             val = val:gsub('%%${platformio.core_dir}', meta.core_dir or "")
@@ -423,30 +416,30 @@ function M.start_watchers()
             return
           end
 
-          local attempts = 0
-          local function run_when_ready()
-              if _G.metadata.isBusy and attempts < 50 then -- Timeout after 5 seconds
-                  attempts = attempts + 1
-                  vim.defer_fn(run_when_ready, 100)
-                  return
-              end
-              self.isBusy = true
-              vim.defer_fn(function()
-                  M.pio_refresh('PIO checksum: ', function()
-                      self.isBusy = false
-                      vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
-                  end)
-              end, 500)
-          end
-          run_when_ready()
+          -- local attempts = 0
+          -- local function run_when_ready()
+          --     if _G.metadata.isBusy and attempts < 50 then -- Timeout after 5 seconds
+          --         attempts = attempts + 1
+          --         vim.defer_fn(run_when_ready, 100)
+          --         return
+          --     end
+          --     self.isBusy = true
+          --     vim.defer_fn(function()
+          --         M.pio_refresh('PIO checksum: ', function()
+          --             self.isBusy = false
+          --             vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+          --         end)
+          --     end, 500)
+          -- end
+          -- run_when_ready()
 
-          -- self.isBusy = true
-          -- vim.defer_fn(function ()
-          --   M.pio_refresh('PIO checksum: ',function()
-          --     self.isBusy = false
-          --     vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
-          --   end)
-          -- end, 500)
+          self.isBusy = true
+          vim.defer_fn(function ()
+            M.pio_refresh('PIO checksum: ',function()
+              self.isBusy = false
+              vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+            end)
+          end, 500)
         end
       end
     },
