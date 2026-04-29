@@ -287,7 +287,7 @@ function M.run_compiledb()
   vim.notify('Building Compilation DB...', vim.log.levels.INFO)
 
   local ok, result = pcall(function()
-    return vim.system({ 'pio', 'run', '-t', 'compiledb' }, { shell = true, timeout = 30000 }, function(obj)
+    return vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, shell = true, timeout = 30000 }, function(obj)
       vim.schedule(function()
         -- 1. Reset flag IMMEDIATELY when process returns
         meta.isBusy = false
