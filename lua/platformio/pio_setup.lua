@@ -111,7 +111,7 @@ function M.pio_refresh(callback)
       meta.last_projectChecksum = checksum
       pcall(M.get_sysroot_triplet, meta.cc_compiler)
 
-      if callback then callback() end
+      if callback then vim.schedule(callback) end
       return true
     end
 
