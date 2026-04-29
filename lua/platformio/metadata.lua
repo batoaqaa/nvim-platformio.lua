@@ -154,7 +154,7 @@ function M.load_project_config()
     end
   end
   -- If no file, initialize hash with defaults
-  last_saved_hash = vim.fn.sha256(vim.json.encode(_pio_metadata))
+  last_saved_hash = vim.fn.sha256(vim.misc.pretty_print(_pio_metadata))
 end
 
 -- 5. Helper for ToggleTerm / Commands
@@ -167,10 +167,10 @@ end
 M.load_project_config()
 
 -- Auto-save on exit even if no manual changes were made
-vim.api.nvim_create_autocmd('VimLeavePre', {
-  callback = function()
-    M.save_project_config(true)
-  end,
-})
+-- vim.api.nvim_create_autocmd('VimLeavePre', {
+--   callback = function()
+--     M.save_project_config(true)
+--   end,
+-- })
 
 return M
