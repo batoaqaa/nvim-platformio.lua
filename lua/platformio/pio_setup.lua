@@ -111,7 +111,7 @@ function M.pio_refresh(callback)
       meta.last_projectChecksum = checksum
       pcall(M.get_sysroot_triplet, meta.cc_compiler)
 
-      if callback then vim.schedule(callback) end
+      -- if callback then vim.schedule(callback) end
       return true
     end
 
@@ -122,7 +122,8 @@ function M.pio_refresh(callback)
     if ok and (type(current_checksum) == 'string' and current_checksum ~= '') then
       if current_checksum == meta.last_projectChecksum then
         vim.notify('PIO: Metadata synced with cache', vim.log.levels.INFO)
-        if callback then callback() end
+        -- if callback then callback() end
+        if callback then vim.schedule(callback) end
         return true
       end -- Already updated
 
@@ -134,7 +135,8 @@ function M.pio_refresh(callback)
           local metadata = require('platformio.metadata')
           metadata.save_project_config()
           vim.notify('PIO: Metadata synced from cache', vim.log.levels.INFO)
-          return
+          if callback then vim.schedule(callback) end
+          return true
         end
       end
     end
@@ -175,6 +177,7 @@ function M.pio_refresh(callback)
 
         if ook and apply_metadata(data, current_checksum) then
           vim.notify('PIO: Metadata synced from CLI', vim.log.levels.INFO)
+          if callback then vim.schedule(callback) end
         else
           vim.notify('PIO: Failed to parse metadata output', vim.log.levels.WARN)
         end
