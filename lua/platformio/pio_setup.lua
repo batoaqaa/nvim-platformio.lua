@@ -424,7 +424,7 @@ function M.start_watchers()
           vim.defer_fn(function ()
             M.pio_refresh('PIO checksum: ',function()
               self.isBusy = false
-              vim.notify('PIO checksum: Metadata synced from cache, checksum', vim.log.levels.INFO)
+              vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
             end)
           end, 500)
         end
