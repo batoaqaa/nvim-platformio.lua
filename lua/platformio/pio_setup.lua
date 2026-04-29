@@ -313,6 +313,7 @@ function M.run_compiledb()
         -- 4. Handle errors (missing pio, syntax error in config, etc.)
         local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
         vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
+        M.start_watchers()
       end
     end)
   end)
