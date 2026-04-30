@@ -148,11 +148,12 @@ function M.fetch_metadata(callback, env, from, attempts)
   ---------------------------------------------------------
   -- STEP 3: Auto-Initialize (If files are missing)
   ---------------------------------------------------------
-  if not current_checksum then
+  if not ok or not current_checksum then
     vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
     vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
       vim.schedule(function()
         if obj.code == 0 then
+          vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
           M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
         else
           vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
