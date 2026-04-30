@@ -211,7 +211,7 @@ function M.pio_refresh(from, callback)
 
         local formated = vim.misc.jsonFormat(decoded)
         local file = vim.uv.cwd() .. 'config.json'
-        vim.mis.writeFile(file, formated, {})
+        vim.misc.writeFile(file, formated, {})
 
         -- Reset core structure
         meta.envs = {}
