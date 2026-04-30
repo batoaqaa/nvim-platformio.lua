@@ -4,6 +4,85 @@ M = {}
 local boilerplate = require('platformio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
 
+function M.fetch_config(from)
+  local msg = (type(from) == 'string' and from ~= '') and from or 'PIO: '
+  local meta = _G.metadata
+  local home = (os.getenv('HOME') or os.getenv('USERPROFILE') or ''):gsub('[\\/]+$', '')
+
+  vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
+    vim.schedule(function()
+      -- 1. Check Execution
+      if obj.code ~= 0 then
+        local errmsg = obj.code == 127 and "'pio' not found" or (obj.stderr or 'Unknown Error')
+        return vim.notify(msg .. 'Config Error: ' .. errmsg, vim.log.levels.ERROR)
+      end
+
+      -- 2. Decode JSON safely
+      local ok, decoded = pcall(vim.json.decode, obj.stdout or '')
+      if not ok or type(decoded) ~= 'table' then
+        return vim.notify(msg .. 'Failed to decode config JSON', vim.log.levels.ERROR)
+      end
+
+      local formated = vim.misc.jsonFormat(decoded)
+      local file = vim.misc.joinPath(vim.uv.cwd(), 'config.json')
+      vim.misc.writeFile(file, formated, {})
+
+      -- Reset core structure
+      meta.envs = {}
+      meta.default_envs = {}
+
+      -- 3. Parse Sections
+      for _, section in ipairs(decoded) do
+        local name, data = section[1], section[2]
+        if name == 'platformio' then
+          for _, kv in ipairs(data) do
+            meta[kv[1]] = kv[2]
+          end
+        elseif name:match('^env:') then
+          local env_name = name:match('^env:(.+)')
+          meta.envs[env_name] = {}
+          for _, kv in ipairs(data) do
+            meta.envs[env_name][kv[1]] = kv[2]
+          end
+        end
+      end
+
+      -- 4. Assign active_env
+      meta.active_env = meta.default_envs[1] or next(meta.envs) or ''
+
+      -- 5. Resolve Paths (INI -> Env -> Default)
+      local path_map = {
+        { key = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
+        { key = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
+        { key = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
+      }
+
+      for _, item in ipairs(path_map) do
+        local val = meta[item.key]
+        -- Fallback chain
+        if not val or val == '' then
+          val = os.getenv(item.env) or (home .. item.sub)
+        end
+        -- Expand variables and Normalize
+        if type(val) == 'string' then
+          val = val:gsub('%%${platformio.core_dir}', meta.core_dir or '')
+          meta[item.key] = vim.misc.normalizePath(val)
+        end
+      end
+
+      -- 6. Trigger next step
+      if meta.active_env ~= '' then
+        vim.notify(msg .. 'Config sync successful', vim.log.levels.INFO)
+        return meta.active_env
+      else
+        vim.notify(msg .. 'No [env:] found. Please add a board.', vim.log.levels.ERROR)
+      end
+    end)
+  end)
+end
+
+
+
 -- local debounce_timer = vim.uv.new_timer()
 -- INFO:
 -- =============================================================================
@@ -373,27 +452,49 @@ local function watch_file(target, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
-  -- Poll every 1500ms. This is light on CPU and ignores "save noise".
   handle:start(target.path, 1500, function(err, stat)
-    -- if err or not stat or (target and target.isBusy) then return end
     if err or not stat then return end
 
-    -- 2. Debounce: Reset the timer on every event
-    -- Only after 500ms of "silence" will the actual callback run
     if debounce_timer then
-      -- Stop any existing timer to "debounce"
-      if debounce_timer:is_active() then debounce_timer:stop() end
-      debounce_timer:start(1000, 0, vim.schedule_wrap(function()
-        -- vim.schedule(function ()
-          local filestat = uv.fs_stat(target.path)
-          if filestat and filestat.type == 'file' then
-            callback(target)
-          end
-          -- if vim.loop.fs_stat(target.path) then callback(target) end
-        -- end)
-      end))
+      debounce_timer:stop()
+      -- Define the logic in a local variable so it can "call itself" for retries
+      local function attempt_callback()
+        if target.isBusy then
+          -- Retry in 1000ms if still busy
+          debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+          return
+        end
+
+        local filestat = uv.fs_stat(target.path)
+        if filestat and filestat.type == 'file' then
+          callback(target)
+        end
+      end
+      -- Initial start
+      debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
     end
   end)
+  -- Poll every 1000ms. This is light on CPU and ignores "save noise".
+  -- handle:start(target.path, 1000, function(err, stat)
+  --   -- if err or not stat or (target and target.isBusy) then return end
+  --   if err or not stat then return end
+  --
+  --   -- 2. Debounce: Reset the timer on every event
+  --   -- Only after 500ms of "silence" will the actual callback run
+  --   if debounce_timer then
+  --     -- Stop any existing timer to "debounce"
+  --     if debounce_timer:is_active() then debounce_timer:stop() end
+  --     debounce_timer:start(500, 0, vim.schedule_wrap(function()
+  --       -- vim.schedule(function ()
+  --         local filestat = uv.fs_stat(target.path)
+  --         if filestat and filestat.type == 'file' then
+  --           callback(target)
+  --         end
+  --         -- if vim.loop.fs_stat(target.path) then callback(target) end
+  --       -- end)
+  --     end))
+  --   end
+  -- end)
 
   table.insert(M.watcher_handles, handle)
   return handle
