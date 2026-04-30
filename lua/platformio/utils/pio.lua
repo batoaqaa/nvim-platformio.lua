@@ -250,10 +250,11 @@ function M.handlePiolib(result)
   _G.metadata.isBusy = false
 end
 
-function M.handlePiodb(result)
+function M.handlePiodb(target, result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the only and the last command
+    target.isBusy = false
     vim.notify('Piodb: Success', vim.log.levels.INFO)
   elseif result == 'FAIL' then
   end

@@ -283,28 +283,38 @@ function M.run_compiledb(target)
 
   vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
+  local pio = require('platformio.utils.pio')
+  pio.run_sequence({
+    cmnds = {
+      'pio run -t compiledb' .. ' env=' .. vim.misc.get_active__env(),
+    },
+    cb = function (result)
+      pio.handlePioinit(target, result)
+    end
+  })
+
   -- vim.schedule(function()
-    vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
-    -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
-      vim.schedule(function()
-
-        target.isBusy = false
-
-        if obj.code == 0 then
-          -- vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- Trigger refresh (LSP restart, etc.)
-          -- vim.schedule(function ()
-            -- M.pio_refresh('PIO platformio.ini  change: ', function()
-              vim.notify('PIO platformio.ini change: Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
-            -- end)
-          -- end)
-        else
-          local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
-          vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
-        end
-        _G.metadata.isBusy = false
-      end)
-    end)
+    -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { text = true }, function(obj)
+    -- -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
+    --   vim.schedule(function()
+    --
+    --     target.isBusy = false
+    --
+    --     if obj.code == 0 then
+    --       -- vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --       -- Trigger refresh (LSP restart, etc.)
+    --       -- vim.schedule(function ()
+    --         -- M.pio_refresh('PIO platformio.ini  change: ', function()
+    --           vim.notify('PIO platformio.ini change: Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+    --         -- end)
+    --       -- end)
+    --     else
+    --       local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
+    --       vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
+    --     end
+    --     _G.metadata.isBusy = false
+    --   end)
+    -- end)
   -- end)
 end
 

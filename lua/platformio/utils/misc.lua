@@ -8,6 +8,48 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
+------------------------------------------------------
+--INFO:
+-- stylua: ignore
+-- Fast environment detection (no external calls)
+function M.get_active__env()
+  local default_env, first_env
+  local in_platformio_block = false
+  local path = ''
+
+  for _, dir in ipairs({ vim.api.nvim_buf_get_name(0):match('(.*[/\\])'), (vim.uv.cwd() .. '/') }) do
+    local tmp = dir .. 'platformio.ini'
+    if vim.uv.fs_stat(tmp) then path = vim.fs.normalize(tmp) end
+  end
+  if path == '' then return vim.notify('PIO: platformio.ini not found or no [env] defined.', vim.log.levels.ERROR) end
+
+  local ok, content = vim.misc.readFile(path)
+  if not ok or not content then return vim.notify('PIO: platformio.ini not found in ' .. path, vim.log.levels.WARN) end
+
+  for line in vim.gsplit(content, '\n') do
+    -- Detect the section headers [section]
+    local section = line:match('^%s*%[(.+)%]%s*$')
+    if section then
+      in_platformio_block = (section == 'platformio')
+      -- Capture the first env name seen
+      local env_name = section:match('^env:(.+)')
+      if env_name and not first_env then first_env = env_name end
+    end
+
+    -- If inside [platformio], look for default_envs
+    if in_platformio_block then
+      local def = line:match('^%s*default_envs%s*=%s*([^%s,]+)')
+      if def then
+        default_env = def
+        if first_env then break end
+      end
+    end
+  end
+
+  return default_env or first_env
+end
+
+------------------------------------------------------
 --INFO:
 --  Version-Safe Path Joining (Fallback for Neovim < 0.10.0)
 -- stylua: ignore
