@@ -477,6 +477,7 @@ local function watch_file(target, callback)
 
       local function attempt_callback()
         if target.isBusy and retries < 10 then
+          print(retries)
           retries = retries + 1
           debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
           return
