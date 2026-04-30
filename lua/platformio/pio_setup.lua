@@ -384,7 +384,7 @@ local function watch_file(target, callback)
     if debounce_timer then
       -- Stop any existing timer to "debounce"
       debounce_timer:stop()
-      debounce_timer:start(500, 0, vim.schedule_wrap(function()
+      debounce_timer:start(1500, 0, vim.schedule_wrap(function()
         vim.schedule(function ()
           if vim.loop.fs_stat(target.path) then callback(target) end
         end)
