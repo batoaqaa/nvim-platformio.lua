@@ -40,6 +40,7 @@ default_envs =
 
 ;--------------------------------------------------------------------------
 [env]
+framework = arduino
 upload_speed = 115200
 monitor_speed = 9600
 
@@ -51,6 +52,10 @@ extra_scripts =
 ;    pre:enable_toolchain.py ; enabled global env 'PLATFORMIO_SETTING_COMPILATIONDB_INCLUDE_TOOLCHAIN'
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
+
+[env:seeed_xiao_esp32c3]
+platform = espressif32
+board = seeed_xiao_esp32c3
 
 ]],
   content = function(self)
