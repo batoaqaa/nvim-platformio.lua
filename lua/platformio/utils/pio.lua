@@ -253,7 +253,7 @@ function M.fetch_config(from)
           break
         end
       end
-      meta.active_env = active_env or ''
+      meta.active_env = active_env
 
       -- 5. Resolve Paths (INI -> Env -> Default)
       local path_map = {
@@ -283,6 +283,7 @@ function M.fetch_config(from)
       end
     end)
   end)
+  vim.notify(msg .. 'active_env= ' .. active_env, vim.log.levels.INFO)
   return active_env
 end
 
