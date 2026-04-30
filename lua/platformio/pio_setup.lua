@@ -476,7 +476,7 @@ local function watch_file(target, callback)
 
           local function attempt_callback()
             -- Check if busy (checks both local M and global _G)
-            if M.isBusy or (_G.metadata and _G.metadata.isBusy) then
+            if target.isBusy then --or (_G.metadata and _G.metadata.isBusy) then
               if retries < max_retries then
                 retries = retries + 1
                 debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
