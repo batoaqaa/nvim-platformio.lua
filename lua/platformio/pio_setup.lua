@@ -15,9 +15,11 @@ function M.pio_refresh(callback, from)
 
   local function on_done(active_env)
     if active_env then
+      print(active_env)
       vim.pio.fetch_metadata(callback, active_env, from, 1)
     end
   end
+
   vim.pio.fetch_config(on_done, from)
 end
 
