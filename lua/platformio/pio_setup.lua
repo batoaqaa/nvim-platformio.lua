@@ -452,9 +452,47 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 -- 4. watch_file
 -- stylua: ignore
 local function watch_file(target, callback)
+  -- Extract directory path from target.path (filename)
+  local folder_path = target.path:match("(.*[/\\])")
+  -- local filename = target.path:match("[^/\\]+$")
+
   local handle = uv.new_fs_poll()
   if not handle then return end
 
+  local last_mtime = 0
+
+  handle:start(folder_path, 1500, function(err)
+    if err then return end
+
+    -- 1. EARLY EXIT: Check the specific file immediately
+    local filestat = uv.fs_stat(target.path)
+    if not filestat or filestat.mtime.sec <= last_mtime then
+      return -- Quit early! This wasn't the file we care about.
+    end
+
+    -- 2. ONLY NOW do we start the debounce/busy logic
+    if debounce_timer then
+      debounce_timer:stop()
+      local retries = 0
+
+      local function attempt_callback()
+        if target.isBusy and retries < 10 then
+          retries = retries + 1
+          debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+          return
+        end
+
+        -- Final confirmation and update timestamp
+        local final_stat = uv.fs_stat(target.path)
+        if final_stat and final_stat.mtime.sec > last_mtime then
+          last_mtime = final_stat.mtime.sec
+          callback(target)
+        end
+      end
+
+      debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+    end
+  end)
   -- handle:start(target.path, 1000, function(err, stat)
   --   if err or not stat then return end
   --
@@ -477,26 +515,26 @@ local function watch_file(target, callback)
   -- end)
 
   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
-  handle:start(target.path, 1000, function(err, stat)
-    -- if err or not stat or (target and target.isBusy) then return end
-    if err or not stat then return end
-
-    -- 2. Debounce: Reset the timer on every event
-    -- Only after 500ms of "silence" will the actual callback run
-    if debounce_timer then
-      -- Stop any existing timer to "debounce"
-      if debounce_timer:is_active() then debounce_timer:stop() end
-      debounce_timer:start(500, 0, vim.schedule_wrap(function()
-        -- vim.schedule(function ()
-          local filestat = uv.fs_stat(target.path)
-          if filestat and filestat.type == 'file' then
-            callback(target)
-          end
-          -- if vim.loop.fs_stat(target.path) then callback(target) end
-        -- end)
-      end))
-    end
-  end)
+  -- handle:start(target.path, 1000, function(err, stat)
+  --   -- if err or not stat or (target and target.isBusy) then return end
+  --   if err or not stat then return end
+  --
+  --   -- 2. Debounce: Reset the timer on every event
+  --   -- Only after 500ms of "silence" will the actual callback run
+  --   if debounce_timer then
+  --     -- Stop any existing timer to "debounce"
+  --     if debounce_timer:is_active() then debounce_timer:stop() end
+  --     debounce_timer:start(500, 0, vim.schedule_wrap(function()
+  --       -- vim.schedule(function ()
+  --         local filestat = uv.fs_stat(target.path)
+  --         if filestat and filestat.type == 'file' then
+  --           callback(target)
+  --         end
+  --         -- if vim.loop.fs_stat(target.path) then callback(target) end
+  --       -- end)
+  --     end))
+  --   end
+  -- end)
 
   table.insert(M.watcher_handles, handle)
   return handle
