@@ -289,7 +289,7 @@ function M.run_compiledb(target)
       'pio run -t compiledb' .. ' env=' .. vim.misc.get_active__env(),
     },
     cb = function (result)
-      pio.handlePioinit(target, result)
+      pio.handlePiodb(target, result)
     end
   })
 
