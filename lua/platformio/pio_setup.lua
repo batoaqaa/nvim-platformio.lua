@@ -461,7 +461,12 @@ local function watch_file(target, callback)
 
     -- Early Exit Filters
     if filename and filename ~= target_filename then return end
-    if not uv.fs_access(target.path, 'R') then return end
+
+    local f = io.open(target.path, "r")
+    if f then f:close()
+    else return end -- Not readable (protected, locked, or missing)
+
+    -- if not uv.fs_access(target.path, 'R') then return end
 
     -- Protected Execution
     local ok, result = pcall(function()
