@@ -12,10 +12,13 @@ local boilerplate_gen = boilerplate.boilerplate_gen
 function M.pio_refresh(callback, from)
   local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
   vim.notify(msg ..'Config sync ...', vim.log.levels.INFO)
-  local active_env = vim.pio.fetch_config(from)
-  if active_env then
-    vim.pio.fetch_metadata(callback, active_env, from, 1)
+
+  local function on_done(active_env)
+    if active_env then
+      vim.pio.fetch_metadata(callback, active_env, from, 1)
+    end
   end
+  vim.pio.fetch_config(on_done, from)
 end
 
 -- =============================================================================

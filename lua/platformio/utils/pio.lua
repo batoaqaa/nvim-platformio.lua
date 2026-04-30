@@ -190,7 +190,38 @@ function M.fetch_metadata(callback, env, from, attempts)
   -- end)
 end
 
+-- =============================================================================
+-- stylua: ignore
+function M.pioConfig(callback)
+  -- 'pio project config --json' is the only way to get FINAL computed paths
+  vim.system({ 'pio', 'project', 'config', '--json' }, { text = true }, function(obj)
+    if obj.code ~= 0 then return end
 
+    local ok, data = pcall(vim.json.decode, obj.stdout)
+    if not ok or type(data) ~= 'table' then return end
+
+    local paths = {}
+    -- PlatformIO JSON output groups options by section
+    for _, section_data in pairs(data) do
+      for _, item in ipairs(section_data) do
+        if item.option == 'core_dir' then paths.core = item.value end
+        if item.option == 'packages_dir' then paths.packages = item.value end
+        if item.option == 'platforms_dir' then paths.platforms = item.value end
+      end
+    end
+
+    -- Fill in defaults if not explicitly overridden
+    local home = vim.uv.os_homedir()
+    paths.core = paths.core or (home .. '/.platformio')
+    paths.packages = paths.packages or (paths.core .. '/packages')
+    paths.platforms = paths.platforms or (paths.core .. '/platforms')
+
+    vim.schedule(function()
+      _G.metadata.paths = paths -- Cache the results
+      if callback then callback(paths) end
+    end)
+  end)
+end
 
 
 -- INFO:
@@ -198,7 +229,7 @@ end
 -- Get project infomation
 -- =============================================================================
 -- stylua: ignore
-function M.fetch_config(from)
+function M.fetch_config(on_done, from)
   local msg = (type(from) == 'string' and from ~= '') and from or 'PIO: '
   local meta = _G.metadata
   local home = (os.getenv('HOME') or os.getenv('USERPROFILE') or ''):gsub('[\\/]+$', '')
@@ -282,9 +313,12 @@ function M.fetch_config(from)
       else
         vim.notify(msg .. 'No [env:] found. Please add a board.', vim.log.levels.ERROR)
       end
+
+      if on_done then
+        vim.schedule(function() on_done(active_env) end)
+      end
     end)
   end)
-  return active_env
 end
 
 -- INFO:
