@@ -286,7 +286,7 @@ function M.run_compiledb(target)
   local pio = require('platformio.utils.pio')
   pio.run_sequence({
     cmnds = {
-      'pio run -t compiledb' .. ' env=' .. vim.misc.get_active__env(),
+      'pio run -t compiledb -e ' .. vim.misc.get_active__env(),
     },
     cb = function (result)
       pio.handlePiodb(target, result)
