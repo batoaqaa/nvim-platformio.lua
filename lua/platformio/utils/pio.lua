@@ -139,7 +139,15 @@ function M.fetch_metadata(callback, env, from, attempts)
         local metadata = require('platformio.metadata')
         metadata.save_project_config()
         vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
-        if callback then vim.schedule(callback) end
+        -- if callback then vim.schedule(callback) end
+
+        if type(callback) == "function" then
+          vim.schedule(callback)
+        else
+          -- If it's not a function, just do nothing or print a debug message
+          print("Debug: callback was " .. type(callback))
+        end
+
         return true
       end
     end
@@ -493,9 +501,9 @@ function M.handlePioinitDb(result)
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh('PIO init+db: ', function()
+      pio_refresh(function()
         lsp_restart('clangd')
-      end)
+      end, 'PIO init+db: ')
     end)
     M.queue = {}
     term.stdout_callback = nil
