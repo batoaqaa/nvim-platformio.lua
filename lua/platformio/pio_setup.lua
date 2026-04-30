@@ -294,7 +294,7 @@ function M.run_compiledb(target)
   -- })
 
   -- vim.schedule(function()
-  vim.system({ 'pio', 'run', '-t', 'compiledb -s -e ' .. vim.misc.get_active__env() }, { text = true }, function(obj)
+  vim.system({ 'pio', 'run', '-t', 'compiledb', '-s', '-e', vim.misc.get_active__env() }, { text = true }, function(obj)
     -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
     vim.schedule(function()
       target.isBusy = false
