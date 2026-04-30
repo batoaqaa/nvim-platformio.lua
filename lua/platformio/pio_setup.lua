@@ -373,21 +373,24 @@ local function watch_file(target, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
-  -- Poll every 1000ms. This is light on CPU and ignores "save noise".
-  handle:start(target.path, 1000, function(err, stat)
-    if err or not stat or (target and target.isBusy) then return end
+  -- Poll every 1500ms. This is light on CPU and ignores "save noise".
+  handle:start(target.path, 1500, function(err, stat)
+    -- if err or not stat or (target and target.isBusy) then return end
+    if err or not stat then return end
 
-    -- vim.schedule(function ()
-    --   if vim.loop.fs_stat(target.path) then callback(target) end
-    -- end)
-
+    -- 2. Debounce: Reset the timer on every event
+    -- Only after 500ms of "silence" will the actual callback run
     if debounce_timer then
       -- Stop any existing timer to "debounce"
-      debounce_timer:stop()
-      debounce_timer:start(1500, 0, vim.schedule_wrap(function()
-        vim.schedule(function ()
-          if vim.loop.fs_stat(target.path) then callback(target) end
-        end)
+      if debounce_timer:is_active() then debounce_timer:stop() end
+      debounce_timer:start(1000, 0, vim.schedule_wrap(function()
+        -- vim.schedule(function ()
+          local filestat = uv.fs_stat(target.path)
+          if filestat and filestat.type == 'file' then
+            callback(target)
+          end
+          -- if vim.loop.fs_stat(target.path) then callback(target) end
+        -- end)
       end))
     end
   end)

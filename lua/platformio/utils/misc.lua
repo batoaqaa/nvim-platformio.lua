@@ -30,7 +30,7 @@ end
 -- stylua: ignore
 -- Fast environment detection (no external calls)
 function M.get_active__env()
-  local default_env, first_env
+  local default_env, first_env = '', ''
   local in_platformio_block = false
   local path = ''
 
