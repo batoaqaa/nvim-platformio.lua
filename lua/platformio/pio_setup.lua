@@ -364,7 +364,6 @@ function M.run_compiledb(target)
   target.isBusy = true
   _G.metadata.isBusy = true
 
-  vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
 
   -- local pio = require('platformio.utils.pio')
   -- pio.run_sequence({
@@ -377,7 +376,8 @@ function M.run_compiledb(target)
   -- })
 
   local env = vim.misc.get_active__env()
-  if env and env ~= '' then
+  -- if env and env ~= '' then
+    vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
     -- vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb', '-s', '-e', env }, { text = true }, function(obj)
       -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
@@ -400,7 +400,7 @@ function M.run_compiledb(target)
       end)
     end)
     -- end)
-  end
+  -- end
 end
 
 -- =============================================================================
