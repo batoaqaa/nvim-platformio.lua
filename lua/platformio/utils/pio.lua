@@ -275,6 +275,7 @@ function M.fetch_config(from)
         end
       end
 
+      vim.notify(msg .. 'active_env= ' .. active_env, vim.log.levels.INFO)
       -- 6. Trigger next step
       if meta.active_env ~= '' then
         vim.notify(msg .. 'Config sync successful', vim.log.levels.INFO)
@@ -283,7 +284,6 @@ function M.fetch_config(from)
       end
     end)
   end)
-  vim.notify(msg .. 'active_env= ' .. active_env, vim.log.levels.INFO)
   return active_env
 end
 
