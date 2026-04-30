@@ -460,7 +460,7 @@ local function watch_file(target, callback)
     if err then return end
 
     -- Early Exit Filters
-    if filename and filename ~= target_filename then return end
+    if target.isBusy or (filename and filename ~= target_filename) then return end
 
     local f = io.open(target.path, "r")
     if f then f:close()

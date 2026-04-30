@@ -47,6 +47,7 @@ function M.get_active__env()
   local ok, content = vim.misc.readFile(path)
   if not ok or not content then return vim.notify('PIO: platformio.ini not found in ' .. path, vim.log.levels.WARN) end
 
+  print(content)
   for line in vim.gsplit(content, '\n') do
     -- Detect the section headers [section]
     local section = line:match('^%s*%[(.+)%]%s*$')
