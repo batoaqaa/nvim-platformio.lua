@@ -17,6 +17,279 @@ local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
 -- UNIVERSAL TOOLCHAIN DETECTION
 -- =============================================================================
 -- stylua: ignore
+function M.get_sysroot_triplet(cc_compiler)
+  local bin_path = vim.fn.fnamemodify(cc_compiler, ':h')
+
+  -- Early exit if path is nil or not a directory
+  if not bin_path or vim.fn.isdirectory(bin_path) == 0 then return nil end
+
+  -- Normalize backslashes to forward slashes for cross-platform consistency
+  bin_path = bin_path:gsub('\\', '/')
+  local files = vim.fn.readdir(bin_path)
+  local triplet = nil
+
+  -- Loop through files to find the compiler and extract the triplet
+  for _, name in ipairs(files) do
+    -- Pattern: ^(.*) matches triplet, %- matches dash, g[c%+][c%+] matches gcc/g++
+    local match = name:match('^(.*)%-g[c%+][c%+]')
+    if match then triplet = vim.misc.normalizePath(match) break
+    end
+  end
+
+  -- Return nil if no compiler was found in the bin directory
+  if not triplet then return nil end
+
+  -- toolchain_root is the parent of the 'bin' folder
+  local toolchain_root = vim.misc.normalizePath(vim.fn.fnamemodify(bin_path, ':h'))
+  -- sysroot folder is expected to have the same name as the triplet
+  local sysroot = vim.misc.normalizePath(toolchain_root .. '/' .. triplet)
+  local query_driver = vim.misc.normalizePath(bin_path .. '/' .. triplet .. '-*')
+
+  -- vim.notify('triplet= ' .. triplet, vim.log.levels.INFO)
+  -- Only return data if the sysroot folder actually exists on disk
+  if vim.fn.isdirectory(sysroot) == 1 then
+    _G.metadata.triplet = triplet
+    _G.metadata.sysroot = sysroot
+    _G.metadata.toolchain_root = toolchain_root
+    _G.metadata.query_driver = query_driver
+    return {
+      triplet = triplet,
+      sysroot = sysroot,
+      toolchain_root = toolchain_root,
+      query_driver = query_driver,
+    }
+  end
+  return nil
+end
+
+-- INFO:-------------------------------------------------
+-- get pio project metadata info
+-- stylua: ignore
+function M.fetch_metadata(callback, env, from, attempts)
+  local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
+  local meta = _G.metadata
+  local active_env = env or meta.active_env
+  if not active_env or active_env == '' then
+    return
+  end
+
+  -- Set up file paths
+  local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build')
+  local build_env_dir = vim.misc.joinPath(build_dir, active_env)
+  local checksum_file = vim.misc.joinPath(build_dir, 'project.checksum')
+  local idedata_file = vim.misc.joinPath(build_env_dir, 'idedata.json')
+
+  ---------------------------------------------------------
+  -- INTERNAL PROCESSOR: Applies parsed data to _G.metadata
+  local function apply_metadata(data, checksum)
+    if not data then return false end
+
+    local norm = function(p) return vim.misc.normalizePath(p) or '' end
+
+    -- Helper for flags/defines to keep order and formatting
+    local quote_map = function(list, prefix)
+      local res = {}
+      for _, v in ipairs(list or {}) do
+        local val = prefix and (prefix .. norm(v)) or v
+        table.insert(res, string.format('%s', val))
+      end
+      return res
+    end
+
+    -- 1. Base Paths & Compilers
+    meta.cc_path = norm(data.cc_path)
+    meta.cc_compiler = meta.cc_path
+    meta.cxx_path = norm(data.cxx_path)
+    meta.gdb_path = norm(data.gdb_path)
+
+    -- 2. Flags & Defines
+    meta.cc_flags = quote_map(data.cc_flags)
+    meta.cxx_flags = quote_map(data.cxx_flags)
+    meta.defines = quote_map(data.defines)
+
+    -- 3. Includes (Build, Toolchain, Compatlib)
+    local inc = data.includes or {}
+    meta.includes_build = quote_map(inc.build, '-I')
+    meta.includes_toolchain = quote_map(inc.toolchain, '-isystem')
+    meta.includes_compatlib = quote_map(inc.compatlib, '-isystem')
+    meta.last_projectChecksum = checksum
+    pcall(M.get_sysroot_triplet, meta.cc_compiler)
+
+    -- if callback then vim.schedule(callback) end
+    return true
+  end
+
+  ---------------------------------------------------------
+  -- STEP 1: Fast Checksum Check
+  ---------------------------------------------------------
+  local ok, current_checksum = vim.misc.readFile(checksum_file)
+  if ok and (type(current_checksum) == 'string' and current_checksum ~= '') then
+    if current_checksum == meta.last_projectChecksum then
+      vim.notify(msg .. 'Metadata synced with cache', vim.log.levels.INFO)
+      -- if callback then callback() end
+      if callback then vim.schedule(callback) end
+      return true
+    end -- Already updated
+
+    -- STEP 2: Cache Path (idedata.json exists and checksum changed)
+    local idok, content = vim.misc.readFile(idedata_file)
+    if idok and (type(content) == 'string' and content ~= '') then
+      local cok, decoded = pcall(vim.json.decode, content)
+      if cok and apply_metadata(decoded, current_checksum) then
+        local metadata = require('platformio.metadata')
+        metadata.save_project_config()
+        vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
+        if callback then vim.schedule(callback) end
+        return true
+      end
+    end
+  end
+
+  ---------------------------------------------------------
+  -- STEP 3: Auto-Initialize (If files are missing)
+  ---------------------------------------------------------
+  if not current_checksum then
+    vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
+    vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
+      vim.schedule(function()
+        if obj.code == 0 then
+          M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
+        else
+          vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
+        end
+      end)
+    end)
+    return
+  end
+
+  ---------------------------------------------------------
+  -- STEP 4: Standard CLI Fallback (The Slow Path)
+  ---------------------------------------------------------
+  -- vim.notify(msg .. 'Metadata sync ...', vim.log.levels.INFO)
+  -- vim.system({ 'pio', 'project', 'metadata', '-e', active_env, '--json-output' }, { text = true }, function(obj)
+  --   vim.schedule(function()
+  --     if obj.code ~= 0 then
+  --       if attempts > 0 then
+  --         vim.defer_fn(function() M.fetch_metadata(attempts - 1, env) end, 500)
+  --         return
+  --       end
+  --       return vim.notify(msg .. 'Metadata Error: ' .. (obj.stderr or 'Unknown'), vim.log.levels.WARN)
+  --     end
+  --
+  --     local ook, raw_data = pcall(vim.json.decode, obj.stdout or '')
+  --     local _, data = next(raw_data or {})
+  --
+  --     if ook and apply_metadata(data, current_checksum) then
+  --       vim.notify(msg .. 'Metadata synced from CLI', vim.log.levels.INFO)
+  --       if callback then vim.schedule(callback) end
+  --     else
+  --       vim.notify(msg .. 'Failed to parse metadata output', vim.log.levels.WARN)
+  --     end
+  --   end)
+  -- end)
+end
+
+
+
+
+-- INFO:
+-- =============================================================================
+-- Get project infomation
+-- =============================================================================
+-- stylua: ignore
+function M.fetch_config(from)
+  local msg = (type(from) == 'string' and from ~= '') and from or 'PIO: '
+  local meta = _G.metadata
+  local home = (os.getenv('HOME') or os.getenv('USERPROFILE') or ''):gsub('[\\/]+$', '')
+
+  local active_env
+  vim.system({ 'pio', 'project', 'config', '--json-output' }, { text = true }, function(obj)
+    vim.schedule(function()
+      -- 1. Check Execution
+      if obj.code ~= 0 then
+        local errmsg = obj.code == 127 and "'pio' not found" or (obj.stderr or 'Unknown Error')
+        return vim.notify(msg .. 'Config Error: ' .. errmsg, vim.log.levels.ERROR)
+      end
+
+      -- 2. Decode JSON safely
+      local ok, decoded = pcall(vim.json.decode, obj.stdout or '')
+      if not ok or type(decoded) ~= 'table' then
+        return vim.notify(msg .. 'Failed to decode config JSON', vim.log.levels.ERROR)
+      end
+
+      local formated = vim.misc.jsonFormat(decoded)
+      local file = vim.misc.joinPath(vim.uv.cwd(), 'config.json')
+      vim.misc.writeFile(file, formated, {})
+
+      -- Reset core structure
+      meta.envs = {}
+      meta.default_envs = {}
+      local valid_envs = {}
+
+      -- 3. Parse Sections
+      for _, section in ipairs(decoded) do
+        local name, data = section[1], section[2]
+        if name == 'platformio' then
+          for _, kv in ipairs(data) do
+            meta[kv[1]] = kv[2]
+          end
+        elseif name:match('^env:') then
+          local env_name = name:match('^env:(.+)')
+          if not active_env then active_env = env_name end
+          valid_envs[env_name] = true
+          meta.envs[env_name] = {}
+          for _, kv in ipairs(data) do
+            meta.envs[env_name][kv[1]] = kv[2]
+          end
+        end
+      end
+
+      -- 4. Assign active_env
+      -- Validation: Find the first default_env that actually exists as a block
+      for _, env_name in ipairs(meta.default_envs) do
+        if valid_envs[env_name] then
+          active_env = env_name
+          break
+        end
+      end
+      meta.active_env = active_env or ''
+
+      -- 5. Resolve Paths (INI -> Env -> Default)
+      local path_map = {
+        { key = 'core_dir', env = 'PLATFORMIO_CORE_DIR', sub = '/.platformio' },
+        { key = 'packages_dir', env = 'PLATFORMIO_PACKAGES_DIR', sub = '/.platformio/packages' },
+        { key = 'platforms_dir', env = 'PLATFORMIO_PLATFORMS_DIR', sub = '/.platformio/platforms' },
+      }
+
+      for _, item in ipairs(path_map) do
+        local val = meta[item.key]
+        -- Fallback chain
+        if not val or val == '' then
+          val = os.getenv(item.env) or (home .. item.sub)
+        end
+        -- Expand variables and Normalize
+        if type(val) == 'string' then
+          val = val:gsub('%%${platformio.core_dir}', meta.core_dir or '')
+          meta[item.key] = vim.misc.normalizePath(val)
+        end
+      end
+
+      -- 6. Trigger next step
+      if meta.active_env ~= '' then
+        vim.notify(msg .. 'Config sync successful', vim.log.levels.INFO)
+      else
+        vim.notify(msg .. 'No [env:] found. Please add a board.', vim.log.levels.ERROR)
+      end
+    end)
+  end)
+  return active_env
+end
+
+-- INFO:
+-- =============================================================================
+-- UNIVERSAL TOOLCHAIN DETECTION
+-- =============================================================================
+-- stylua: ignore
 function M.compile_commandsFix() --M.dbPathsFix()
   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
   local content = vim.fn.readfile(filename)

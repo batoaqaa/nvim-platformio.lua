@@ -30,9 +30,7 @@ end
 -- stylua: ignore
 -- Fast environment detection (no external calls)
 function M.get_active__env()
-  local default_env, first_env-- = '', ''
-  local in_platformio_block = false
-  local path = ''
+  local path
 
   for _, dir in ipairs({ vim.api.nvim_buf_get_name(0):match('(.*[/\\])'), (vim.uv.cwd() .. '/') }) do
     local tmp = dir .. 'platformio.ini'
@@ -42,33 +40,46 @@ function M.get_active__env()
       break
     end
   end
-  if path == '' then return vim.notify('PIO: platformio.ini not found or no [env] defined.', vim.log.levels.ERROR) end
+  if not path or path == '' then return vim.notify('PIO: platformio.ini not found or no [env] defined.', vim.log.levels.ERROR) end
 
+  -- Read file content (returns string or nil)
   local ok, content = vim.misc.readFile(path)
   if not ok or not content then return vim.notify('PIO: platformio.ini not found in ' .. path, vim.log.levels.WARN) end
 
-  print(content)
+  local default_envs_raw = ''
+  local first_env = nil
+  local valid_envs = {}
+  local in_platformio_block = false
+
+  -- Iterate lines from the content string
   for line in vim.gsplit(content, '\n') do
-    -- Detect the section headers [section]
+    -- Section Detection: [section_name]
     local section = line:match('^%s*%[(.+)%]%s*$')
     if section then
       in_platformio_block = (section == 'platformio')
-      -- Capture the first env name seen
       local env_name = section:match('^env:(.+)')
-      if env_name and not first_env then first_env = env_name end
+      if env_name then
+        if not first_env then first_env = env_name end
+        valid_envs[env_name] = true
+      end
     end
 
-    -- If inside [platformio], look for default_envs
+    -- Collect the default_envs string from [platformio] block
     if in_platformio_block then
-      local def = line:match('^%s*default_envs%s*=%s*([^%s,]+)')
-      if def then
-        default_env = def
-        if first_env then break end
-      end
+      local def = line:match('^%s*default_envs%s*=%s*(.+)')
+      if def then default_envs_raw = def end
     end
   end
 
-  return default_env or first_env
+  -- Validation: Find the first default_env that actually exists as a block
+  if default_envs_raw ~= '' then
+    for env_name in default_envs_raw:gmatch('([^%s,]+)') do
+      if valid_envs[env_name] then return env_name end
+    end
+  end
+
+  -- Fallback to the very first [env:...] block found in the file
+  return first_env
 end
 
 ------------------------------------------------------
@@ -265,14 +276,6 @@ function M.readFile(path)
 end
 
 ------------------------------------------------------
---INFO:
--- Example
--- local ok, err = writeFiile(path, json)
--- if ok then print("Write complete!") end
--- stylua: ignore
----@param path string
----@param data string
----@param opts table
 -- function M.writeFile(path, data, opts)
 --   local uv = vim.uv or vim.loop
 --
@@ -308,6 +311,14 @@ end
 --   return true, 'writeFile: complete'
 -- end
 
+--INFO:
+-- Example
+-- local ok, err = writeFiile(path, json)
+-- if ok then print("Write complete!") end
+-- stylua: ignore
+---@param path string
+---@param data string
+---@param opts table
 function M.writeFile(path, data, opts)
   local uv = vim.uv or vim.loop
 
