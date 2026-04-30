@@ -195,6 +195,9 @@ function M.handlePioinitDb(result)
         -- end
       end)
     end)
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     M.queue = {}
     term.stdout_callback = nil
@@ -229,11 +232,14 @@ function M.handlePioinit(result)
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
       end)
     end)
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   end
-  M.queue = {}
-  term.stdout_callback = nil
-  _G.metadata.isBusy = false
 end
 
 ------------------------------------------------------
@@ -243,24 +249,31 @@ function M.handlePiolib(result)
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the only and the last command
     vim.notify('Piolib: Success', vim.log.levels.INFO)
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   end
-  M.queue = {}
-  term.stdout_callback = nil
-  _G.metadata.isBusy = false
 end
 
 function M.handlePiodb(target, result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the only and the last command
-    target.isBusy = false
     vim.notify('Piodb: Success', vim.log.levels.INFO)
+    target.isBusy = false
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    target.isBusy = false
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
   end
-  M.queue = {}
-  term.stdout_callback = nil
-  _G.metadata.isBusy = false
 end
 
 return M
