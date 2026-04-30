@@ -4,28 +4,9 @@ M = {}
 local boilerplate = require('platformio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
 
-
-
--- local debounce_timer = vim.uv.new_timer()
--- =============================================================================
--- stylua: ignore
-function M.pio_refresh(callback, from)
-  local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
-  vim.notify(msg ..'Config sync ...', vim.log.levels.INFO)
-
-  local function on_done(active_env)
-    if active_env then
-      print(active_env)
-      vim.pio.fetch_metadata(callback, active_env, from, 1)
-    end
-  end
-
-  vim.pio.fetch_config(on_done, from)
-end
-
 -- =============================================================================
 -- INFO:
--- 1. Helper: Unified hashing for change detection
+-- Unified hashing for change detection
 local function get_hash(path)
   if vim.fn.filereadable(path) == 0 then
     return nil
@@ -36,10 +17,35 @@ local function get_hash(path)
   return (ok and type(data) == 'string' and data ~= '') and vim.fn.sha256(data) or ''
 end
 
--- =============================================================================
--- stylua: ignore
+
 --INFO:
--- 1.run_compiledb
+--stylua: ignore
+--=============================================================================
+function M.pio_refresh(callback, from)
+  local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
+  vim.notify(msg ..'Config sync ...', vim.log.levels.INFO)
+
+  local function on_done(active_env)
+    if active_env then vim.pio.fetch_metadata(callback, active_env, from, 1) end
+  end
+
+  vim.pio.fetch_config(on_done, from)
+end
+
+--INFO:
+--=============================================================================
+--  watchers setup
+--=============================================================================
+-- Ensure this is at the TOP of your file, outside any functions
+local uv = vim.uv or vim.loop
+M.watcher_handles = {}
+local debounce_timer = uv.new_timer()
+local last_mtime = 0
+
+--INFO:
+--stylua: ignore
+--1.run_compiledb after platformio.ini changed
+--=============================================================================
 function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
   if target.isBusy then return end
@@ -57,7 +63,7 @@ function M.run_compiledb(target)
   --   end
   -- })
 
-  local env = vim.misc.get_active__env()
+  local env = vim.pio.get_active__env()
   -- if env and env ~= '' then
     vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
     -- vim.schedule(function()
@@ -85,18 +91,10 @@ function M.run_compiledb(target)
   -- end
 end
 
--- =============================================================================
 --INFO:
--- Ensure this is at the TOP of your file, outside any functions
-local uv = vim.uv or vim.loop
-M.watcher_handles = {}
-local debounce_timer = uv.new_timer()
-local last_mtime = 0
-
--- =============================================================================
--- stylua: ignore
---INFO:
--- 2.stop_watchers 
+--stylua: ignore
+--2.stop_watchers 
+--=============================================================================
 function M.stop_watchers()
   if not M.watcher_handles or (type(M.watcher_handles) ~= 'table') then M.watcher_handles = {} return end
 
@@ -109,10 +107,10 @@ function M.stop_watchers()
   M.watcher_handles = {}
 end
 
--- =============================================================================
--- stylua: ignore
 --INFO:
--- 3.watcher cleanup
+--stylua: ignore
+--3.watcher cleanup
+--=============================================================================
 function M.cleanup()
   M.stop_watchers()
   if debounce_timer and not debounce_timer:is_closing() then
@@ -120,8 +118,7 @@ function M.cleanup()
     debounce_timer:close()
   end
 end
--- =============================================================================
---INFO:
+
 -- Force cleanup when leaving Neovim to prevent :qa lag
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
@@ -129,8 +126,10 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
--- stylua: ignore
--- 3. MAIN WATCHER: Efficient Folder Monitoring
+--INFO:
+--stylua: ignore
+--4. MAIN WATCHER: Efficient Folder Monitoring
+--=============================================================================
 local function watch_file(target, callback)
   local folder_path = target.path:match('(.*[/\\])')
   local target_filename = target.path:match('[^/\\]+$')
@@ -196,67 +195,11 @@ local function watch_file(target, callback)
   table.insert(M.watcher_handles, handle)
   return handle
 end
--- =============================================================================
--- stylua: ignore
---INFO:
--- 4. watch_file
--- stylua: ignore
--- local function watch_file(target, callback)
---   local handle = uv.new_fs_poll()
---   if not handle then return end
---
---   -- handle:start(target.path, 1000, function(err, stat)
---   --   if err or not stat then return end
---   --
---   --   if debounce_timer then
---   --     debounce_timer:stop()
---   --     -- Define the logic in a local variable so it can "call itself" for retries
---   --     local function attempt_callback()
---   --       if target.isBusy then
---   --         -- Retry in 1000ms if still busy
---   --         debounce_timer:start(1500, 0, vim.schedule_wrap(attempt_callback))
---   --         return
---   --       end
---   --
---   --       local filestat = uv.fs_stat(target.path)
---   --       if filestat and filestat.type == 'file' then callback(target) end
---   --     end
---   --     -- Initial start
---   --     debounce_timer:start(1500, 0, vim.schedule_wrap(attempt_callback))
---   --   end
---   -- end)
---
---   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
---   -- handle:start(target.path, 1000, function(err, stat)
---   --   -- if err or not stat or (target and target.isBusy) then return end
---   --   if err or not stat then return end
---   --
---   --   -- 2. Debounce: Reset the timer on every event
---   --   -- Only after 500ms of "silence" will the actual callback run
---   --   if debounce_timer then
---   --     -- Stop any existing timer to "debounce"
---   --     if debounce_timer:is_active() then debounce_timer:stop() end
---   --     debounce_timer:start(500, 0, vim.schedule_wrap(function()
---   --       -- vim.schedule(function ()
---   --         local filestat = uv.fs_stat(target.path)
---   --         if filestat and filestat.type == 'file' then
---   --           callback(target)
---   --         end
---   --         -- if vim.loop.fs_stat(target.path) then callback(target) end
---   --       -- end)
---   --     end))
---   --   end
---   -- end)
---
---   table.insert(M.watcher_handles, handle)
---   return handle
--- end
 
-
--- =============================================================================
--- stylua: ignore
 --INFO:
--- 5. start_watches
+--stylua: ignore
+--5. start_watches
+--=============================================================================
 function M.start_watchers()
   -- Clean up any existing watchers first to prevent duplicates
   if next(M.watcher_handles) then M.stop_watchers() end
@@ -304,7 +247,6 @@ function M.start_watchers()
       end
     },
   }
-  -- targets[1].last_hash = get_hash(targets[1].path) or ''
 
   for _, target in ipairs(targets) do
     --[[ wrap the callback in a small anonymous function,
@@ -313,9 +255,9 @@ function M.start_watchers()
   end
 end
 
--- =============================================================================
--- stylua: ignore
 --INFO: 6.  Exported setup function
+--stylua: ignore
+--=============================================================================
 function M.init()
   local config = require('platformio').config
   if config.lspClangd.enabled == true then

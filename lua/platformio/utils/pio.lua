@@ -62,9 +62,68 @@ function M.get_sysroot_triplet(cc_compiler)
   return nil
 end
 
--- INFO:-------------------------------------------------
+--INFO:
+-- Fast environment detection from platformio.ini file(no external calls)
+-- stylua: ignore
+--=============================================================================
+function M.get_active__env()
+  local path
+
+  for _, dir in ipairs({ vim.api.nvim_buf_get_name(0):match('(.*[/\\])'), (vim.uv.cwd() .. '/') }) do
+    local tmp = dir .. 'platformio.ini'
+    local filestat = vim.uv.fs_stat(tmp)
+    if filestat and filestat.type == 'file' then
+      path = vim.fs.normalize(tmp)
+      break
+    end
+  end
+  if not path or path == '' then return vim.notify('PIO: platformio.ini not found or no [env] defined.', vim.log.levels.ERROR) end
+
+  -- Read file content (returns string or nil)
+  local ok, content = vim.misc.readFile(path)
+  if not ok or not content then return vim.notify('PIO: platformio.ini not found in ' .. path, vim.log.levels.WARN) end
+
+  local default_envs_raw = ''
+  local first_env = nil
+  local valid_envs = {}
+  local in_platformio_block = false
+
+  -- Iterate lines from the content string
+  for line in vim.gsplit(content, '\n') do
+    -- Section Detection: [section_name]
+    local section = line:match('^%s*%[(.+)%]%s*$')
+    if section then
+      in_platformio_block = (section == 'platformio')
+      local env_name = section:match('^env:(.+)')
+      if env_name then
+        if not first_env then first_env = env_name end
+        valid_envs[env_name] = true
+      end
+    end
+
+    -- Collect the default_envs string from [platformio] block
+    if in_platformio_block then
+      local def = line:match('^%s*default_envs%s*=%s*(.+)')
+      if def then default_envs_raw = def end
+    end
+  end
+
+  -- Validation: Find the first default_env that actually exists as a block
+  if default_envs_raw ~= '' then
+    for env_name in default_envs_raw:gmatch('([^%s,]+)') do
+      if valid_envs[env_name] then return env_name end
+    end
+  end
+
+  -- Fallback to the very first [env:...] block found in the file
+  return first_env
+end
+
+
+-- INFO:
 -- get pio project metadata info
 -- stylua: ignore
+--=============================================================================
 function M.fetch_metadata(callback, env, from, attempts)
   local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
   local meta = _G.metadata
@@ -198,43 +257,44 @@ function M.fetch_metadata(callback, env, from, attempts)
   -- end)
 end
 
--- =============================================================================
+-- INFO:
 -- stylua: ignore
-function M.pioConfig(callback)
-  -- 'pio project config --json' is the only way to get FINAL computed paths
-  vim.system({ 'pio', 'project', 'config', '--json' }, { text = true }, function(obj)
-    if obj.code ~= 0 then return end
-
-    local ok, data = pcall(vim.json.decode, obj.stdout)
-    if not ok or type(data) ~= 'table' then return end
-
-    local paths = {}
-    -- PlatformIO JSON output groups options by section
-    for _, section_data in pairs(data) do
-      for _, item in ipairs(section_data) do
-        if item.option == 'core_dir' then paths.core = item.value end
-        if item.option == 'packages_dir' then paths.packages = item.value end
-        if item.option == 'platforms_dir' then paths.platforms = item.value end
-      end
-    end
-
-    -- Fill in defaults if not explicitly overridden
-    local home = vim.uv.os_homedir()
-    paths.core = paths.core or (home .. '/.platformio')
-    paths.packages = paths.packages or (paths.core .. '/packages')
-    paths.platforms = paths.platforms or (paths.core .. '/platforms')
-
-    vim.schedule(function()
-      _G.metadata.paths = paths -- Cache the results
-      if callback then callback(paths) end
-    end)
-  end)
-end
+--=============================================================================
+-- function M.pioConfig(callback)
+--   -- 'pio project config --json' is the only way to get FINAL computed paths
+--   vim.system({ 'pio', 'project', 'config', '--json' }, { text = true }, function(obj)
+--     if obj.code ~= 0 then return end
+--
+--     local ok, data = pcall(vim.json.decode, obj.stdout)
+--     if not ok or type(data) ~= 'table' then return end
+--
+--     local paths = {}
+--     -- PlatformIO JSON output groups options by section
+--     for _, section_data in pairs(data) do
+--       for _, item in ipairs(section_data) do
+--         if item.option == 'core_dir' then paths.core = item.value end
+--         if item.option == 'packages_dir' then paths.packages = item.value end
+--         if item.option == 'platforms_dir' then paths.platforms = item.value end
+--       end
+--     end
+--
+--     -- Fill in defaults if not explicitly overridden
+--     local home = vim.uv.os_homedir()
+--     paths.core = paths.core or (home .. '/.platformio')
+--     paths.packages = paths.packages or (paths.core .. '/packages')
+--     paths.platforms = paths.platforms or (paths.core .. '/platforms')
+--
+--     vim.schedule(function()
+--       _G.metadata.paths = paths -- Cache the results
+--       if callback then callback(paths) end
+--     end)
+--   end)
+-- end
 
 
 -- INFO:
 -- =============================================================================
--- Get project infomation
+-- Get project configuration
 -- =============================================================================
 -- stylua: ignore
 function M.fetch_config(on_done, from)
@@ -314,7 +374,9 @@ function M.fetch_config(on_done, from)
         end
       end
 
-      vim.notify(msg .. 'active_env= ' .. active_env, vim.log.levels.INFO)
+      if active_env then
+        vim.notify(msg .. 'active_env= ' .. active_env, vim.log.levels.INFO)
+      end
       -- 6. Trigger next step
       if meta.active_env ~= '' then
         vim.notify(msg .. 'Config sync successful', vim.log.levels.INFO)
@@ -330,10 +392,9 @@ function M.fetch_config(on_done, from)
 end
 
 -- INFO:
--- =============================================================================
--- UNIVERSAL TOOLCHAIN DETECTION
--- =============================================================================
+-- Fix compile_commands.json file with absoulute paths
 -- stylua: ignore
+-- =============================================================================
 function M.compile_commandsFix() --M.dbPathsFix()
   local filename = vim.fs.joinpath(vim.uv.cwd(), 'compile_commands.json')
   local content = vim.fn.readfile(filename)
@@ -410,11 +471,18 @@ function M.compile_commandsFix() --M.dbPathsFix()
   _G.metadata.isBusy = false
 end
 
+
+-- INFO:
+--configuration for running sequential commands on ToggleTerminal
+-- stylua: ignore
+-- =============================================================================
+-- =============================================================================
 local callBack = nil
 local pio_buffer = '' -- Persistent stream buffer
-------------------------------------------------------
+
 -- INFO: ToggleTerminal commands stdout filter
 -- stylua: ignore
+-- =============================================================================
 function M.stdoutcallback(_, _, data)
   if not data then return end
 
@@ -441,9 +509,11 @@ function M.stdoutcallback(_, _, data)
 end
 
 local commandPassed = 0
-------------------------------------------------------
+
+
 -- INFO: commands sequencer
 -- stylua: ignore
+-- =============================================================================
 M.run_sequence = function(tasks)
   M.queue = {}
   local commands = tasks.cmnds
@@ -470,6 +540,7 @@ end
 
 ------------------------------------------------------
 -- Handle after pioinit execution
+-- =============================================================================
 function M.handlePioinitDb(result)
   if result == 'INIT' then
     local boilerplate = require('platformio.boilerplate')
@@ -516,46 +587,8 @@ function M.handlePioinitDb(result)
 end
 
 ------------------------------------------------------
--- Handle after pioinit execution
--- function M.handlePioinit(result)
---   if result == 'INIT' then
---     local boilerplate = require('platformio.boilerplate')
---     local boilerplate_gen = boilerplate.boilerplate_gen
---
---     boilerplate.core_dir = _G.metadata.core_dir
---     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
---
---     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
---
---     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
---     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
---     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
---
---     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
---   elseif result == 'DONE' then -- result of the last command
---     vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
---     vim.notify('PIO init: Done', vim.log.levels.INFO)
---     commandPassed = commandPassed + 1
---     vim.misc.gitignore_lsp_configs('compile_commands.json')
---     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
---     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
---
---     local pio_refresh = require('platformio.pio_setup').pio_refresh
---     pio_refresh('PIO init: ', function()
---       lsp_restart('clangd')
---     end)
---     M.queue = {}
---     term.stdout_callback = nil
---     _G.metadata.isBusy = false
---   elseif result == 'FAIL' then
---     M.queue = {}
---     term.stdout_callback = nil
---     _G.metadata.isBusy = false
---   end
--- end
-
-------------------------------------------------------
 -- Handle after piolib execution
+-- =============================================================================
 function M.handlePiolib(result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
@@ -573,6 +606,8 @@ function M.handlePiolib(result)
   end
 end
 
+------------------------------------------------------
+-- =============================================================================
 function M.handlePiodb(target, result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
