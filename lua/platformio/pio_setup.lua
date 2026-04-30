@@ -449,7 +449,7 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 
 -- stylua: ignore
 -- 3. MAIN WATCHER: Efficient Folder Monitoring
-function M.watch_file(target, callback)
+local function watch_file(target, callback)
   local folder_path = target.path:match('(.*[/\\])')
   local target_filename = target.path:match('[^/\\]+$')
 
