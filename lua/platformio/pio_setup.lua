@@ -409,6 +409,7 @@ end
 local uv = vim.uv or vim.loop
 M.watcher_handles = {}
 local debounce_timer = uv.new_timer()
+local last_mtime = 0
 
 -- =============================================================================
 -- stylua: ignore
@@ -446,6 +447,68 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
+-- stylua: ignore
+-- 3. MAIN WATCHER: Efficient Folder Monitoring
+function M.watch_file(target, callback)
+  local folder_path = target.path:match('(.*[/\\])')
+  local target_filename = target.path:match('[^/\\]+$')
+
+  local handle = uv.new_fs_event()
+  if not handle then return end
+
+  handle:start(folder_path, {}, function(err, filename)
+    if err then return end
+
+    -- Early Exit Filters
+    if filename and filename ~= target_filename then return end
+    if not uv.fs_access(target.path, 'R') then return end
+
+    -- Protected Execution
+    local ok, result = pcall(function()
+      local stat = uv.fs_stat(target.path)
+      if not stat or stat.mtime.sec <= last_mtime then return end
+
+      vim.schedule(function()
+        if debounce_timer then
+          debounce_timer:stop()
+          local retries = 0
+          local max_retries = 15 -- 15 seconds max wait
+
+          local function attempt_callback()
+            -- Check if busy (checks both local M and global _G)
+            if M.isBusy or (_G.metadata and _G.metadata.isBusy) then
+              if retries < max_retries then
+                retries = retries + 1
+                debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+                return
+              end
+              vim.notify('PIO: Sync timed out (busy)', vim.log.levels.ERROR)
+              return
+            end
+
+            -- Final validation & run
+            local final_stat = uv.fs_stat(target.path)
+            if final_stat and final_stat.mtime.sec > last_mtime then
+              last_mtime = final_stat.mtime.sec
+              callback(target)
+            end
+          end
+
+          debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+        end
+      end)
+    end)
+
+    if not ok then
+      vim.schedule(function()
+        vim.notify('PIO Watcher Error: ' .. tostring(result), vim.log.levels.ERROR)
+      end)
+    end
+  end)
+
+  table.insert(M.watcher_handles, handle)
+  return handle
+end
 -- =============================================================================
 -- stylua: ignore
 --INFO:
@@ -502,67 +565,6 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 --   return handle
 -- end
 
---INFO:
--- 4. watch_file
--- stylua: ignore
-local function watch_file(target, callback)
-  -- 1. Setup paths
-  local folder_path = target.path:match("(.*[/\\])")
-  local target_filename = target.path:match("[^/\\]+$")
-  local last_mtime = 0
-
-  local handle = uv.new_fs_event()
-  if not handle then return end
-
-  -- 2. Start watching the folder
-  handle:start(folder_path, {}, function(err, filename, events)
-    if err then return end
-
-    -- EARLY EXIT: If the changed file isn't our target, quit immediately
-    -- Note: Some OS events might not provide the filename; we fallback to a stat check
-    if filename and filename ~= target_filename then
-      return
-    end
-
-    -- 3. Verify actual modification (avoids triggers on just 'opening' the file)
-    local stat = uv.fs_stat(target.path)
-    if not stat or stat.mtime.sec <= last_mtime then
-      return
-    end
-
-    -- 4. Debounce and Busy-Retry Logic
-    vim.schedule(function()
-      if debounce_timer then
-        debounce_timer:stop()
-        local retries = 0
-
-        local function attempt_callback()
-          if target.isBusy then
-            if retries < 10 then
-              retries = retries + 1
-              debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
-              return
-            end
-            vim.notify("PIO: Sync timed out (busy)", vim.log.levels.ERROR)
-            return
-          end
-
-          -- Final Check & Execution
-          local final_stat = uv.fs_stat(target.path)
-          if final_stat and final_stat.mtime.sec > last_mtime then
-            last_mtime = final_stat.mtime.sec
-            callback(target)
-          end
-        end
-
-        debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
-      end
-    end)
-  end)
-
-  table.insert(M.watcher_handles, handle)
-  return handle
-end
 
 -- =============================================================================
 -- stylua: ignore
