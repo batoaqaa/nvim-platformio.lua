@@ -46,14 +46,10 @@ local function finalize_setup()
 
   local sample_flag = wizard_data.sample == 'Yes' and ' --sample-code' or ''
   local init_cmd = string.format('pio project init --ide vim --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
+  local db_cmd = string.format('pio run -t compiledb -e %s', wizard_data.board_id)
 
-  local commands = { init_cmd }
-  local final_cb = pio.handlePioinit
-
-  if wizard_data.use_compiledb == 'Yes' then
-    table.insert(commands, 'pio run -t compiledb')
-    final_cb = pio.handlePioinitDb
-  end
+  local commands = { init_cmd, db_cmd }
+  local final_cb = pio.handlePioinitDb
 
   notify('Starting project setup for ' .. wizard_data.board_id .. '...')
   pio.run_sequence({ cmnds = commands, cb = final_cb })
@@ -62,18 +58,19 @@ end
 --- SEQUENTIAL STEPS ---
 
 -- Step 4: CompileDB
-local function pick_compiledb()
-  small_menu('Generate Compilation Database (LSP)?', { 'Yes', 'No' }, function(choice)
-    wizard_data.use_compiledb = choice
-    finalize_setup()
-  end)
-end
+-- local function pick_compiledb()
+--   small_menu('Generate Compilation Database (LSP)?', { 'Yes', 'No' }, function(choice)
+--     wizard_data.use_compiledb = choice
+--     finalize_setup()
+--   end)
+-- end
 
 -- Step 3: Sample Code
 local function pick_sample()
   small_menu('Include Sample Code?', { 'Yes', 'No' }, function(choice)
     wizard_data.sample = choice
-    pick_compiledb()
+    -- pick_compiledb()
+    finalize_setup()
   end)
 end
 
@@ -86,7 +83,6 @@ local function pick_framework(board_details)
 end
 
 -- Step 1: Board (Entry Point)
-
 local function pick_board(json_data)
   pickers
     .new({}, {

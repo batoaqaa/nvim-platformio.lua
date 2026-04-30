@@ -417,7 +417,7 @@ M.run_sequence = function(tasks)
 
 
   callBack = tasks.cb -- 1. Save the callback in a local variable
-  commandPassed = 0
+  commandPassed = 1
   _G.metadata.isBusy = true
 
   term.stdout_callback = M.stdoutcallback
@@ -442,30 +442,23 @@ function M.handlePioinitDb(result)
 
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'PASS' then
+    -- if commandPassed == 1 then
+    -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
+    -- end
+    vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
     commandPassed = commandPassed + 1
-    if commandPassed == 1 then
-      vim.schedule(function()
-        vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-      end)
-      -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
-    end
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
-      vim.notify('compiledb: Done ..', vim.log.levels.INFO)
-      M.queue = {}
-      term.stdout_callback = nil
+      vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
+      vim.notify('PIO init+db: Done', vim.log.levels.INFO)
+      vim.misc.gitignore_lsp_configs('compile_commands.json')
+      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh('PIO init+db: ', function()
-        vim.misc.gitignore_lsp_configs('compile_commands.json')
         lsp_restart('clangd')
-        -- _G.metadata.dbTrigger = true
-        -- local ok, _ = pcall(M.compile_commandsFix)
-        -- if not ok then
-        --   print('Env: dbTrigger, fail to call dbFix')
-        -- end
       end)
     end)
     M.queue = {}
@@ -480,40 +473,42 @@ end
 
 ------------------------------------------------------
 -- Handle after pioinit execution
-function M.handlePioinit(result)
-  if result == 'INIT' then
-    local boilerplate = require('platformio.boilerplate')
-    local boilerplate_gen = boilerplate.boilerplate_gen
-
-    boilerplate.core_dir = _G.metadata.core_dir
-    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
-
-    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
-
-    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
-    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
-
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
-  elseif result == 'DONE' then -- result of the last command
-    vim.schedule(function()
-      vim.notify('Pioinit: Done ..', vim.log.levels.INFO)
-      local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh('PIO init: ', function()
-        vim.misc.gitignore_lsp_configs('compile_commands.json')
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-      end)
-    end)
-    M.queue = {}
-    term.stdout_callback = nil
-    _G.metadata.isBusy = false
-  elseif result == 'FAIL' then
-    M.queue = {}
-    term.stdout_callback = nil
-    _G.metadata.isBusy = false
-  end
-end
+-- function M.handlePioinit(result)
+--   if result == 'INIT' then
+--     local boilerplate = require('platformio.boilerplate')
+--     local boilerplate_gen = boilerplate.boilerplate_gen
+--
+--     boilerplate.core_dir = _G.metadata.core_dir
+--     boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+--
+--     boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+--
+--     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+--     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+--     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+--
+--     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+--   elseif result == 'DONE' then -- result of the last command
+--     vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
+--     vim.notify('PIO init: Done', vim.log.levels.INFO)
+--     commandPassed = commandPassed + 1
+--     vim.misc.gitignore_lsp_configs('compile_commands.json')
+--     local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+--     boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+--
+--     local pio_refresh = require('platformio.pio_setup').pio_refresh
+--     pio_refresh('PIO init: ', function()
+--       lsp_restart('clangd')
+--     end)
+--     M.queue = {}
+--     term.stdout_callback = nil
+--     _G.metadata.isBusy = false
+--   elseif result == 'FAIL' then
+--     M.queue = {}
+--     term.stdout_callback = nil
+--     _G.metadata.isBusy = false
+--   end
+-- end
 
 ------------------------------------------------------
 -- Handle after piolib execution
@@ -521,7 +516,9 @@ function M.handlePiolib(result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the only and the last command
-    vim.notify('Piolib: Success', vim.log.levels.INFO)
+    vim.notify('PIO lib:  pass ' .. commandPassed, vim.log.levels.INFO)
+    vim.notify('PIO lib: Done', vim.log.levels.INFO)
+    commandPassed = commandPassed + 1
     M.queue = {}
     term.stdout_callback = nil
     _G.metadata.isBusy = false
@@ -536,7 +533,9 @@ function M.handlePiodb(target, result)
   if result == 'INIT' then
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the only and the last command
-    vim.notify('Piodb: Success', vim.log.levels.INFO)
+    vim.notify('PIO db:  pass ' .. commandPassed, vim.log.levels.INFO)
+    vim.notify('PIO db: Done', vim.log.levels.INFO)
+    commandPassed = commandPassed + 1
     target.isBusy = false
     M.queue = {}
     term.stdout_callback = nil
