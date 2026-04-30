@@ -36,7 +36,11 @@ function M.get_active__env()
 
   for _, dir in ipairs({ vim.api.nvim_buf_get_name(0):match('(.*[/\\])'), (vim.uv.cwd() .. '/') }) do
     local tmp = dir .. 'platformio.ini'
-    if vim.uv.fs_stat(tmp) then path = vim.fs.normalize(tmp) end
+    local filestat = vim.uv.fs_stat(tmp)
+    if filestat and filestat.type == 'file' then
+      path = vim.fs.normalize(tmp)
+      break
+    end
   end
   if path == '' then return vim.notify('PIO: platformio.ini not found or no [env] defined.', vim.log.levels.ERROR) end
 
