@@ -452,7 +452,7 @@ local function watch_file(target, callback)
   local handle = uv.new_fs_poll()
   if not handle then return end
 
-  handle:start(target.path, 1500, function(err, stat)
+  handle:start(target.path, 1000, function(err, stat)
     if err or not stat then return end
 
     if debounce_timer then
@@ -461,17 +461,15 @@ local function watch_file(target, callback)
       local function attempt_callback()
         if target.isBusy then
           -- Retry in 1000ms if still busy
-          debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+          debounce_timer:start(1500, 0, vim.schedule_wrap(attempt_callback))
           return
         end
 
         local filestat = uv.fs_stat(target.path)
-        if filestat and filestat.type == 'file' then
-          callback(target)
-        end
+        if filestat and filestat.type == 'file' then callback(target) end
       end
       -- Initial start
-      debounce_timer:start(1000, 0, vim.schedule_wrap(attempt_callback))
+      debounce_timer:start(1500, 0, vim.schedule_wrap(attempt_callback))
     end
   end)
   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
