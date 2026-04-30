@@ -10,6 +10,23 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 ------------------------------------------------------
 --INFO:
+--- stylua: ignore
+function M.delete_file(path)
+  local file = vim.fn.fnamemodify(path, ':p')
+  if vim.fn.filereadable(path) == 1 then
+    local success = vim.fn.delete(path)
+
+    if success == 0 then
+      vim.notify('PlatformIO: ' .. file .. ' file removed', vim.log.levels.INFO)
+    else
+      vim.notify('PlatformIO: Failed to delete ' .. file, vim.log.levels.ERROR)
+    end
+  else
+    vim.notify('PlatformIO: ' .. file .. ' file not found', vim.log.levels.WARN)
+  end
+end
+------------------------------------------------------
+--INFO:
 -- stylua: ignore
 -- Fast environment detection (no external calls)
 function M.get_active__env()

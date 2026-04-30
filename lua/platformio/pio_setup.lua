@@ -209,6 +209,10 @@ function M.pio_refresh(from, callback)
           return vim.notify(msg .. "Failed to decode config JSON", vim.log.levels.ERROR)
         end
 
+        local formated = vim.misc.jsonFormat(decoded)
+        local file = vim.uv.cwd() .. 'config.json'
+        vim.mis.writeFile(file, formated, {})
+
         -- Reset core structure
         meta.envs = {}
         meta.default_envs = {}
