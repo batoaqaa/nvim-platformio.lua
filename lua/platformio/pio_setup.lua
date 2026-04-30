@@ -376,12 +376,20 @@ local function watch_file(target, callback)
   -- Poll every 1000ms. This is light on CPU and ignores "save noise".
   handle:start(target.path, 1000, function(err, stat)
     if err or not stat or (target and target.isBusy) then return end
-    vim.schedule(function ()
-      local current_stat = vim.uv.fs_stat(target.path)
-      if current_stat then
-        callback(target)
-      end
-    end)
+
+    -- vim.schedule(function ()
+    --   if vim.loop.fs_stat(target.path) then callback(target) end
+    -- end)
+
+    if debounce_timer then
+      -- Stop any existing timer to "debounce"
+      debounce_timer:stop()
+      debounce_timer:start(500, 0, vim.schedule_wrap(function()
+        vim.schedule(function ()
+          if vim.loop.fs_stat(target.path) then callback(target) end
+        end)
+      end))
+    end
   end)
 
   table.insert(M.watcher_handles, handle)

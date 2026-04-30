@@ -12,7 +12,7 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 --INFO:
 --- stylua: ignore
 function M.delete_file(path)
-  local file = vim.fn.fnamemodify(path, ':p')
+  local file = vim.fn.fnamemodify(path, ':t')
   if vim.fn.filereadable(path) == 1 then
     local success = vim.fn.delete(path)
 
