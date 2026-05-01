@@ -613,7 +613,7 @@ function M.handlePioinit(result)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init: ')
     end)
-    vim.misc.deleteFile(vim.fs.joinpath(vim.vim.g.platformioRootDir, '.ccls'))
+    vim.misc.deleteFile(vim.fs.joinpath(vim.g.platformioRootDir, '.ccls'))
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
