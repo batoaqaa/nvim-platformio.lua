@@ -583,7 +583,7 @@ function M.handlePioinitDb(result)
 
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'PASS' then
@@ -598,8 +598,8 @@ function M.handlePioinitDb(result)
       vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init+db: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+      -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+      -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
@@ -631,7 +631,7 @@ function M.handlePioinit(result)
 
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
     win_id = vim.misc.showMessage('************ Project Initializing ************')
     trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')
@@ -656,8 +656,8 @@ function M.handlePioinit(result)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        -- local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         clangdRestart()
         vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
