@@ -44,6 +44,17 @@ function M.jsonFormat(root_data)
 
   local function get_indent(lvl) return string.rep('  ', lvl) end
 
+  -- Full JSON Escape Table
+  local escapes = {
+    ['\\'] = '\\\\',
+    ['"']  = '\\"',
+    ['\b'] = '\\b',
+    ['\f'] = '\\f',
+    ['\n'] = '\\n',
+    ['\r'] = '\\r',
+    ['\t'] = '\\t',
+  }
+
   while #stack > 0 do
     local curr = stack[#stack]
     local val, lvl = curr.val, curr.lvl
@@ -99,10 +110,22 @@ function M.jsonFormat(root_data)
       -- 4. Primitives (String, Number, Bool, Nil)
       local output = ''
       if val == nil or val == vim.NIL then output = 'null'
+      elseif val == vim.empty_dict then output = '{}'
       elseif type(val) == 'boolean' then output = tostring(val)
       elseif type(val) == 'string' then
-        -- Normalize Windows paths to Unix for cross-platform checksums
-        output = '"' .. val:gsub('\\', '/'):gsub('"', '\\"') .. '"'
+        -- A. Handle standard escapes (\n, \t, etc.)
+        local s = val:gsub('[\\"\b\f\n\r\t]', escapes)
+
+        -- B. Handle unprintable control characters (U+0000 to U+001F)
+        s = s:gsub('[%z\1-\31]', function(c)
+          return string.format('\\u%04x', string.byte(c))
+        end)
+
+        -- C. Normalize Windows paths to Unix for cross-platform SHA256 stability
+        -- We flip double-backslashes (\\) resulting from the escape to (/)
+        s = s:gsub('\\\\', '/')
+
+        output = '"' .. s .. '"'
       else output = tostring(val) end
       table.insert(buffer, output)
       table.remove(stack)
