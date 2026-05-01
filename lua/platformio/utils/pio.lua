@@ -239,25 +239,10 @@ function M.fetch_metadata(callback, env, from, attempts)
     end
   -- else
   end
-  buildIdedata()
-
   ---------------------------------------------------------
   -- STEP 3: Auto-Initialize (If files project.checksum and idedata.json are missing)
   ---------------------------------------------------------
-  -- if not ok or not current_checksum then
-  --   vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
-  --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
-  --     vim.schedule(function()
-  --       if obj.code == 0 then
-  --         vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
-  --         M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
-  --       else
-  --         vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
-  --       end
-  --     end)
-  --   end)
-  --   return
-  -- end
+  buildIdedata()
 
   ---------------------------------------------------------
   -- STEP 4: Standard CLI Fallback (The Slow Path)
@@ -285,41 +270,6 @@ function M.fetch_metadata(callback, env, from, attempts)
   --   end)
   -- end)
 end
-
--- INFO:
--- stylua: ignore
---=============================================================================
--- function M.pioConfig(callback)
---   -- 'pio project config --json' is the only way to get FINAL computed paths
---   vim.system({ 'pio', 'project', 'config', '--json' }, { text = true }, function(obj)
---     if obj.code ~= 0 then return end
---
---     local ok, data = pcall(vim.json.decode, obj.stdout)
---     if not ok or type(data) ~= 'table' then return end
---
---     local paths = {}
---     -- PlatformIO JSON output groups options by section
---     for _, section_data in pairs(data) do
---       for _, item in ipairs(section_data) do
---         if item.option == 'core_dir' then paths.core = item.value end
---         if item.option == 'packages_dir' then paths.packages = item.value end
---         if item.option == 'platforms_dir' then paths.platforms = item.value end
---       end
---     end
---
---     -- Fill in defaults if not explicitly overridden
---     local home = vim.uv.os_homedir()
---     paths.core = paths.core or (home .. '/.platformio')
---     paths.packages = paths.packages or (paths.core .. '/packages')
---     paths.platforms = paths.platforms or (paths.core .. '/platforms')
---
---     vim.schedule(function()
---       _G.metadata.paths = paths -- Cache the results
---       if callback then callback(paths) end
---     end)
---   end)
--- end
-
 
 -- INFO:
 -- =============================================================================
@@ -640,6 +590,7 @@ function M.handlePioinit(result)
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
+      vim.misc.deleteFile(vim.misc.joinPath(vim.vim.g.platformioRootDir, '.ccl'))
 
       -- \27[s   : Save current cursor position (the prompt)
       -- \r      : Go to start of line

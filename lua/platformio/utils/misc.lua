@@ -3,6 +3,7 @@
 local M = {}
 
 M.is_windows = jit.os == 'Windows'
+local uv = vim.uv or vim.loop
 
 M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
@@ -10,7 +11,6 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 ------------------------------------------------------
 --INFO:
-local uv = vim.uv or vim.loop
 
 -- stylua: ignore
 function M.showMessage(msg)
@@ -74,47 +74,10 @@ function M.closeMessage(status_obj)
   end
 end
 
--- function M.showMessage(msg)
---   local bufnr = vim.api.nvim_create_buf(false, true)
---   local text = '  ' .. msg .. '  '
---   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', text, '' })
---
---   local width = #text + 2
---   local height = 3
---
---   -- Calculate center of the screen
---   local row = math.floor((vim.o.lines - height) / 2)
---   local col = math.floor((vim.o.columns - width) / 2)
---
---   local opts = {
---     relative = 'editor',
---     row = row,
---     col = col,
---     width = width,
---     height = height,
---     style = 'minimal',
---     border = 'double',
---     focusable = false,
---     zindex = 200, -- High zindex to stay above ToggleTerm
---   }
---
---   local win_id = vim.api.nvim_open_win(bufnr, false, opts)
---
---   -- Apply a solid background so you can't see the terminal text through it
---   vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,FloatBorder:DiagnosticInfo', { scope = 'local', win = win_id })
---
---   return win_id
--- end
-
--- function M.closeMessage(win_id)
---   if win_id and vim.api.nvim_win_is_valid(win_id) then
---     vim.api.nvim_win_close(win_id, true)
---   end
--- end
 ------------------------------------------------------
 --INFO:
 --- stylua: ignore
-function M.delete_file(path)
+function M.deleteFile(path)
   local file = vim.fn.fnamemodify(path, ':t')
   if vim.fn.filereadable(path) == 1 then
     local success = vim.fn.delete(path)
@@ -237,146 +200,6 @@ function M.jsonFormat(root_data)
   return table.concat(buffer)
 end
 
-------------------------------------------------------
---INFO:
--- regex 100ms
--- stylua: ignore
-function M.pretty_json(data)
-  -- 1. Get a guaranteed valid JSON string from Neovim's core
-  local json = vim.json.encode(data)
-
-  -- 2. Use regex to inject newlines and indentation
-  -- This is much faster than manual recursion in Lua
-  local indent = '  '
-  local level = 0
-
-  -- Add newlines after { [ , and before } ]
-  json = json:gsub('([%[%{%],])', '%1\n')
-  json = json:gsub('([%]}])', '\n%1')
-
-  local lines = {}
-  for line in json:gmatch('[^\n]+') do
-    line = line:gsub('^%s+', '') -- trim existing whitespace
-
-    -- Decrease level if line starts with closing bracket
-    if line:match('^[%]}]') then level = level - 1 end
-
-    table.insert(lines, string.rep(indent, level) .. line)
-
-    -- Increase level if line ends with opening bracket
-    if line:match('[%[{]$') then level = level + 1 end
-  end
-  return table.concat(lines, '\n')
-end
-
-------------------------------------------------------
---INFO:
--- recursion 50ms
--- stylua: ignore
--- local function pretty_print(data) -- 48ms
-function M.pretty_print(data) -- 48ms
-  local buffer = {}
-  local insert = table.insert
-
-  -- Table of standard JSON escape sequences
-  local escapes = {
-    ['\\'] = '\\\\',
-    ['"']  = '\\"',
-    ['\b'] = '\\b',
-    ['\f'] = '\\f',
-    ['\n'] = '\\n',
-    ['\r'] = '\\r',
-    ['\t'] = '\\t',
-  }
-
-  local function format_item(item, current_level)
-    local indent = string.rep('  ', current_level)
-    local next_indent = string.rep('  ', current_level + 1)
-
-    -- 1. Handle Neovim-specific Nulls and Empty Objects
-    -- vim.NIL represents a JSON 'null' (distinct from Lua nil)
-    if item == nil or item == vim.NIL then
-      insert(buffer, 'null')
-      return
-    elseif item == vim.empty_dict then
-      insert(buffer, '{}')
-      return
-    end
-
-    if type(item) == 'table' then
-      -- 2. Determine if Table should be an Array [] or an Object {}
-      local is_array = false
-      local mt = getmetatable(item)
-
-      -- If decoded by Neovim, it likely has a __jsontype marker
-      if mt and mt.__jsontype == 'array' then is_array = true
-      -- If not marked, treat as array if it has indexed items or is a plain empty table
-      elseif #item > 0 or (next(item) == nil and mt == nil) then is_array = true end
-
-      -- 3. Handle Empty Structures Immediately
-      if next(item) == nil then
-        insert(buffer, is_array and '[]' or '{}')
-        return
-      end
-
-      local opener = is_array and '[' or '{'
-      local closer = is_array and ']' or '}'
-      insert(buffer, opener .. '\n')
-
-      -- 4. Key Management & Sorting
-      -- Sorting is mandatory for consistent SHA256 hashes across different systems
-      local keys = {}
-      for k in pairs(item) do insert(keys, k) end
-
-      -- Sort object keys alphabetically
-      if not is_array then table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
-      -- Ensure array indices [1, 2, 3] are processed in order
-      else table.sort(keys) end
-
-      -- 5. Iterate through items
-      for i, k in ipairs(keys) do
-        local v = item[k]
-        if i > 1 then insert(buffer, ',\n') end -- Standard JSON comma placement
-        insert(buffer, next_indent)
-
-        -- If it's an object, add the "key": prefix
-        if not is_array then insert(buffer, '"' .. tostring(k) .. '": ') end
-
-        -- Recurse for nested tables
-        format_item(v, current_level + 1)
-      end
-
-      insert(buffer, '\n' .. indent .. closer)
-
-    elseif type(item) == 'string' then
-      -- 6. String Escaping & Path Normalization
-      -- A. Apply standard escapes (newline, tab, etc.)
-      local s = item:gsub('[\\"\b\f\n\r\t]', escapes)
-
-      -- B. Convert unprintable control characters to \u00xx format
-      s = s:gsub('[%z\1-\31]', function(c)
-        return string.format('\\u%04x', string.byte(c))
-      end)
-
-      -- C. Normalize Windows paths to Unix style
-      -- We flip double-backslashes (\\) to (/) so SHA256 matches across OSs
-      s = s:gsub('\\\\', '/')
-
-      insert(buffer, '"' .. s .. '"')
-
-    elseif type(item) == 'boolean' or type(item) == 'number' then
-      -- 7. Primitives
-      insert(buffer, tostring(item))
-    else
-      -- 8. Fallback for anything else
-      insert(buffer, '"' .. tostring(item) .. '"')
-    end
-  end
-
-  -- Start recursion at level 0
-  format_item(data, 0)
-  return table.concat(buffer)
-end
 
 ------------------------------------------------------
 --INFO:
@@ -386,8 +209,6 @@ end
 -- stylua: ignore
 ---@param path string
 function M.readFile(path)
-  local uv = vim.uv or vim.loop
-
   -- 1. Check if file exists before opening to avoid "noisy" errors
   local stat = uv.fs_stat(path)
   if not stat then return false, 'File does not exist' end
@@ -405,42 +226,6 @@ function M.readFile(path)
   return true, content
 end
 
-------------------------------------------------------
--- function M.writeFile(path, data, opts)
---   local uv = vim.uv or vim.loop
---
---   opts = opts or {overwrite = true, mkdir = true}
---
---   -- 1. Check if file exists and handle overwrite flag
---   local stat = uv.fs_stat(path)
---   if stat and opts.overwrite == false then
---     return false, 'writeFile: File already exists and overwrite is disabled'
---   end
---
---   -- 2. Ensure folder exists (mkdir -p logic)
---   if opts.mkdir ~= false then
---     local parent = vim.fn.fnamemodify(path, ':h')
---     if not stat or stat.type ~= 'directory' then
---       -- Using vim.fn.mkdir is easier for recursive creation
---       vim.fn.mkdir(parent, 'p', '0700')
---     end
---   end
---
---   -- 3. Open file for writing
---   local fd, err = uv.fs_open(path, 'w', 438)
---   if not fd then return false, 'writeFile: Open error: ' .. (err or 'unknown') end
---
---   -- 4. Write data
---   local success, write_err = uv.fs_write(fd, data, 0)
---
---   -- 5. ALWAYS close
---   uv.fs_close(fd)
---
---   if not success then return false, 'writeFile: Write error: ' .. write_err end
---
---   return true, 'writeFile: complete'
--- end
-
 --INFO:
 -- Example
 -- local ok, err = writeFiile(path, json)
@@ -450,8 +235,6 @@ end
 ---@param data string
 ---@param opts table
 function M.writeFile(path, data, opts)
-  local uv = vim.uv or vim.loop
-
   -- opts.overwrite: boolean (default true)
   -- opts.mkdir: boolean (default true)
   opts = opts or { overwrite = true, mkdir = true }
