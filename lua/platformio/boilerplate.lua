@@ -183,22 +183,22 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
-Remove:
-  - "-Winclude-next-outside-header"
-  - "-fno-fat-lto-objects"
-  - "-fno%%-fat%%-lto%%-objects"
-  - "-fno%%-canonical%%-system%%-headers"
-  - "-misc-definitions-in-headers"
-  - "-fno-tree-switch-conversion"
-  - "-mtext-section-literals"
-  - "-mlong-calls"
-  - "-mlongcalls"
-  - "-fstrict-volatile-bitfields"
-  - "-free*"
-  - "-fipa-pta*"
-  - "-march=*"
-  - "-mabi=*"
-  - "-mcpu=*"
+  Remove:
+    - "-Winclude-next-outside-header"
+    - "-fno-fat-lto-objects"
+    - "-fno%%-fat%%-lto%%-objects"
+    - "-fno%%-canonical%%-system%%-headers"
+    - "-misc-definitions-in-headers"
+    - "-fno-tree-switch-conversion"
+    - "-mtext-section-literals"
+    - "-mlong-calls"
+    - "-mlongcalls"
+    - "-fstrict-volatile-bitfields"
+    - "-free*"
+    - "-fipa-pta*"
+    - "-march=*"
+    - "-mabi=*"
+    - "-mcpu=*"
 Diagnostics:
   Suppress:
     - "pragma_system_header_ignored"

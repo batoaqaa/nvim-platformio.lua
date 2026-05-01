@@ -3,9 +3,10 @@ local M = {}
 -- -- INFO:
 
 --- stylua: ignore
-function M.lsp_restart(name)
+function M.clangdRestart()
+  local name = 'clangd'
   -- vim.schedule_wrap(function()
-  vim.notify('LSP restart.', vim.log.levels.WARN)
+  vim.notify('LSP: Clangd restart.', vim.log.levels.WARN)
 
   local clangConfig = _G.get_clangd_config()
   -- print(vim.inspect(clangConfig))

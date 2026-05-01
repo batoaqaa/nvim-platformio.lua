@@ -119,7 +119,7 @@ function K.lspKeymaps(client, bufnr)
             return c.id == client.id
           end,
         })
-        print('lsp formatting')
+        print('LSP: clangd formatting')
         -- end
       end,
     })

@@ -5,7 +5,7 @@ local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
 
 -- stylua: ignore
 function M.piolsp()
-  require('platformio.lspConfig.tools').lsp_restart('clangd')
+  require('platformio.lspConfig.tools').clangdRestart()
 end
 
 function M.piocmd(cmd_table, direction)

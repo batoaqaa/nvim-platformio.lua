@@ -10,7 +10,7 @@ M.is_processing = false
 M.queue = {}
 
 local term = require('platformio.utils.term')
-local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
+local clangdRestart = require('platformio.lspConfig.tools').clangdRestart
 
 -- INFO:
 -- =============================================================================
@@ -495,7 +495,7 @@ function M.compile_commandsFix() --M.dbPathsFix()
     local end_time = vim.loop.hrtime()
     local duration = (end_time - start_time) / 1e6
     vim.notify(string.format('compiledb: paths fixed in %.2fms', duration), vim.log.levels.INFO)
-    lsp_restart('clangd')
+    clangdRestart()
   end
   _G.metadata.isBusy = false
 end
@@ -603,7 +603,7 @@ function M.handlePioinitDb(result)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
-        lsp_restart('clangd')
+        clangdRestart()
       end, 'PIO init+db: ')
     end)
     M.queue = {}
@@ -659,7 +659,7 @@ function M.handlePioinit(result)
       pio_refresh(function()
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        lsp_restart('clangd')
+        clangdRestart()
         vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init: ')

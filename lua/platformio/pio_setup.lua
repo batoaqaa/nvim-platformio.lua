@@ -1,6 +1,6 @@
 M = {}
 
--- local lsp_restart = require('platformio.lspConfig.tools').lsp_restart
+local clangdRestart = require('platformio.lspConfig.tools').clangdRestart
 local boilerplate = require('platformio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
 
@@ -78,6 +78,7 @@ function M.run_compiledb(target)
           -- Trigger refresh (LSP restart, etc.)
           -- vim.schedule(function ()
           -- M.pio_refresh(function()
+          clangdRestart()
           vim.notify('PIO platformio.ini change: Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
           -- end, 'PIO platformio.ini  change: ')
           -- end)
@@ -242,6 +243,7 @@ function M.start_watchers()
             M.pio_refresh(function()
               self.isBusy = false
               vim.notify('PIO checksum: Metadata synced', vim.log.levels.INFO)
+              clangdRestart()
             end, 'PIO checksum: ')
           end, 500)
         end
