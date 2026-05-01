@@ -202,6 +202,7 @@ boilerplate['.clangd'] = {
   content = [[
 Diagnostics:
   Suppress:
+    - "pragma_system_header_ignored"
     - "misc-definitions-in-headers"
     - "pp_including_mainfile_in_preamble"
     - "misc-unused-using-decls"
