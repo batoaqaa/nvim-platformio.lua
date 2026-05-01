@@ -170,27 +170,9 @@ boilerplate['.clangd_config'] = {
 --   External:
 --     File: .clangd_index
 
--- CompileFlags:
 -- Add:
 --   - "-xc++"
 --   - "-std=c++17"
--- Remove:
---   - "-Winclude-next-outside-header"
---   - "-fno-fat-lto-objects"
---   - "-fno%%-fat%%-lto%%-objects"
---   - "-fno%%-canonical%%-system%%-headers"
---   - "-misc-definitions-in-headers"
---   - "-fno-tree-switch-conversion"
---   - "-mtext-section-literals"
---   - "-mlong-calls"
---   - "-mlongcalls"
---   - "-fstrict-volatile-bitfields"
---   - "-free*"
---   - "-fipa-pta*"
---   - "-march=*"
---   - "-mabi=*"
---   - "-mcpu=*"
-
 -- INFO: .clangd
 -- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
@@ -201,6 +183,23 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 Diagnostics:
+CompileFlags:
+Remove:
+  - "-Winclude-next-outside-header"
+  - "-fno-fat-lto-objects"
+  - "-fno%%-fat%%-lto%%-objects"
+  - "-fno%%-canonical%%-system%%-headers"
+  - "-misc-definitions-in-headers"
+  - "-fno-tree-switch-conversion"
+  - "-mtext-section-literals"
+  - "-mlong-calls"
+  - "-mlongcalls"
+  - "-fstrict-volatile-bitfields"
+  - "-free*"
+  - "-fipa-pta*"
+  - "-march=*"
+  - "-mabi=*"
+  - "-mcpu=*"
   Suppress:
     - "pragma_system_header_ignored"
     - "misc-definitions-in-headers"
