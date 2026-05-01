@@ -11,41 +11,74 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 ------------------------------------------------------
 --INFO:
 --- stylua: ignore
-function M.showMessage(msg, timeout)
-  -- 1. Create a scratch buffer (not listed, no file)
-  local bufnr = vim.api.nvim_create_buf(false, true)
 
-  -- 2. Set the text (with a little padding)
+function M.showMessage(msg, timeout)
+  local bufnr = vim.api.nvim_create_buf(false, true)
   local text = '  ' .. msg .. '  '
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', text, '' })
 
-  -- 3. Calculate window size and position
   local width = #text + 2
   local height = 3
   local opts = {
     relative = 'editor',
-    row = 2, -- Top of the screen
-    col = vim.o.columns - width - 2, -- Right side
+    row = 2,
+    col = vim.o.columns - width - 4, -- Shifted slightly more left for safety
     width = width,
     height = height,
     style = 'minimal',
     border = 'rounded',
-    focusable = false, -- Don't let the cursor jump into it
+    focusable = false,
+    -- CRITICAL: Higher than ToggleTerm's zindex to stay on top
+    zindex = 150,
   }
 
-  -- 4. Open the window
   local win = vim.api.nvim_open_win(bufnr, false, opts)
 
-  -- 5. Optional: Highlight as "Warning" or "Info"
-  vim.api.nvim_set_option_value('winhl', 'Normal:DiagnosticInfo', { scope = 'local', win = win })
+  -- Use a high-contrast highlight so it's readable over the terminal
+  vim.api.nvim_set_option_value('winhl', 'Normal:Pmenu,FloatBorder:DiagnosticInfo', { scope = 'local', win = win })
 
-  -- 6. Auto-close after timeout (default 3s)
   vim.defer_fn(function()
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_close(win, true)
     end
   end, timeout or 3000)
 end
+
+-- function M.showMessage(msg, timeout)
+--   -- 1. Create a scratch buffer (not listed, no file)
+--   local bufnr = vim.api.nvim_create_buf(false, true)
+--
+--   -- 2. Set the text (with a little padding)
+--   local text = '  ' .. msg .. '  '
+--   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', text, '' })
+--
+--   -- 3. Calculate window size and position
+--   local width = #text + 2
+--   local height = 3
+--   local opts = {
+--     relative = 'editor',
+--     row = 2, -- Top of the screen
+--     col = vim.o.columns - width - 2, -- Right side
+--     width = width,
+--     height = height,
+--     style = 'minimal',
+--     border = 'rounded',
+--     focusable = false, -- Don't let the cursor jump into it
+--   }
+--
+--   -- 4. Open the window
+--   local win = vim.api.nvim_open_win(bufnr, false, opts)
+--
+--   -- 5. Optional: Highlight as "Warning" or "Info"
+--   vim.api.nvim_set_option_value('winhl', 'Normal:DiagnosticInfo', { scope = 'local', win = win })
+--
+--   -- 6. Auto-close after timeout (default 3s)
+--   vim.defer_fn(function()
+--     if vim.api.nvim_win_is_valid(win) then
+--       vim.api.nvim_win_close(win, true)
+--     end
+--   end, timeout or 3000)
+-- end
 
 ------------------------------------------------------
 --INFO:
