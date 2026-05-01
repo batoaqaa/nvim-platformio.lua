@@ -182,7 +182,6 @@ boilerplate['.clangd'] = {
   -- - "-std=gnu++17"
   -- template = [[
   content = [[
-Diagnostics:
 CompileFlags:
 Remove:
   - "-Winclude-next-outside-header"
@@ -200,6 +199,7 @@ Remove:
   - "-march=*"
   - "-mabi=*"
   - "-mcpu=*"
+Diagnostics:
   Suppress:
     - "pragma_system_header_ignored"
     - "misc-definitions-in-headers"
