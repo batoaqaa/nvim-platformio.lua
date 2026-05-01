@@ -113,19 +113,20 @@ function _G.get_clangd_config()
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
       -- local include_flags = table.concat(_G.metadata.fallbackFlags, ", ")
       local includes_toolchain = table.concat(_G.metadata.includes_toolchain, ", ")
-      f_flags = string.format([["-std=c++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain)
+      f_flags = [["-std=c++17", "-xc++"]]
+      -- f_flags = string.format([["-std=c++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
-      -- q_driver =  '**' --_G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
-      q_driver =  _G.metadata.query_driver --.. ',C:/PROGRA~1/LLVM/bin/*'                                            -- use with "--query-driver=%s"
+      -- q_driver =  '**' --_G.metadata.query_driver .. ',C:/PROGRA~1/LLVM/bin/*'  -- use with "--query-driver=%s"
+      q_driver =  _G.metadata.query_driver --.. ',C:/PROGRA~1/LLVM/bin/*'          -- use with "--query-driver=%s"
     end
   end
 
   -- 3. Format your template string
   local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  -- local formatted_str = string.format(table_config, q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
-  local formatted_str = string.format(table_config or '', q_driver, '', vim.misc.normalizePath(new_root_dir))
+  local formatted_str = string.format(table_config or '', q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
+  -- local formatted_str = string.format(table_config or '', q_driver, '', vim.misc.normalizePath(new_root_dir))
 
   -- 4. Load the config table
   local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)
