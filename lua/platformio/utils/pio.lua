@@ -640,9 +640,11 @@ function M.handlePioinit(result)
       local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
+      term.ToggleTerminal('echo ************ Please wait for project Initialization to finish ************', 'float')
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
+        term.ToggleTerminal('echo ************ project Initialization success ************', 'float')
       end, 'PIO init: ')
     end)
     M.queue = {}
