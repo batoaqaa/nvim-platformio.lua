@@ -120,13 +120,14 @@ function M.get_active__env()
 end
 
 
--- INFO:
+--INFO:
 -- get pio project metadata info
 -- stylua: ignore
 --=============================================================================
 function M.fetch_metadata(callback, env, from, attempts)
   local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
   local meta = _G.metadata
+  print(env)
   local active_env = env or meta.active_env
   if not active_env or active_env == '' then
     return
@@ -138,8 +139,9 @@ function M.fetch_metadata(callback, env, from, attempts)
   local checksum_file = vim.misc.joinPath(build_dir, 'project.checksum')
   local idedata_file = vim.misc.joinPath(build_env_dir, 'idedata.json')
 
+  --INFO:
+  --INTERNAL PROCESSOR: Applies parsed data to _G.metadata
   ---------------------------------------------------------
-  -- INTERNAL PROCESSOR: Applies parsed data to _G.metadata
   local function apply_metadata(data, checksum)
     if not data then return false end
 
@@ -174,7 +176,6 @@ function M.fetch_metadata(callback, env, from, attempts)
     meta.last_projectChecksum = checksum
     pcall(M.get_sysroot_triplet, meta.cc_compiler)
 
-    -- if callback then vim.schedule(callback) end
     return true
   end
 
