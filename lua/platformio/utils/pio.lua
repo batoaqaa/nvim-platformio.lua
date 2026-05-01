@@ -647,11 +647,11 @@ function M.handlePioinit(result)
       -- 4. \n executes it
       local msg = '************ Please wait for project Initialization to finish ************'
 
-      -- The leading space ' ' prevents some shells from saving it to history
-      -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
-      local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
-
-      vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
+      -- -- The leading space ' ' prevents some shells from saving it to history
+      -- -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
+      -- local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
+      --
+      -- vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
 
       -- local msg = '************ Please wait for project Initialization to finish ************'
       -- -- ToggleTerm objects have a .bufnr property and a .job_id property
@@ -663,7 +663,7 @@ function M.handlePioinit(result)
       -- end
       -- vim.api.nvim_chan_send(vim.b[term:bufnri(term)].terminal_job_id, '\r\n' .. msg .. '\r\n')
 
-      -- term.ToggleTerminal('echo "************ Please wait for project Initialization to finish ************"', 'float')
+      term.ToggleTerminal(msg, 'float')
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
