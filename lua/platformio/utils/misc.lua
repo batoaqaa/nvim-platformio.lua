@@ -10,20 +10,19 @@ M.devNul = M.is_windows and ' 2>./nul' or ' 2>/dev/null'
 
 ------------------------------------------------------
 --INFO:
---- stylua: ignore
+local uv = vim.uv or vim.loop
+
+-- stylua: ignore
 function M.showMessage(msg)
   local bufnr = vim.api.nvim_create_buf(false, true)
   local text = '  ' .. msg .. '  '
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', text, '' })
 
-  local width = #text + 2
-  local height = 3
-
-  -- Calculate center of the screen
+  local width, height = #text + 2, 3
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
 
-  local opts = {
+  local win_id = vim.api.nvim_open_win(bufnr, false, {
     relative = 'editor',
     row = row,
     col = col,
@@ -31,23 +30,87 @@ function M.showMessage(msg)
     height = height,
     style = 'minimal',
     border = 'double',
-    focusable = false,
-    zindex = 200, -- High zindex to stay above ToggleTerm
-  }
+    zindex = 250,
+  })
 
-  local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+  -- Define the "Glow" colors
+  -- We use 'IncSearch' or 'CurSearch' for a bright, glowing look
+  local hl_on = 'Normal:IncSearch,FloatBorder:IncSearch'
+  local hl_off = 'Normal:NormalFloat,FloatBorder:NormalFloat'
 
-  -- Apply a solid background so you can't see the terminal text through it
-  vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,FloatBorder:DiagnosticInfo', { scope = 'local', win = win_id })
+  -- Create a timer for the blinking effect
+  local blink_timer = uv.new_timer()
+  local is_on = true
 
-  return win_id
+  if blink_timer then
+    blink_timer:start(
+      0,
+      500,
+      vim.schedule_wrap(function()
+        if vim.api.nvim_win_is_valid(win_id) then
+          vim.api.nvim_set_option_value('winhl', is_on and hl_on or hl_off, { scope = 'local', win = win_id })
+          is_on = not is_on
+        else
+          blink_timer:stop()
+          blink_timer:close()
+        end
+      end)
+    )
+  end
+
+  -- Return both so you can kill them later
+  return { win = win_id, timer = blink_timer }
 end
 
-function M.closeMessage(win_id)
-  if win_id and vim.api.nvim_win_is_valid(win_id) then
-    vim.api.nvim_win_close(win_id, true)
+function M.closeMessage(status_obj)
+  if status_obj then
+    if status_obj.timer then
+      status_obj.timer:stop()
+      status_obj.timer:close()
+    end
+    if status_obj.win and vim.api.nvim_win_is_valid(status_obj.win) then
+      vim.api.nvim_win_close(status_obj.win, true)
+    end
   end
 end
+
+-- function M.showMessage(msg)
+--   local bufnr = vim.api.nvim_create_buf(false, true)
+--   local text = '  ' .. msg .. '  '
+--   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', text, '' })
+--
+--   local width = #text + 2
+--   local height = 3
+--
+--   -- Calculate center of the screen
+--   local row = math.floor((vim.o.lines - height) / 2)
+--   local col = math.floor((vim.o.columns - width) / 2)
+--
+--   local opts = {
+--     relative = 'editor',
+--     row = row,
+--     col = col,
+--     width = width,
+--     height = height,
+--     style = 'minimal',
+--     border = 'double',
+--     focusable = false,
+--     zindex = 200, -- High zindex to stay above ToggleTerm
+--   }
+--
+--   local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+--
+--   -- Apply a solid background so you can't see the terminal text through it
+--   vim.api.nvim_set_option_value('winhl', 'Normal:NormalFloat,FloatBorder:DiagnosticInfo', { scope = 'local', win = win_id })
+--
+--   return win_id
+-- end
+
+-- function M.closeMessage(win_id)
+--   if win_id and vim.api.nvim_win_is_valid(win_id) then
+--     vim.api.nvim_win_close(win_id, true)
+--   end
+-- end
 ------------------------------------------------------
 --INFO:
 --- stylua: ignore
