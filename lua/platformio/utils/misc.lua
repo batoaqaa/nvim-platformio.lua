@@ -172,54 +172,105 @@ end
 -- stylua: ignore
 -- local function pretty_print(data) -- 48ms
 function M.pretty_print(data) -- 48ms
-  -- Force input into a table if it's just a single string
   local buffer = {}
+  local insert = table.insert
+
+  -- Table of standard JSON escape sequences
+  local escapes = {
+    ['\\'] = '\\\\',
+    ['"']  = '\\"',
+    ['\b'] = '\\b',
+    ['\f'] = '\\f',
+    ['\n'] = '\\n',
+    ['\r'] = '\\r',
+    ['\t'] = '\\t',
+  }
 
   local function format_item(item, current_level)
-    local insert = table.insert
     local indent = string.rep('  ', current_level)
     local next_indent = string.rep('  ', current_level + 1)
 
+    -- 1. Handle Neovim-specific Nulls and Empty Objects
+    -- vim.NIL represents a JSON 'null' (distinct from Lua nil)
+    if item == nil or item == vim.NIL then
+      insert(buffer, 'null')
+      return
+    elseif item == vim.empty_dict then
+      insert(buffer, '{}')
+      return
+    end
+
     if type(item) == 'table' then
-      -- 1. TRULY EMPTY CHECK
+      -- 2. Determine if Table should be an Array [] or an Object {}
+      local is_array = false
+      local mt = getmetatable(item)
+
+      -- If decoded by Neovim, it likely has a __jsontype marker
+      if mt and mt.__jsontype == 'array' then is_array = true
+      -- If not marked, treat as array if it has indexed items or is a plain empty table
+      elseif #item > 0 or (next(item) == nil and mt == nil) then is_array = true end
+
+      -- 3. Handle Empty Structures Immediately
       if next(item) == nil then
-        -- In PIO metadata, most empty fields are intended to be arrays []
-        -- But we use {} as a safe JSON default for generic tables.
-        insert(buffer, '{}')
+        insert(buffer, is_array and '[]' or '{}')
         return
       end
 
-      -- 2. DETERMINE IF ARRAY OR OBJECT
-      -- A table is an array if it has a value at index 1
-      local is_array = item[1] ~= nil
       local opener = is_array and '[' or '{'
       local closer = is_array and ']' or '}'
-
       insert(buffer, opener .. '\n')
 
-      -- 3. SORT KEYS (Crucial for consistent SHA256 hashes)
+      -- 4. Key Management & Sorting
+      -- Sorting is mandatory for consistent SHA256 hashes across different systems
       local keys = {}
-      for k in pairs(item) do table.insert(keys, k) end
-      if not is_array then table.sort(keys) end
+      for k in pairs(item) do insert(keys, k) end
 
-      local first = true
-      for _, k in ipairs(keys) do
+      -- Sort object keys alphabetically
+      if not is_array then table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+      -- Ensure array indices [1, 2, 3] are processed in order
+      else table.sort(keys) end
+
+      -- 5. Iterate through items
+      for i, k in ipairs(keys) do
         local v = item[k]
-        if not first then insert(buffer, ',\n') end
+        if i > 1 then insert(buffer, ',\n') end -- Standard JSON comma placement
         insert(buffer, next_indent)
 
+        -- If it's an object, add the "key": prefix
         if not is_array then insert(buffer, '"' .. tostring(k) .. '": ') end
 
+        -- Recurse for nested tables
         format_item(v, current_level + 1)
-        first = false
       end
+
       insert(buffer, '\n' .. indent .. closer)
+
     elseif type(item) == 'string' then
-      -- Escape backslashes for Windows paths and quotes
-      insert(buffer, '"' .. item:gsub('[\\]+', '/'):gsub('"', '\\"') .. '"')
-    else insert(buffer, tostring(item)) end
+      -- 6. String Escaping & Path Normalization
+      -- A. Apply standard escapes (newline, tab, etc.)
+      local s = item:gsub('[\\"\b\f\n\r\t]', escapes)
+
+      -- B. Convert unprintable control characters to \u00xx format
+      s = s:gsub('[%z\1-\31]', function(c)
+        return string.format('\\u%04x', string.byte(c))
+      end)
+
+      -- C. Normalize Windows paths to Unix style
+      -- We flip double-backslashes (\\) to (/) so SHA256 matches across OSs
+      s = s:gsub('\\\\', '/')
+
+      insert(buffer, '"' .. s .. '"')
+
+    elseif type(item) == 'boolean' or type(item) == 'number' then
+      -- 7. Primitives
+      insert(buffer, tostring(item))
+    else
+      -- 8. Fallback for anything else
+      insert(buffer, '"' .. tostring(item) .. '"')
+    end
   end
 
+  -- Start recursion at level 0
   format_item(data, 0)
   return table.concat(buffer)
 end
