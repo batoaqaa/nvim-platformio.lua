@@ -651,10 +651,8 @@ function M.handlePioinit(result)
       -- %s      : Your message
       -- \27[0m  : Reset color
       -- \27[u   : Restore cursor back to the prompt
-
-      local ghost_msg = string.format('\27[s\r\27[A\27[K\27[33m%s\27[0m\27[u', msg)
-
-      vim.api.nvim_chan_send(trm.job_id, ghost_msg)
+      local safe_msg = string.format('\27[G\r\n\27[33m%s\27[0m\r\n', msg)
+      vim.api.nvim_chan_send(term.job_id, safe_msg)
 
       -- -- The leading space ' ' prevents some shells from saving it to history
       -- -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
