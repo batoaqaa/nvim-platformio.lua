@@ -1,4 +1,5 @@
-local isWindows = jit.os == 'Windows'
+local isWindows = vim.fn.has('win32') == 1 --jit.os == 'Windows'
+local isMac = vim.fn.has('mac') == 1
 
 ----------------------------------------------------------------------------------------
 -- INFO: Set options
@@ -38,12 +39,7 @@ vim.g.have_nerd_font = true
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
-if not isWindows then
-  vim.g.shell = '/bin/bash' -- or '/bin/zsh', '/usr/bin/fish', etc.
-  vim.g.shellcmdflag = '-c' -- Executes the command passed as a string
-  vim.g.shellpipe = '|' -- Pipes output of external commands
-  vim.g.shellredir = '> ' -- Redirects output of external commands
-else
+if isWindows then
   local pwsh = vim.fn.executable('pwsh') == 1 and 'pwsh' or 'powershell'
   vim.opt.shell = pwsh
   vim.opt.shellcmdflag =
@@ -52,7 +48,15 @@ else
   vim.opt.shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
   vim.opt.shellquote = ''
   vim.opt.shellxquote = ''
+
+--elseif vim.fn.has("mac") == 1 then
+else
+  vim.g.shell = '/bin/bash' -- or '/bin/zsh', '/usr/bin/fish', etc.
+  vim.g.shellcmdflag = '-c' -- Executes the command passed as a string
+  vim.g.shellpipe = '|' -- Pipes output of external commands
+  vim.g.shellredir = '> ' -- Redirects output of external commands
 end
+
 vim.hl = vim.highlight
 vim.api.nvim_set_hl(0, 'PioStatus', {
   fg = '#e0af68', -- Dark text
@@ -163,8 +167,52 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
 ---[[
+local function setup_xdg_paths()
+  local is_win = vim.fn.has('win32') == 1
+  local is_mac = vim.fn.has('mac') == 1
+  local home = vim.env.HOME or vim.env.USERPROFILE or ''
+  local app_name = 'nvim-pio' -- pick a temp root
+
+  -- Helper to ensure we never gsub a nil and always use forward slashes
+  local function normalize(path)
+    return path:gsub('\\', '/')
+  end
+
+  -- 1. XDG_CONFIG_HOME (Settings/Configs)
+  if not vim.env.XDG_CONFIG_HOME then
+    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local')) or is_mac and (home .. '/Library/Preferences') or (home .. '/.config')
+    vim.env.XDG_CONFIG_HOME = normalize(vim.fs.joinpath(path, app_name))
+  end
+
+  -- 2. XDG_DATA_HOME (Large data/Databases)
+  if not vim.env.XDG_DATA_HOME then
+    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
+      or is_mac and (home .. '/Library/Application Support')
+      or (home .. '/.local/share')
+    vim.env.XDG_DATA_HOME = normalize(vim.fs.joinpath(path, app_name))
+  end
+
+  -- 3. XDG_STATE_HOME (Logs/History/Persistent State)
+  if not vim.env.XDG_STATE_HOME then
+    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
+      or is_mac and (home .. '/Library/Application Support')
+      or (home .. '/.local/state')
+    vim.env.XDG_STATE_HOME = normalize(vim.fs.joinpath(path, app_name))
+  end
+
+  -- 4. XDG_CACHE_HOME (Temporary/Disposable data)
+  if not vim.env.XDG_CACHE_HOME then
+    local path = is_win and (vim.env.TEMP or (home .. '/AppData/Local/Temp')) or is_mac and (home .. '/Library/Caches') or (home .. '/.cache')
+    vim.env.XDG_CACHE_HOME = normalize(vim.fs.joinpath(path, app_name))
+  end
+end
+
+setup_xdg_paths()
+---]]
+--[[
 local app_name = 'nvim-pio' -- pick a temp root
 local home = isWindows and vim.env.LOCALAPPDATA:gsub('\\', '/') or vim.env.HOME
+-- local home = vim.env.HOME or vim.env.USERPROFILE or ""
 home = home .. '/' .. app_name
 -- local home = vim.loop.os_tmpdir():gsub('\\', '/') .. '/' .. app_name
 
