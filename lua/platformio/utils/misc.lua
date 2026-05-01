@@ -76,20 +76,15 @@ end
 
 ------------------------------------------------------
 --INFO:
---- stylua: ignore
+-- stylua: ignore
 function M.deleteFile(path)
   local file = vim.fn.fnamemodify(path, ':t')
   if vim.fn.filereadable(path) == 1 then
     local success = vim.fn.delete(path)
 
-    if success == 0 then
-      vim.notify('PlatformIO: ' .. file .. ' file removed', vim.log.levels.INFO)
-    else
-      vim.notify('PlatformIO: Failed to delete ' .. file, vim.log.levels.ERROR)
-    end
-  else
-    vim.notify('PlatformIO: ' .. file .. ' file not found', vim.log.levels.WARN)
-  end
+    if success == 0 then vim.notify('PlatformIO: ' .. file .. ' file removed', vim.log.levels.INFO)
+    else vim.notify('PlatformIO: Failed to delete ' .. file, vim.log.levels.ERROR) end
+  else vim.notify('PlatformIO: ' .. file .. ' file not found', vim.log.levels.WARN) end
 end
 
 ------------------------------------------------------

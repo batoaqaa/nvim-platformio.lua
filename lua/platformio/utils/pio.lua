@@ -590,7 +590,6 @@ function M.handlePioinit(result)
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      vim.misc.deleteFile(vim.fs.joinpath(vim.vim.g.platformioRootDir, '.ccls'))
 
       -- \27[s   : Save current cursor position (the prompt)
       -- \r      : Go to start of line
@@ -614,6 +613,7 @@ function M.handlePioinit(result)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init: ')
     end)
+    vim.misc.deleteFile(vim.fs.joinpath(vim.vim.g.platformioRootDir, '.ccls'))
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
