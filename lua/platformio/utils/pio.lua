@@ -649,17 +649,12 @@ function M.handlePioinit(result)
       -- %s      : Your message
       -- \27[0m  : Reset color
       -- \27[u   : Restore cursor back to the prompt
-
       -- IMPORTANT: No \n at the end, so it doesn't execute
       -- local msg = '************ Please wait for project Initialization to finish ************'
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      vim.notify('Project Initialization in Progress...', vim.log.levels.INFO, {
-        title = 'PlatformIO',
-        timeout = 3000, -- Auto-close in 3 seconds
-      })
-
+      vim.misc.showMessage('************ Project Initializing ************', 5000)
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
