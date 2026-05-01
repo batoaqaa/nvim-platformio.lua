@@ -665,15 +665,13 @@ function M.handlePioinit(result)
     end)
     M.queue = {}
     term.stdout_callback = nil
-    term:close()
-    -- trm:close()
+    trm:close()
     _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
-    term:close()
-    -- trm:close()
+    trm:close()
     _G.metadata.isBusy = false
   end
 end
