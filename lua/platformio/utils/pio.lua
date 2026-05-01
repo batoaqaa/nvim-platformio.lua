@@ -646,11 +646,16 @@ function M.handlePioinit(result)
       -- 3. Write-Host outputs the text directly
       -- 4. \n executes it
       local msg = '************ Please wait for project Initialization to finish ************'
+      -- \r : Moves cursor to the start of the current line (over prompt)
+      -- \27[K : ANSI Escape code to "Clear from cursor to end of line"
+      -- \r\n : Move to a fresh new line so we don't mess up the current prompt
+      local stealth_msg = string.format('\r\27[K%s\r\n', msg)
+      vim.api.nvim_chan_send(trm.job_id, stealth_msg)
 
-      -- The leading space ' ' prevents some shells from saving it to history
-      -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
-      local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
-      vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
+      -- -- The leading space ' ' prevents some shells from saving it to history
+      -- -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
+      -- local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
+      -- vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
 
       -- local msg = '************ Please wait for project Initialization to finish ************'
       -- -- ToggleTerm objects have a .bufnr property and a .job_id property
