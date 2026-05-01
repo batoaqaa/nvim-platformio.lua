@@ -144,7 +144,6 @@ function M.ToggleTerminal(command, direction)
   local orig_window = prev.orig_window
 
   if string.find(command, ' monitor') then
-    prev.mon = prev.mon or {} --????
     if prev.mon then -- INFO: if previous monitor terminal already opened ==> reopen
       prev.mon.display_name = 'piomon:' .. orig_window
       local win_type = vim.fn.win_gettype(prev.mon.window)
@@ -161,7 +160,6 @@ function M.ToggleTerminal(command, direction)
     pioOpts.id = 98
     pioOpts.on_stdout = nil
   else -- INFO: if previous cli terminal already opened ==> reopen
-    prev.cli = prev.cli or {} --????
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
       local win_type = vim.fn.win_gettype(prev.cli.window)
@@ -336,6 +334,7 @@ function M.ToggleTerminal(command, direction)
       send(terminal, command)
     end
   end, 50) -- 50ms delay, adjust as needed sgget
+  return terminal
 end
 
 return M

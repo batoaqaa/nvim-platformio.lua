@@ -567,6 +567,7 @@ M.run_sequence = function(tasks)
   vim.schedule(function() if callBack then callBack('INIT') end end)
 end
 
+local trm
 ------------------------------------------------------
 -- Handle after pioinit execution
 -- =============================================================================
@@ -631,7 +632,7 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
@@ -643,8 +644,8 @@ function M.handlePioinit(result)
       local msg = '************ Please wait for project Initialization to finish ************'
 
       -- ToggleTerm objects have a .bufnr property and a .job_id property
-      if term and term.bufnr then
-        local chan_id = vim.b[term.bufnr].terminal_job_id
+      if trm and trm.bufnr then
+        local chan_id = vim.b[trm.bufnr].terminal_job_id
         if chan_id then
           vim.api.nvim_chan_send(chan_id, '\r\n' .. msg .. '\r\n')
         end
