@@ -590,7 +590,7 @@ function M.handlePioinit(result)
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      vim.misc.deleteFile(vim.misc.joinPath(vim.vim.g.platformioRootDir, '.ccl'))
+      vim.misc.deleteFile(vim.misc.joinPath(vim.vim.g.platformioRootDir, '.ccls'))
 
       -- \27[s   : Save current cursor position (the prompt)
       -- \r      : Go to start of line
