@@ -633,6 +633,7 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
+    win_id = vim.misc.showMessage('************ Project Initializing ************')
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
@@ -655,7 +656,6 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      win_id = vim.misc.showMessage('************ Project Initializing ************')
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
@@ -667,6 +667,7 @@ function M.handlePioinit(result)
     term.stdout_callback = nil
     _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
     _G.metadata.isBusy = false
