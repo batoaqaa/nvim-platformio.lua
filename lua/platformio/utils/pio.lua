@@ -127,12 +127,12 @@ end
 function M.fetch_metadata(callback, env, from, attempts)
   local msg = (type(from)=='string' and from ~= '') and from or 'PIO: '
   local meta = _G.metadata
-  print(env)
   local active_env = env or meta.active_env
   if not active_env or active_env == '' then
     return
   end
 
+  print(active_env)
   -- Set up file paths
   local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build')
   local build_env_dir = vim.misc.joinPath(build_dir, active_env)
@@ -220,6 +220,7 @@ function M.fetch_metadata(callback, env, from, attempts)
     end
   end
 
+  vim.notify(msg .. 'Metadata syncing .....', vim.log.levels.INFO)
   ---------------------------------------------------------
   -- STEP 3: Auto-Initialize (If files project.checksum and idedata.json are missing)
   ---------------------------------------------------------
