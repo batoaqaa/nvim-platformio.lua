@@ -69,7 +69,6 @@ function M.run_compiledb(target)
   --   end
   -- })
 
-  print(env)
   -- if env and env ~= '' then
     vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
     -- vim.schedule(function()
