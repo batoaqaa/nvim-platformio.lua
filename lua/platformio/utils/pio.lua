@@ -641,15 +641,26 @@ function M.handlePioinit(result)
       local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
+      -- 1. \r clears the current prompt line visually
+      -- 2. Clear-Host or [Console]::CursorLeft=0 resets the line
+      -- 3. Write-Host outputs the text directly
+      -- 4. \n executes it
       local msg = '************ Please wait for project Initialization to finish ************'
 
-      -- ToggleTerm objects have a .bufnr property and a .job_id property
-      if trm and trm.bufnr then
-        local chan_id = vim.b[trm.bufnr].terminal_job_id
-        if chan_id then
-          vim.api.nvim_chan_send(chan_id, '\r\n' .. msg .. '\r\n')
-        end
-      end
+      -- The leading space ' ' prevents some shells from saving it to history
+      -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
+      local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
+
+      vim.api.nvim_chan_send(term.job_id, '\r' .. cmd)
+
+      -- local msg = '************ Please wait for project Initialization to finish ************'
+      -- -- ToggleTerm objects have a .bufnr property and a .job_id property
+      -- if trm and trm.bufnr then
+      --   local chan_id = vim.b[trm.bufnr].terminal_job_id
+      --   if chan_id then
+      --     vim.api.nvim_chan_send(chan_id, '\r\n' .. msg .. '\r\n')
+      --   end
+      -- end
       -- vim.api.nvim_chan_send(vim.b[term:bufnri(term)].terminal_job_id, '\r\n' .. msg .. '\r\n')
 
       -- term.ToggleTerminal('echo "************ Please wait for project Initialization to finish ************"', 'float')
