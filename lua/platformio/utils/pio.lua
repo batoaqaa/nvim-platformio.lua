@@ -651,7 +651,7 @@ function M.handlePioinit(result)
       -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
       local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
 
-      vim.api.nvim_chan_send(term.job_id, '\r' .. cmd)
+      vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
 
       -- local msg = '************ Please wait for project Initialization to finish ************'
       -- -- ToggleTerm objects have a .bufnr property and a .job_id property
