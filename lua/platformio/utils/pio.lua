@@ -641,8 +641,6 @@ function M.handlePioinit(result)
       local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
-      local msg = '************ Please wait for project Initialization to finish ************'
-
       -- \27[s   : Save current cursor position (the prompt)
       -- \r      : Go to start of line
       -- \27[A   : Move cursor UP one line (to space above prompt)
@@ -653,25 +651,15 @@ function M.handlePioinit(result)
       -- \27[u   : Restore cursor back to the prompt
 
       -- IMPORTANT: No \n at the end, so it doesn't execute
-      local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
-      vim.api.nvim_chan_send(trm.job_id, clean_msg)
-
-      -- -- The leading space ' ' prevents some shells from saving it to history
-      -- -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
-      -- local cmd = string.format(" [Console]::CursorLeft=0; Write-Host '%s'\n", msg)
-      -- vim.api.nvim_chan_send(trm.job_id, '\r' .. cmd)
-
       -- local msg = '************ Please wait for project Initialization to finish ************'
-      -- -- ToggleTerm objects have a .bufnr property and a .job_id property
-      -- if trm and trm.bufnr then
-      --   local chan_id = vim.b[trm.bufnr].terminal_job_id
-      --   if chan_id then
-      --     vim.api.nvim_chan_send(chan_id, '\r\n' .. msg .. '\r\n')
-      --   end
-      -- end
-      -- vim.api.nvim_chan_send(vim.b[term:bufnri(term)].terminal_job_id, '\r\n' .. msg .. '\r\n')
+      -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
+      -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      -- term.ToggleTerminal(msg, 'float')
+      vim.notify('Project Initialization in Progress...', vim.log.levels.INFO, {
+        title = 'PlatformIO',
+        timeout = 3000, -- Auto-close in 3 seconds
+      })
+
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
