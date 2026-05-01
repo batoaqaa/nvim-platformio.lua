@@ -177,12 +177,16 @@ function M.fetch_metadata(callback, env, from, attempts)
 
     return true
   end
+
+  --INFO:
+  --Generate idedata.json
+  ---------------------------------------------------------
   local function buildIdedata()
-    vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
+    vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.INFO)
     vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
       vim.schedule(function()
         if obj.code == 0 then
-          vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
+          vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.INFO)
           M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
         else
           vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
