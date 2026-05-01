@@ -49,6 +49,8 @@ local last_mtime = 0
 function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
   if target.isBusy then return end
+  local env = vim.pio.get_active__env()
+  if not env then return end
   target.isBusy = true
   _G.metadata.isBusy = true
 
@@ -63,7 +65,6 @@ function M.run_compiledb(target)
   --   end
   -- })
 
-  local env = vim.pio.get_active__env()
   print(env)
   -- if env and env ~= '' then
     vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
