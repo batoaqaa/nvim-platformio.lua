@@ -485,8 +485,7 @@ function M.boilerplate_gen(framework, src_path, filename)
   filename = filename or framework
   local entry = boilerplate[framework]
   if not entry then return '' end
-  --
-  local file_path = src_path .. '/' .. filename
+  local file_path = vim.fs.normalize(src_path .. '/' .. filename)
   print(file_path)
   if vim.uv.fs_stat(file_path) then
     if not entry.rewrite then
