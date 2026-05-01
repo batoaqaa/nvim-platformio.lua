@@ -33,7 +33,7 @@ boilerplate['platformio.ini'] = {
 core_dir = %s
 platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
-libdeps_dir = ./external_libs
+;libdeps_dir = ./external_libs
 
 default_envs = 
 ;default_envs = uno, nodemcu
@@ -53,9 +53,9 @@ extra_scripts =
 
 lib_ldf_mode = chain   ;Library dependencies Finder ldf
 
-[env:seeed_xiao_esp32c3]
-platform = espressif32
-board = seeed_xiao_esp32c3
+;[env:seeed_xiao_esp32c3]
+;platform = espressif32
+;board = seeed_xiao_esp32c3
 
 ]],
   content = function(self)
@@ -170,6 +170,27 @@ boilerplate['.clangd_config'] = {
 --   External:
 --     File: .clangd_index
 
+-- CompileFlags:
+-- Add:
+--   - "-xc++"
+--   - "-std=c++17"
+-- Remove:
+--   - "-Winclude-next-outside-header"
+--   - "-fno-fat-lto-objects"
+--   - "-fno%%-fat%%-lto%%-objects"
+--   - "-fno%%-canonical%%-system%%-headers"
+--   - "-misc-definitions-in-headers"
+--   - "-fno-tree-switch-conversion"
+--   - "-mtext-section-literals"
+--   - "-mlong-calls"
+--   - "-mlongcalls"
+--   - "-fstrict-volatile-bitfields"
+--   - "-free*"
+--   - "-fipa-pta*"
+--   - "-march=*"
+--   - "-mabi=*"
+--   - "-mcpu=*"
+
 -- INFO: .clangd
 -- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
@@ -179,26 +200,6 @@ boilerplate['.clangd'] = {
   -- - "-std=gnu++17"
   -- template = [[
   content = [[
-CompileFlags:
-  Add:
-    - "-xc++"
-    - "-std=c++17"
-  Remove:
-    - "-Winclude-next-outside-header"
-    - "-fno-fat-lto-objects"
-    - "-fno%%-fat%%-lto%%-objects"
-    - "-fno%%-canonical%%-system%%-headers"
-    - "-misc-definitions-in-headers"
-    - "-fno-tree-switch-conversion"
-    - "-mtext-section-literals"
-    - "-mlong-calls"
-    - "-mlongcalls"
-    - "-fstrict-volatile-bitfields"
-    - "-free*"
-    - "-fipa-pta*"
-    - "-march=*"
-    - "-mabi=*"
-    - "-mcpu=*"
 Diagnostics:
   Suppress:
     - "misc-definitions-in-headers"
