@@ -170,9 +170,6 @@ boilerplate['.clangd_config'] = {
 --   External:
 --     File: .clangd_index
 
--- Add:
---   - "-xc++"
---   - "-std=c++17"
 -- INFO: .clangd
 -- boilerplate['.clangd'] = {
 boilerplate['.clangd'] = {
@@ -183,6 +180,9 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
+  Add:
+    - "-xc++"
+    - "-std=c++17"
   Remove:
     - "-Winclude-next-outside-header"
     - "-fno-fat-lto-objects"
