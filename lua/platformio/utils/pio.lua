@@ -179,7 +179,7 @@ function M.fetch_metadata(callback, env, from, attempts)
   end
 
   ---------------------------------------------------------
-  -- STEP 1: Fast Checksum Check
+  -- STEP 1: Fast Checksum Check (project.checksum and idedata.json)
   ---------------------------------------------------------
   local ok, current_checksum = vim.misc.readFile(checksum_file)
   if ok and (type(current_checksum) == 'string' and current_checksum ~= '') then
@@ -220,11 +220,11 @@ function M.fetch_metadata(callback, env, from, attempts)
   end
 
   ---------------------------------------------------------
-  -- STEP 3: Auto-Initialize (If files are missing)
+  -- STEP 3: Auto-Initialize (If files project.checksum and idedata.json are missing)
   ---------------------------------------------------------
   if not ok or not current_checksum then
     vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
-    vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env }, { text = true }, function(obj)
+    vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
       vim.schedule(function()
         if obj.code == 0 then
           vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
