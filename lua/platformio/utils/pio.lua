@@ -641,16 +641,20 @@ function M.handlePioinit(result)
       local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
-      -- 1. \r clears the current prompt line visually
-      -- 2. Clear-Host or [Console]::CursorLeft=0 resets the line
-      -- 3. Write-Host outputs the text directly
-      -- 4. \n executes it
       local msg = '************ Please wait for project Initialization to finish ************'
-      -- \r : Moves cursor to the start of the current line (over prompt)
-      -- \27[K : ANSI Escape code to "Clear from cursor to end of line"
-      -- \r\n : Move to a fresh new line so we don't mess up the current prompt
-      local stealth_msg = string.format('\r\27[K%s\r\n', msg)
-      vim.api.nvim_chan_send(trm.job_id, stealth_msg)
+
+      -- \27[s   : Save current cursor position (the prompt)
+      -- \r      : Go to start of line
+      -- \27[A   : Move cursor UP one line (to space above prompt)
+      -- \27[K   : Clear that line
+      -- \27[33m : Color Yellow (optional)
+      -- %s      : Your message
+      -- \27[0m  : Reset color
+      -- \27[u   : Restore cursor back to the prompt
+
+      local ghost_msg = string.format('\27[s\r\27[A\27[K\27[33m%s\27[0m\27[u', msg)
+
+      vim.api.nvim_chan_send(trm.job_id, ghost_msg)
 
       -- -- The leading space ' ' prevents some shells from saving it to history
       -- -- [Console]::CursorLeft=0 moves the cursor back to hide the "echo" part
