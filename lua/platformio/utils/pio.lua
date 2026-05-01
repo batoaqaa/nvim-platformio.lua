@@ -660,6 +660,7 @@ function M.handlePioinit(result)
       pio_refresh(function()
         lsp_restart('clangd')
         vim.misc.closeMessage(win_id)
+        term.toggle()
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init: ')
     end)
@@ -668,6 +669,7 @@ function M.handlePioinit(result)
     _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     vim.misc.closeMessage(win_id)
+    term.toggle()
     M.queue = {}
     term.stdout_callback = nil
     _G.metadata.isBusy = false
