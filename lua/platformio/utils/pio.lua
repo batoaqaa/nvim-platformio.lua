@@ -641,7 +641,7 @@ function M.handlePioinit(result)
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
       local msg = '************ Please wait for project Initialization to finish ************'
-      vim.api.nvim_chan_send(vim.b[term.bufnr].terminal_job_id, '\r\n' .. msg .. '\r\n')
+      vim.api.nvim_chan_send(vim.b[term:bufnri(term)].terminal_job_id, '\r\n' .. msg .. '\r\n')
 
       -- term.ToggleTerminal('echo "************ Please wait for project Initialization to finish ************"', 'float')
       local pio_refresh = require('platformio.pio_setup').pio_refresh

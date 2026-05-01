@@ -40,8 +40,22 @@ function M.enter()
   end
 end
 
+-- 1. Tell the LSP what a "Terminal" object looks like (simplified)
+---@class Terminal
+---@field id number
+---@field bufnr number
+---@field window number
+---@field close function
+---@field toggle function
 -- INFO: get previous window
 local function getPreviousWindow(orig_window)
+  -- 2. Define your context class
+  ---@class PioPrevContext
+  ---@field term Terminal|nil  -- Handle for horizontal terminal
+  ---@field mon Terminal|nil
+  ---@field cli Terminal|nil
+  ---@field float boolean      -- flag float terminal
+  ---@field orig_window number|nil
   local prev = {
     orig_window = orig_window,
     term = nil, --active terminal
@@ -130,6 +144,7 @@ function M.ToggleTerminal(command, direction)
   local orig_window = prev.orig_window
 
   if string.find(command, ' monitor') then
+    prev.mon = prev.mon or {} --????
     if prev.mon then -- INFO: if previous monitor terminal already opened ==> reopen
       prev.mon.display_name = 'piomon:' .. orig_window
       local win_type = vim.fn.win_gettype(prev.mon.window)
@@ -146,6 +161,7 @@ function M.ToggleTerminal(command, direction)
     pioOpts.id = 98
     pioOpts.on_stdout = nil
   else -- INFO: if previous cli terminal already opened ==> reopen
+    prev.cli = prev.cli or {} --????
     if prev.cli then
       prev.cli.display_name = 'piocli:' .. orig_window
       local win_type = vim.fn.win_gettype(prev.cli.window)
@@ -312,7 +328,7 @@ function M.ToggleTerminal(command, direction)
   -- INFO: create new terminal
   local terminal = require('toggleterm.terminal').Terminal:new(termConfig)
   if prev.term and prev.float then
-    prev.term:close()
+    prev.term.close()
   end
   terminal:toggle()
   vim.defer_fn(function()
