@@ -51,7 +51,16 @@ function M.jsonFormat(root_data)
 
     if type(val) == 'table' then
       -- 1. Determine if Array or Object
-      local is_array = (#val > 0) or (next(val) == nil)
+      local is_array = false
+
+      -- Check if it's explicitly marked as an array by the Neovim parser
+      local mt = getmetatable(val)
+      if mt and mt.__jsontype == 'array' then
+        is_array = true
+      -- If not marked, check if it has indexed items or is literally an empty table
+      elseif #val > 0 or next(val) == nil then
+        is_array = true
+      end
 
       if curr.stage == 'start' then
         table.insert(buffer, (is_array and '[' or '{') .. '\n')
@@ -89,7 +98,7 @@ function M.jsonFormat(root_data)
     else
       -- 4. Primitives (String, Number, Bool, Nil)
       local output = ''
-      if val == nil then output = 'null'
+      if val == nil or val == vim.NIL then output = 'null'
       elseif type(val) == 'boolean' then output = tostring(val)
       elseif type(val) == 'string' then
         -- Normalize Windows paths to Unix for cross-platform checksums
