@@ -641,8 +641,6 @@ function M.handlePioinit(result)
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
       -- \27[s   : Save current cursor position (the prompt)
       -- \r      : Go to start of line
@@ -659,6 +657,8 @@ function M.handlePioinit(result)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
+        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         lsp_restart('clangd')
         vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
