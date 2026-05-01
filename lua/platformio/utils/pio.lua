@@ -616,6 +616,7 @@ function M.handlePioinitDb(result)
   end
 end
 
+local win_id
 ----------------------------------------------------
 -- Handle after pioinit execution
 function M.handlePioinit(result)
@@ -632,7 +633,7 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
-    trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
@@ -654,10 +655,11 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      vim.misc.showMessage('************ Project Initializing ************', 5000)
+      win_id = vim.misc.showMessage('************ Project Initializing ************')
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         lsp_restart('clangd')
+        vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init: ')
     end)
