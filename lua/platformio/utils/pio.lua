@@ -132,7 +132,6 @@ function M.fetch_metadata(callback, env, from, attempts)
     return
   end
 
-  print(active_env)
   -- Set up file paths
   local build_dir = vim.misc.joinPath(vim.uv.cwd(), '.pio', 'build')
   local build_env_dir = vim.misc.joinPath(build_dir, active_env)
@@ -178,6 +177,21 @@ function M.fetch_metadata(callback, env, from, attempts)
 
     return true
   end
+  local function buildIdedata()
+    vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
+    vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
+      vim.schedule(function()
+        if obj.code == 0 then
+          vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
+          M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
+        else
+          vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
+        end
+      end)
+    end)
+    return true
+
+  end
 
   ---------------------------------------------------------
   -- STEP 1: Fast Checksum Check (project.checksum and idedata.json)
@@ -217,27 +231,29 @@ function M.fetch_metadata(callback, env, from, attempts)
 
         return true
       end
+    -- else
     end
+  -- else
   end
+  buildIdedata()
 
-  vim.notify(msg .. 'Metadata syncing .....', vim.log.levels.INFO)
   ---------------------------------------------------------
   -- STEP 3: Auto-Initialize (If files project.checksum and idedata.json are missing)
   ---------------------------------------------------------
-  if not ok or not current_checksum then
-    vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
-    vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
-      vim.schedule(function()
-        if obj.code == 0 then
-          vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
-          M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
-        else
-          vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
-        end
-      end)
-    end)
-    return
-  end
+  -- if not ok or not current_checksum then
+  --   vim.notify(msg .. 'Initializing project metadata...', vim.log.levels.WARN)
+  --   vim.system({ 'pio', 'run', '-t', 'idedata', '-e', active_env, '-s' }, { text = true }, function(obj)
+  --     vim.schedule(function()
+  --       if obj.code == 0 then
+  --         vim.notify(msg .. 'Initializing project metadata success.', vim.log.levels.ERROR)
+  --         M.fetch_metadata(callback, active_env, from, attempts - 1) -- Recursive call after files created
+  --       else
+  --         vim.notify(msg .. 'Initialization failed. Build project manually.', vim.log.levels.ERROR)
+  --       end
+  --     end)
+  --   end)
+  --   return
+  -- end
 
   ---------------------------------------------------------
   -- STEP 4: Standard CLI Fallback (The Slow Path)
