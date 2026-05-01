@@ -139,17 +139,6 @@ keymap('n', '<leader>bd', function()
   pcall(vim.api.nvim_buf_delete, bufnr, { force = false })
 end, { desc = '[D]elete Buffer' })
 
--- keymap('n', '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', { desc = 'Delete Non-Pinned Buffers' })
--- keymap('n', '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', { desc = 'Delete Other Buffers' })
--- keymap('n', '<leader>br', '<Cmd>BufferLineCloseRight<CR>', { desc = 'Delete Buffers to the Right' })
--- keymap('n', '<leader>bl', '<Cmd>BufferLineCloseLeft<CR>', { desc = 'Delete Buffers to the Left' })
--- keymap('n', '<S-h>', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
--- keymap('n', '<S-l>', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
--- keymap('n', '[b', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Prev Buffer' })
--- keymap('n', ']b', '<cmd>BufferLineCycleNext<cr>', { desc = 'Next Buffer' })
--- keymap('n', '[B', '<cmd>BufferLineMovePrev<cr>', { desc = 'Move buffer prev' })
--- keymap('n', ']B', '<cmd>BufferLineMoveNext<cr>', { desc = 'Move buffer next' })
-
 keymap('n', '<leader>e', '<cmd>Neotree document_symbols<CR>', { desc = 'NeoTreeToggle' })
 keymap('n', '\\', '<cmd>Neotree toggle<CR>', { desc = 'NeoTreeToggle' })
 -- keymap('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'NvimTreeToggle' })
@@ -168,8 +157,8 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 ---[[
 local function setup_xdg_paths()
-  local is_win = vim.fn.has('win32') == 1
-  local is_mac = vim.fn.has('mac') == 1
+  -- local isWindows = vim.fn.has('win32') == 1
+  -- local isMac = vim.fn.has('mac') == 1
   local home = vim.env.HOME or vim.env.USERPROFILE or ''
   local app_name = 'nvim-pio' -- pick a temp root
 
@@ -180,29 +169,29 @@ local function setup_xdg_paths()
 
   -- 1. XDG_CONFIG_HOME (Settings/Configs)
   if not vim.env.XDG_CONFIG_HOME then
-    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local')) or is_mac and (home .. '/Library/Preferences') or (home .. '/.config')
+    local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local')) or isMac and (home .. '/Library/Preferences') or (home .. '/.config')
     vim.env.XDG_CONFIG_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 2. XDG_DATA_HOME (Large data/Databases)
   if not vim.env.XDG_DATA_HOME then
-    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
-      or is_mac and (home .. '/Library/Application Support')
+    local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
+      or isMac and (home .. '/Library/Application Support')
       or (home .. '/.local/share')
     vim.env.XDG_DATA_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 3. XDG_STATE_HOME (Logs/History/Persistent State)
   if not vim.env.XDG_STATE_HOME then
-    local path = is_win and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
-      or is_mac and (home .. '/Library/Application Support')
+    local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
+      or isMac and (home .. '/Library/Application Support')
       or (home .. '/.local/state')
     vim.env.XDG_STATE_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 4. XDG_CACHE_HOME (Temporary/Disposable data)
   if not vim.env.XDG_CACHE_HOME then
-    local path = is_win and (vim.env.TEMP or (home .. '/AppData/Local/Temp')) or is_mac and (home .. '/Library/Caches') or (home .. '/.cache')
+    local path = isWindows and (vim.env.TEMP or (home .. '/AppData/Local/Temp')) or isMac and (home .. '/Library/Caches') or (home .. '/.cache')
     vim.env.XDG_CACHE_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 end
@@ -307,6 +296,7 @@ local plugins = {
           hide_gitignored = true,
           hide_by_name = {
             '.pio',
+            '.cache',
           },
           never_show = { -- Add any massive folders here
             -- '.cache',
@@ -317,13 +307,6 @@ local plugins = {
           },
         },
       },
-      -- filesystem = {
-      --   hijack_netrw_behavior = 'open_default',
-      --   use_libuv_file_watcher = true, -- This will use the OS level file watchers to detect changes
-      --   filtered_items = {
-      --     never_show = { '.cache', '.git', '.pio' },
-      --   },
-      -- },
     },
   },
 
