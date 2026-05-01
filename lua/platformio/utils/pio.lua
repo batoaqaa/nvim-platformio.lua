@@ -631,7 +631,8 @@ function M.handlePioinit(result)
 
     boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+    print(vim.env.XDG_CONFIG_HOME)
+    boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
     win_id = vim.misc.showMessage('************ Project Initializing ************')
     trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')
