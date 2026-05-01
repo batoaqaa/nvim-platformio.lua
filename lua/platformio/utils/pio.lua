@@ -611,16 +611,17 @@ function M.handlePioinit(result)
 
     term.ToggleTerminal(table.remove(M.queue, 1), 'float')
   elseif result == 'DONE' then -- result of the last command
-    vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
-    vim.notify('PIO init: Done', vim.log.levels.INFO)
-    commandPassed = commandPassed + 1
-    vim.misc.gitignore_lsp_configs('compile_commands.json')
-    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    vim.schedule(function()
+      vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
+      vim.notify('PIO init: Done', vim.log.levels.INFO)
+      vim.misc.gitignore_lsp_configs('compile_commands.json')
+      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
-    local pio_refresh = require('platformio.pio_setup').pio_refresh
-    pio_refresh('PIO init: ', function()
-      lsp_restart('clangd')
+      local pio_refresh = require('platformio.pio_setup').pio_refresh
+      pio_refresh(function()
+        lsp_restart('clangd')
+      end, 'PIO init: ')
     end)
     M.queue = {}
     term.stdout_callback = nil
