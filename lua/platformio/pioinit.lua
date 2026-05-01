@@ -62,7 +62,7 @@ local function pick_framework(board_details)
           pio.run_sequence({
             cmnds = {
               'pio project init --board ' .. board_details['id'] .. ' -O "framework=' .. pio.selected_framework .. '"',
-              'pio run -t compiledb',
+              -- 'pio run -t compiledb',
             },
             cb = pio.handlePioinit,
           })

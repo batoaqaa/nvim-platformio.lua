@@ -593,6 +593,45 @@ function M.handlePioinitDb(result)
   end
 end
 
+----------------------------------------------------
+-- Handle after pioinit execution
+function M.handlePioinit(result)
+  if result == 'INIT' then
+    local boilerplate = require('platformio.boilerplate')
+    local boilerplate_gen = boilerplate.boilerplate_gen
+
+    boilerplate.core_dir = _G.metadata.core_dir
+    boilerplate_gen([[platformio.ini]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clang-format]], vim.g.platformioRootDir)
+
+    boilerplate_gen([[.clangd]], vim.g.platformioRootDir)
+    -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+    -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
+
+    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+  elseif result == 'DONE' then -- result of the last command
+    vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
+    vim.notify('PIO init: Done', vim.log.levels.INFO)
+    commandPassed = commandPassed + 1
+    vim.misc.gitignore_lsp_configs('compile_commands.json')
+    local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+    boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+
+    local pio_refresh = require('platformio.pio_setup').pio_refresh
+    pio_refresh('PIO init: ', function()
+      lsp_restart('clangd')
+    end)
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
+  elseif result == 'FAIL' then
+    M.queue = {}
+    term.stdout_callback = nil
+    _G.metadata.isBusy = false
+  end
+end
+
 ------------------------------------------------------
 -- Handle after piolib execution
 -- =============================================================================
