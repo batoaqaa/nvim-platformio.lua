@@ -180,12 +180,11 @@ boilerplate['.clangd'] = {
   -- - "-std=gnu++17"
   -- template = [[
   content = [[
-# 1. Global Project Rules
 CompileFlags:
   BuiltinHeaders: QueryDriver
   Add:
-    - "-xc++"
     - "-std=gnu++17"
+    - "-xc++-header"
   Remove: 
     - "-fno-tree-switch-conversion"
     - "-fno-fat-lto-objects"
@@ -210,14 +209,6 @@ Diagnostics:
   ClangTidy:
     Remove: ["readability-*", "modernize-*", "bugprone-*", "cert-err58-cpp"]
 
----
-# 2. Specific Rule for Headers (The fix for your pragma error)
-If:
-  PathMatch: [.*\.h, .*\.hpp]
-CompileFlags:
-  Add:
-    - "-x"
-    - "c++-header"
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
