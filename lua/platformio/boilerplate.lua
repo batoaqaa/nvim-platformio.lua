@@ -180,12 +180,10 @@ boilerplate['.clangd'] = {
   -- - "-std=gnu++17"
   -- template = [[
   content = [[
+---
 CompileFlags:
-  BuiltinHeaders: QueryDriver
-  Add:
-    - "-std=gnu++17"
-    - "-xc++-header"
   Remove: 
+    - "-Wunknown-warning-option"
     - "-fno-tree-switch-conversion"
     - "-fno-fat-lto-objects"
     - "-fno-canonical-system-headers"
@@ -196,7 +194,8 @@ CompileFlags:
     - "-mabi=.*"
     - "-mcpu=.*"
     - "-fipa-pta.*"
-
+  Add:
+    - "-Wno-pragma-system-header-outside-header"
 Diagnostics:
   Suppress: 
     - "pp_file_not_found"
@@ -204,11 +203,9 @@ Diagnostics:
     - "pp_included_file_not_found"
     - "pp_including_mainfile_in_preamble"
     - "unused-includes"
-    - "pragma_system_header_ignored"
     - "misc-definitions-in-headers"
   ClangTidy:
     Remove: ["readability-*", "modernize-*", "bugprone-*", "cert-err58-cpp"]
-
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
