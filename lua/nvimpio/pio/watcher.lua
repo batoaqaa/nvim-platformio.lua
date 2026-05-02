@@ -262,7 +262,7 @@ end
 --stylua: ignore
 --=============================================================================
 function M.init()
-  local config = require('platformio').config
+  local config = require('nvimpio').config
   if config.lspClangd.enabled == true then
     vim.notify('PIO start: initialize', vim.log.levels.INFO)
 

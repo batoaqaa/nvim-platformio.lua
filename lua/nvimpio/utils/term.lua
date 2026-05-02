@@ -5,7 +5,7 @@ M.devNul = is_windows and ' 2>./nul' or ' 2>/dev/null'
 -- M.extra = 'printf \'\\\\n\\\\033[0;33mPlease Press ENTER to continue \\\\033[0m\'; read'
 -- M.extra = ' && echo . && echo . && echo Please Press ENTER to continue'
 
-local config = require('platformio').config
+local config = require('nvimpio').config
 
 -- to fix require loop, toggleterm is using stdout_callback function in 'platformio.utils.pio'
 -- M.stdout_callback will be assigned by 'platformio.utils.pio'
