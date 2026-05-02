@@ -49,10 +49,11 @@ local last_mtime = 0
 function M.run_compiledb(target)
   -- 1. Prevent overlapping builds
   if target.isBusy then return end
+  if _G.metadata.isBusy == true then return end
+
   local env = vim.pio.get_active__env()
   if not env then return end
   target.isBusy = true
-  _G.metadata.isBusy = true
 
 
   -- local pio = require('platformio.utils.pio')

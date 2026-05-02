@@ -565,14 +565,12 @@ function M.handlePioinitDb(result)
 end
 
 local win_id
-local current_checksum = ''
 
 ----------------------------------------------------
 -- Handle after pioinit execution
 -- stylua: ignore
 function M.handlePioinit(result)
   if result == 'INIT' then
-    current_checksum = _G.metadata.last_projectChecksum
     local boilerplate = require('platformio.boilerplate')
     local boilerplate_gen = boilerplate.boilerplate_gen
 
@@ -585,6 +583,7 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
+    _G.metadata.isBusy = true
     win_id = vim.misc.showMessage('************ Project Initializing ************')
     if #M.queue > 0 then trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'DONE' then -- result of the last command
@@ -606,17 +605,15 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      print('current= '.. current_checksum .. ' meta='.. _G.metadata.last_projectChecksum)
-      if current_checksum == _G.metadata.last_projectChecksum then
-        local pio_refresh = require('platformio.pio_setup').pio_refresh
-        pio_refresh(function()
-          clangdRestart()
-          -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
-        end, 'PIO init: ')
-      end
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-      vim.misc.closeMessage(win_id)
+      local pio_refresh = require('platformio.pio_setup').pio_refresh
+      pio_refresh(function()
+        _G.metadata.isBusy = false
+        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        vim.misc.closeMessage(win_id)
+        clangdRestart()
+        -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
+      end, 'PIO init: ')
     end)
     vim.misc.deleteFile(vim.fs.joinpath(vim.g.platformioRootDir, '.ccls'))
     M.queue = {}
@@ -624,6 +621,7 @@ function M.handlePioinit(result)
     trm:close()
     _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
