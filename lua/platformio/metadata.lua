@@ -80,7 +80,7 @@ local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 -- ---@type platformio.utils.misc
 -- local misc = vim.misc
 --INFO:
--- 3. Save Logic (Uses sha256 for stability)
+-- 2. Save Logic (Uses sha256 for stability)
 function M.save_project_config(from)
   -- 1. Generate the formatted string directly, jsonFormat already returns a string!
   local ok, pretty_json = pcall(vim.misc.jsonFormat, _pio_metadata)
@@ -106,7 +106,7 @@ function M.save_project_config(from)
 end
 
 --INFO:
--- 4. Load Logic (Populates proxy safely)
+-- 3. Load Logic (Populates proxy safely)
 function M.load_project_config()
   if vim.fn.filereadable(config_path) == 1 then
     local _, json_data = vim.misc.readFile(config_path)
@@ -127,20 +127,8 @@ function M.load_project_config()
   last_saved_hash = vim.fn.sha256(vim.misc.jsonFormat(_pio_metadata))
 end
 
--- 5. Helper for ToggleTerm / Commands
-function M.run_command(cmd_str)
-  -- Mute watcher logic would go here if needed
-  require('toggleterm').exec(cmd_str)
-end
-
--- 6. Initialization
+--INFO:
+-- 4. Initialization
 M.load_project_config()
-
--- Auto-save on exit even if no manual changes were made
--- vim.api.nvim_create_autocmd('VimLeavePre', {
---   callback = function()
---     M.save_project_config(true)
---   end,
--- })
 
 return M

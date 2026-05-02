@@ -47,36 +47,18 @@ local last_mtime = 0
 --1.run_compiledb after platformio.ini changed
 --=============================================================================
 function M.run_compiledb(target)
-  -- 1. Prevent overlapping builds
   if target.isBusy then return end
   if _G.metadata.isBusy == true then return end
 
   local env = vim.pio.get_active__env()
   if not env then return end
   target.isBusy = true
-
-
-  -- local pio = require('platformio.utils.pio')
-  -- pio.run_sequence({
-  --   cmnds = {
-  --     'pio run -t compiledb -e ' .. vim.misc.get_active__env(),
-  --   },
-  --   cb = function (result)
-  --     pio.handlePiodb(target, result)
-  --   end
-  -- })
-
-  -- if env and env ~= '' then
     vim.notify('PIO platformio.ini change: compiledb update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
-    -- vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb', '-s', '-e', env }, { text = true }, function(obj)
-      -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
       vim.schedule(function()
         target.isBusy = false
 
         if obj.code == 0 then
-          -- vim.notify('DB Updated Successfully', vim.log.levels.INFO, { title = 'PlatformIO' })
-          -- Trigger refresh (LSP restart, etc.)
           vim.schedule(function ()
             M.pio_refresh(function()
               vim.notify('PIO platformio.ini change: compiledb update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
@@ -90,8 +72,6 @@ function M.run_compiledb(target)
         _G.metadata.isBusy = false
       end)
     end)
-    -- end)
-  -- end
 end
 
 --INFO:
@@ -217,12 +197,33 @@ function M.start_watchers()
       path = vim.misc.joinPath(project_root, 'platformio.ini'),
       cb = function(self)
         if self.isBusy then return end
+        if _G.metadata.isBusy == true then return end
         local new_hash = get_hash(self.path) or ''
         if new_hash and new_hash ~= self.last_hash then
           self.last_hash = new_hash
-          vim.schedule(function()
-            M.run_compiledb(self) -- Smart: Auto-update DB if config changes
-          end)
+          -- vim.schedule(function()
+            local env = vim.pio.get_active__env()
+            if not env then return end
+            self.isBusy = true
+            vim.notify('PIO platformio.ini change: compiledb update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
+            vim.system({ 'pio', 'run', '-t', 'compiledb', '-s', '-e', env }, { text = true }, function(obj)
+              vim.schedule(function()
+                if obj.code == 0 then
+                  vim.schedule(function ()
+                    M.pio_refresh(function()
+                      vim.notify('PIO platformio.ini change: compiledb update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+                      clangdRestart()
+                    end, 'PIO platformio.ini  change: ')
+                  end)
+                else
+                  local err = (obj.stderr and obj.stderr ~= '') and obj.stderr or 'Check PIO logs'
+                  vim.notify('PIO Build Failed: ' .. err, vim.log.levels.ERROR, { title = 'PlatformIO' })
+                end
+                self.isBusy = false
+              end)
+            end)
+            -- M.run_compiledb(self) -- Smart: Auto-update DB if config changes
+          -- end)
         end
       end,
     },
