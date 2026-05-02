@@ -98,9 +98,9 @@ function M.save_project_config(from)
 
     if status then
       last_saved_hash = current_hash
-      vim.notify(from .. 'save config: success', vim.log.levels.INFO, { title = 'PlatformIO' })
+      vim.notify(from .. 'config save success', vim.log.levels.INFO, { title = 'PlatformIO' })
     else
-      vim.notify(from .. 'save config: failed==> ' .. (err or 'unknown error'), vim.log.levels.ERROR)
+      vim.notify(from .. 'config save failed==> ' .. (err or 'unknown error'), vim.log.levels.ERROR)
     end
   end
 end
