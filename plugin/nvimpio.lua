@@ -13,13 +13,13 @@
 --   __index = function(t, k)
 --     -- Lazy load the misc module if requested
 --     if k == 'misc' then
---       t.misc = require('platformio.utils.misc')
+--       t.misc = require('nvimpio.utils.misc')
 --       return t.misc
 --     end
 --
 --     -- Alias vim.pio to the pio module for convenience
 --     if k == 'pio' then
---       t.pio = require('platformio.utils.pio')
+--       t.pio = require('nvimpio.utils.pio')
 --       return t.pio
 --     end
 --   end,
@@ -32,19 +32,19 @@
 -- setmetatable(vim, {
 --   __index = function(t, k)
 --     if k == 'misc' then
---       local m = require('platformio.utils.misc')
+--       local m = require('nvimpio.utils.misc')
 --       rawset(t, k, m) -- Physically add 'misc' to 'vim'
 --       return m
 --     end
 --     if k == 'pio' then
---       local p = require('platformio.utils.pio')
+--       local p = require('nvimpio.utils.pio')
 --       rawset(t, k, p) -- Physically add 'pio' to 'vim'
 --       return p
 --     end
 --   end,
 -- })
-vim.misc = require('platformio.utils.misc')
-vim.pio = require('platformio.pio.upkeep')
+vim.misc = require('nvimpio.utils.misc')
+vim.pio = require('nvimpio.pio.upkeep')
 
 -- INFO: fix paths in compile_commands.json
 vim.api.nvim_create_user_command('PioFixPaths', function()
@@ -52,7 +52,7 @@ vim.api.nvim_create_user_command('PioFixPaths', function()
 end, {})
 
 -- -- Pioinit2
--- local pio_wiz = require('platformio.pioinit2')
+-- local pio_wiz = require('nvimpio.pioinit2')
 --
 -- -- Create a keybinding to trigger the wizard
 -- vim.keymap.set('n', '<leader>pi', function()
@@ -65,24 +65,24 @@ end, {})
 -- end, {})
 --
 ------------------------------------------------------
-local piolsserial = require('platformio.piolsserial')
+local piolsserial = require('nvimpio.piolsserial')
 
 -- Pioinit
 vim.api.nvim_create_user_command('Pioinit', function()
-  require('platformio.pioinit').pioinit()
+  require('nvimpio.pioinit').pioinit()
 end, { force = true })
 
 -- Piolsp
 vim.api.nvim_create_user_command('PioLSP', function()
   vim.schedule(function()
-    require('platformio.pioCommands').piolsp()
+    require('nvimpio.pioCommands').piolsp()
   end)
 end, {})
 
 -- Piorun
 vim.api.nvim_create_user_command('Piorun', function(opts)
   local args = opts.args
-  require('platformio.piocommands').piorun({ args })
+  require('nvimpio.piocommands').piorun({ args })
 end, {
   nargs = '?',
   complete = function(_, _, _)
@@ -94,7 +94,7 @@ end, {
 -- piolsserial.sync_ttylist()
 vim.api.nvim_create_user_command('Piomon', function(opts)
   local args = opts.fargs
-  require('platformio.pioCommands').piomon(args)
+  require('nvimpio.pioCommands').piomon(args)
 end, {
   nargs = '*',
 
@@ -117,13 +117,13 @@ end, {
 
 -- Piolsserial
 vim.api.nvim_create_user_command('Piolsserial', function()
-  require('platformio.piolsserial').print_tty_list()
+  require('nvimpio.piolsserial').print_tty_list()
 end, {})
 
 -- Piolib
 vim.api.nvim_create_user_command('Piolib', function(opts)
   local args = vim.split(opts.args, ' ')
-  require('platformio.piolib').piolib(args)
+  require('nvimpio.piolib').piolib(args)
 end, {
   nargs = '+',
 })
@@ -131,7 +131,7 @@ end, {
 -- Piocmdh    Piocmd horizontal terminal
 vim.api.nvim_create_user_command('Piocmdh', function(opts)
   local cmd_table = vim.split(opts.args, ' ')
-  require('platformio.pioCommands').piocmd(cmd_table, 'horizontal')
+  require('nvimpio.pioCommands').piocmd(cmd_table, 'horizontal')
 end, {
   nargs = '*',
 })
@@ -139,14 +139,14 @@ end, {
 -- Piocmdf    Piocmd float terminal
 vim.api.nvim_create_user_command('Piocmdf', function(opts)
   local cmd_table = vim.split(opts.args, ' ')
-  require('platformio.pioCommands').piocmd(cmd_table, 'float')
+  require('nvimpio.pioCommands').piocmd(cmd_table, 'float')
 end, {
   nargs = '*',
 })
 
 -- Piodebug
 vim.api.nvim_create_user_command('Piodebug', function()
-  require('platformio.pioCommands').piodebug()
+  require('nvimpio.pioCommands').piodebug()
 end, {})
 
 ------------------------------------------------------
