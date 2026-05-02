@@ -521,6 +521,7 @@ local trm
 ------------------------------------------------------
 -- Handle after pioinit execution
 -- =============================================================================
+-- stylua: ignore
 function M.handlePioinitDb(result)
   if result == 'INIT' then
     local boilerplate = require('platformio.boilerplate')
@@ -535,14 +536,14 @@ function M.handlePioinitDb(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float') end
   elseif result == 'PASS' then
     -- if commandPassed == 1 then
     -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
     -- end
     vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
     commandPassed = commandPassed + 1
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float') end
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
       vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
@@ -552,9 +553,7 @@ function M.handlePioinitDb(result)
       boilerplate_gen([[.clangd]], _G.metadata.core_dir)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh(function()
-        clangdRestart()
-      end, 'PIO init+db: ')
+      pio_refresh(function() clangdRestart() end, 'PIO init+db: ')
     end)
     M.queue = {}
     term.stdout_callback = nil
@@ -569,6 +568,7 @@ end
 local win_id
 ----------------------------------------------------
 -- Handle after pioinit execution
+-- stylua: ignore
 function M.handlePioinit(result)
   if result == 'INIT' then
     local boilerplate = require('platformio.boilerplate')
@@ -584,7 +584,7 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
     win_id = vim.misc.showMessage('************ Project Initializing ************')
-    trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    if #M.queue > 0 then trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'DONE' then -- result of the last command
     vim.schedule(function()
       vim.notify('PIO init:  pass ' .. commandPassed, vim.log.levels.INFO)
@@ -607,7 +607,7 @@ function M.handlePioinit(result)
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         clangdRestart()
         vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
@@ -630,9 +630,10 @@ end
 ------------------------------------------------------
 -- Handle after piolib execution
 -- =============================================================================
+-- stylua: ignore
 function M.handlePiolib(result)
   if result == 'INIT' then
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'DONE' then -- result of the only and the last command
     vim.notify('PIO lib:  pass ' .. commandPassed, vim.log.levels.INFO)
     vim.notify('PIO lib: Done', vim.log.levels.INFO)
@@ -649,9 +650,10 @@ end
 
 ------------------------------------------------------
 -- =============================================================================
+-- stylua: ignore
 function M.handlePiodb(target, result)
   if result == 'INIT' then
-    term.ToggleTerminal(table.remove(M.queue, 1), 'float')
+    if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'DONE' then -- result of the only and the last command
     vim.notify('PIO db:  pass ' .. commandPassed, vim.log.levels.INFO)
     vim.notify('PIO db: Done', vim.log.levels.INFO)

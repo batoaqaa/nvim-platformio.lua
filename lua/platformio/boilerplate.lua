@@ -80,6 +80,7 @@ boilerplate['.clangd_config'] = {
     "--all-scopes-completion",
     "--background-index",
     "--clang-tidy",
+    "--compile-commands-dir=.",
     "--compile_args_from=filesystem",
     "--enable-config",
     "--completion-parse=always",
@@ -485,6 +486,7 @@ function M.boilerplate_gen(framework, src_path, filename)
   local entry = boilerplate[framework]
   if not entry then return '' end
   local file_path = vim.fs.normalize(src_path .. '/' .. filename)
+
   if vim.uv.fs_stat(file_path) then
     if not entry.rewrite then
       if entry.read then
@@ -496,17 +498,8 @@ function M.boilerplate_gen(framework, src_path, filename)
       return ''
     end
   end
-  -- if vim.fn.isdirectory(src_path) == 0 then vim.fn.mkdir(src_path, 'p') end
-  --
-  -- local fd = assert(uv.fs_open(file_path, 'w', 420))
-  -- if not fd then
-  --   print('failed to create file: ' .. file_path)
-  --   return ''
-  -- end
   --
   local template = type(entry.content) == 'function' and entry:content() or entry.content
-  -- uv.fs_write(fd, template, 0)
-  -- uv.fs_close(fd)
   vim.misc.writeFile(file_path, template, {})
 
   if entry.read then
