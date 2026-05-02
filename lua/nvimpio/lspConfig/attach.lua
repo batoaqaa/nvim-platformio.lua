@@ -1,4 +1,4 @@
--- local piolsp = require('platformio.piolsp') --.piolsp
+-- local piolsp = require('nvimpio.piolsp') --.piolsp
 -- INFO: LspAttach autocommand start
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('platformio-lsp-attach', { clear = true }),
@@ -93,7 +93,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
       ------------------------------------------------------------------
       local config = require('platformio').config
       if config.lspClangd.attach.keymaps then
-        local lspkeymaps = require('platformio.lspConfig.keymaps')
+        local lspkeymaps = require('nvimpio.lspConfig.keymaps')
         lspkeymaps.lspKeymaps(client, bufnr)
       end
     end

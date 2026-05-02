@@ -1,7 +1,7 @@
 M = {}
 
-local clangdRestart = require('platformio.lspConfig.tools').clangdRestart
-local boilerplate = require('platformio.boilerplate')
+local clangdRestart = require('nvimpio.lspConfig.tools').clangdRestart
+local boilerplate = require('nvimpio.boilerplate')
 local boilerplate_gen = boilerplate.boilerplate_gen
 
 -- =============================================================================
@@ -267,12 +267,12 @@ function M.init()
     vim.notify('PIO start: initialize', vim.log.levels.INFO)
 
     -- activate meta save and upload and env switch
-    local metadata = require('platformio.pio.metadata')
+    local metadata = require('nvimpio.pio.metadata')
     metadata.load_project_config()
 
-    require('platformio.lspConfig.clangd')
+    require('nvimpio.lspConfig.clangd')
     if config.lspClangd.attach.enabled then
-      require('platformio.lspConfig.attach')
+      require('nvimpio.lspConfig.attach')
     end
 
     -- Always start the watcher so it can catch a future 'pio init'

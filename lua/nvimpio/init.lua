@@ -226,7 +226,7 @@ function M.setup(user_config)
   M.piomenu(M.config)
 
   vim.schedule(function()
-    require('platformio.pio.watcher').init()
+    require('nvimpio.pio.watcher').init()
   end)
 end
 

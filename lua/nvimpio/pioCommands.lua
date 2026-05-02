@@ -1,14 +1,14 @@
 local M = {}
 
--- local misc = require('platformio.utils.misc')
-local ToggleTerminal = require('platformio.utils.term').ToggleTerminal
+-- local misc = require('nvimpio.utils.misc')
+local ToggleTerminal = require('nvimpio.utils.term').ToggleTerminal
 local misc = vim.misc
 
 -- stylua: ignore
 --INFO: PioLSP
 ------------------------------------------------------
 function M.piolsp()
-  require('platformio.lspConfig.tools').clangdRestart()
+  require('nvimpio.lspConfig.tools').clangdRestart()
 end
 
 -- stylua: ignore

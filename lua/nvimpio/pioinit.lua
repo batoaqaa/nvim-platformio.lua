@@ -42,7 +42,7 @@ end
 
 -- FINAL STEP: Construction & Sequence Execution
 local function finalize_setup()
-  local pio = require('platformio.pio.upkeep')
+  local pio = require('nvimpio.pio.upkeep')
 
   local sample_flag = wizard_data.sample == 'Yes' and ' --sample-code' or ''
   local init_cmd = string.format('pio project init --ide vim --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)

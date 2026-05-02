@@ -1,5 +1,5 @@
 local M = {}
-local misc = require('platformio.utils.misc')
+local misc = require('nvimpio.utils.misc')
 
 M.tty_list = {}
 

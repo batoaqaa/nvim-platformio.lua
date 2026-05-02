@@ -9,8 +9,8 @@ M.selected_framework = ''
 M.is_processing = false
 M.queue = {}
 
-local term = require('platformio.utils.term')
-local clangdRestart = require('platformio.lspConfig.tools').clangdRestart
+local term = require('nvimpio.utils.term')
+local clangdRestart = require('nvimpio.lspConfig.tools').clangdRestart
 
 -- INFO:
 -- =============================================================================
@@ -218,7 +218,7 @@ function M.fetch_metadata(callback, env, from, attempts)
       -- vim.misc.writeFile(file, formated, {})
 
       if cok and apply_metadata(decoded, current_checksum) then
-        local metadata = require('platformio.pio.metadata')
+        local metadata = require('nvimpio.pio.metadata')
         metadata.save_project_config(msg)
         vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
         -- if callback then vim.schedule(callback) end
@@ -523,7 +523,7 @@ local win_id
 -- stylua: ignore
 function M.handlePioinitDb(result)
   if result == 'INIT' then
-    local boilerplate = require('platformio.boilerplate')
+    local boilerplate = require('nvimpio.boilerplate')
     local boilerplate_gen = boilerplate.boilerplate_gen
 
     boilerplate.core_dir = _G.metadata.core_dir
@@ -549,9 +549,9 @@ function M.handlePioinitDb(result)
       vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init+db: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      local pio_refresh = require('platformio.pio.watcher').pio_refresh
+      local pio_refresh = require('nvimpio.pio.watcher').pio_refresh
       pio_refresh(function()
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        local boilerplate_gen = require('nvimpio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         vim.misc.closeMessage(win_id)
         clangdRestart()
@@ -578,7 +578,7 @@ end
 -- stylua: ignore
 function M.handlePioinit(result)
   if result == 'INIT' then
-    local boilerplate = require('platformio.boilerplate')
+    local boilerplate = require('nvimpio.boilerplate')
     local boilerplate_gen = boilerplate.boilerplate_gen
 
     boilerplate.core_dir = _G.metadata.core_dir
@@ -611,9 +611,9 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      local pio_refresh = require('platformio.pio.watcher').pio_refresh
+      local pio_refresh = require('nvimpio.pio.watcher').pio_refresh
       pio_refresh(function()
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        local boilerplate_gen = require('nvimpio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         vim.misc.closeMessage(win_id)
         clangdRestart()

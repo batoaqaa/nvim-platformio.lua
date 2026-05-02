@@ -8,7 +8,7 @@ local make_entry = require('telescope.make_entry')
 local conf = require('telescope.config').values
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
-local misc = require('platformio.utils.misc')
+local misc = require('nvimpio.utils.misc')
 local previewers = require('telescope.previewers')
 
 local libentry_maker = function(opts)
@@ -64,7 +64,7 @@ local function pick_library(json_data)
         -- local command = 'pio pkg install --library "' .. pkg_name .. '"'
         -- command = command .. ' && pio run -t compiledb'
 
-        local pio = require('platformio.pio.upkeep')
+        local pio = require('nvimpio.pio.upkeep')
         pio.run_sequence({
             cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
             cb = pio.handlePiolib
@@ -138,7 +138,7 @@ end
 --         local selection = action_state.get_selected_entry()
 --         local pkg_name = selection['value']['owner'] .. '/' .. selection['value']['name']
 --
---         local pio = require('platformio.utils.pio')
+--         local pio = require('nvimpio.utils.pio')
 --         pio.run_sequence({
 --             cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
 --             cb = function () vim.notify('Piolib: Done', vim.log.levels.INFO) end

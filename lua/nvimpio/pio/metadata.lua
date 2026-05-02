@@ -63,7 +63,7 @@ _G.metadata = setmetatable({}, {
         --     -- dbFix()
         --     _pio_metadata.dbTrigger = false
         --   else
-        --     local LspRestart = require('platformio.lspConfigConfig.tools').lsp_restart
+        --     local LspRestart = require('nvimpio.lspConfigConfig.tools').lsp_restart
         --     LspRestart('clangd')
         --     vim.notify('Env: LspRestart', vim.log.levels.INFO, { title = 'PlatformIO', render = 'compact' })
         --   end
