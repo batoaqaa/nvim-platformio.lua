@@ -566,7 +566,7 @@ end
 
 local win_id
 -- if current_checksum == meta.last_projectChecksum then
-local current_checksum = _G.metadata.last_projectChecksum
+local current_checksum = _G.metadata.last_projectChecksum or ''
 
 ----------------------------------------------------
 -- Handle after pioinit execution
