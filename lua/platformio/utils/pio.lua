@@ -194,7 +194,6 @@ function M.fetch_metadata(callback, env, from, attempts)
       end)
     end)
     return true
-
   end
 
   ---------------------------------------------------------
@@ -566,6 +565,9 @@ function M.handlePioinitDb(result)
 end
 
 local win_id
+-- if current_checksum == meta.last_projectChecksum then
+local current_checksum = _G.metadata.last_projectChecksum
+
 ----------------------------------------------------
 -- Handle after pioinit execution
 -- stylua: ignore
@@ -604,14 +606,16 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh(function()
-        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-        clangdRestart()
-        vim.misc.closeMessage(win_id)
-        -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
-      end, 'PIO init: ')
+      if current_checksum == _G.metadata.last_projectChecksum then
+        local pio_refresh = require('platformio.pio_setup').pio_refresh
+        pio_refresh(function()
+          clangdRestart()
+          -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
+        end, 'PIO init: ')
+      end
+      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+      vim.misc.closeMessage(win_id)
     end)
     vim.misc.deleteFile(vim.fs.joinpath(vim.g.platformioRootDir, '.ccls'))
     M.queue = {}
