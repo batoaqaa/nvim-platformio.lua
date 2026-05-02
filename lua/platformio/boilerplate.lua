@@ -114,10 +114,10 @@ boilerplate['.clangd_config'] = {
        completeUnimported = true,
        fallbackFlags = {%s},
        clangdFileStatus = true,
-       compilationDatabasePath = %q,
   }
 }
 ]],
+  -- compilationDatabasePath = %q,
 }
 -- CompileFlags:
 --   Add:
@@ -180,6 +180,50 @@ boilerplate['.clangd'] = {
   -- - "-std=gnu++17"
   -- template = [[
   content = [[
+CompileFlags:
+  Add:
+    - "-xc++"
+    - "-std=c++17"
+  Remove:
+    - "-Winclude-next-outside-header"
+    - "-fno-fat-lto-objects"
+    - "-fno%%-fat%%-lto%%-objects"
+    - "-fno%%-canonical%%-system%%-headers"
+    - "-misc-definitions-in-headers"
+    - "-fno-tree-switch-conversion"
+    - "-mtext-section-literals"
+    - "-mlong-calls"
+    - "-mlongcalls"
+    - "-fstrict-volatile-bitfields"
+    - "-free*"
+    - "-fipa-pta*"
+    - "-march=*"
+    - "-mabi=*"
+    - "-mcpu=*"
+Diagnostics:
+  Suppress:
+    - "pragma_system_header_ignored"
+    - "misc-definitions-in-headers"
+    - "pp_including_mainfile_in_preamble"
+    - "misc-unused-using-decls"
+    - "unused-includes"
+  ClangTidy:
+    Remove:
+      - "readability-*"
+      - "cert-err58-cpp"
+      - "llvmlibc-*"
+      - "fuchsia-*"
+      - "hicpp-avoid-c-arrays"
+      - "cppcoreguidelines-*"
+      - "llvm-*"
+      - "google-*"
+      - "bugprone-*"
+      - "hicpp-vararg"
+      - "modernize-*"
+---
+# This section targets external library files specifically
+If:
+  PathMatch: [.*\.platformio/packages/.*]
 CompileFlags:
   Add:
     - "-xc++"
