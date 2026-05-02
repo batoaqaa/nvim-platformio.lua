@@ -127,7 +127,7 @@ function _G.get_clangd_config()
   local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
   -- local formatted_str = string.format(table_config or '', q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
   -- local formatted_str = string.format(table_config or '', q_driver, '', vim.misc.normalizePath(new_root_dir))
-  local formatted_str = string.format(table_config or '', q_driver, '')
+  local formatted_str = string.format(table_config or '', q_driver, '', vim.g.platformioRootDir)
 
   -- 4. Load the config table
   local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)

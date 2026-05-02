@@ -109,10 +109,11 @@ boilerplate['.clangd_config'] = {
   workspace_required = true,
   single_file_support = true,
   init_options = {
-       usePlaceholders = true,
-       completeUnimported = true,
-       fallbackFlags = {%s},
-       clangdFileStatus = true,
+    usePlaceholders = true,
+    completeUnimported = true,
+    fallbackFlags = {%s},
+    clangdFileStatus = true,
+    compilationDatabasePath = %q,
   }
 }
 ]],
@@ -184,6 +185,8 @@ CompileFlags:
     - "-xc++"
     - "-std=c++17"
   Remove:
+    - "pp_file_not_found"
+    - "pp_file_not_found_angled_not_fatal" 
     - "-Winclude-next-outside-header"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
@@ -228,6 +231,8 @@ CompileFlags:
     - "-xc++"
     - "-std=c++17"
   Remove:
+    - "pp_file_not_found"
+    - "pp_file_not_found_angled_not_fatal" 
     - "-Winclude-next-outside-header"
     - "-fno-fat-lto-objects"
     - "-fno%%-fat%%-lto%%-objects"
