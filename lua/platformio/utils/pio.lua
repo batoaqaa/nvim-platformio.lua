@@ -509,6 +509,7 @@ M.run_sequence = function(tasks)
 
 
   callBack = tasks.cb -- 1. Save the callback in a local variable
+
   commandPassed = 1
   _G.metadata.isBusy = true
 
@@ -536,7 +537,6 @@ function M.handlePioinitDb(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
-    _G.metadata.isBusy = true
     win_id = vim.misc.showMessage('************ Project Initializing ************')
     if #M.queue > 0 then trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'PASS' then
@@ -553,7 +553,6 @@ function M.handlePioinitDb(result)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
-        _G.metadata.isBusy = false
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         vim.misc.closeMessage(win_id)
@@ -565,6 +564,7 @@ function M.handlePioinitDb(result)
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
@@ -592,7 +592,6 @@ function M.handlePioinit(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
-    _G.metadata.isBusy = true
     win_id = vim.misc.showMessage('************ Project Initializing ************')
     if #M.queue > 0 then trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'DONE' then -- result of the last command
@@ -616,7 +615,6 @@ function M.handlePioinit(result)
 
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
-        _G.metadata.isBusy = false
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         vim.misc.closeMessage(win_id)
@@ -628,6 +626,7 @@ function M.handlePioinit(result)
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
+    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
