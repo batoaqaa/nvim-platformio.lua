@@ -561,13 +561,16 @@ function M.handlePioinitDb(result)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
       end, 'PIO init+db: ')
     end)
+    vim.misc.deleteFile(vim.fs.joinpath(vim.g.platformioRootDir, '.ccls'))
     M.queue = {}
     term.stdout_callback = nil
+    trm:close()
   elseif result == 'FAIL' then
     _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
+    trm:close()
   end
 end
 
