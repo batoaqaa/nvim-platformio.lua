@@ -565,7 +565,6 @@ function M.handlePioinitDb(result)
 end
 
 local win_id
--- if current_checksum == meta.last_projectChecksum then
 local current_checksum = ''
 
 ----------------------------------------------------
@@ -607,6 +606,7 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
+      print('current= '.. current_checksum .. ' meta='.. _G.metadata.last_projectChecksum)
       if current_checksum == _G.metadata.last_projectChecksum then
         local pio_refresh = require('platformio.pio_setup').pio_refresh
         pio_refresh(function()
