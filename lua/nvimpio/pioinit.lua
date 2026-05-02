@@ -5,6 +5,7 @@ local action_state = require('telescope.actions.state')
 local previewers = require('telescope.previewers')
 local telescope_conf = require('telescope.config').values
 local themes = require('telescope.themes')
+local pio = require('nvimpio.pio.upkeep')
 
 local wizard_data = {}
 
@@ -42,7 +43,7 @@ end
 
 -- FINAL STEP: Construction & Sequence Execution
 local function finalize_setup()
-  local pio = require('nvimpio.pio.upkeep')
+  -- local pio = require('nvimpio.pio.upkeep')
 
   local sample_flag = wizard_data.sample == 'Yes' and ' --sample-code' or ''
   local init_cmd = string.format('pio project init --ide vim --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
