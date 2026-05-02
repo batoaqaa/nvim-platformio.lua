@@ -51,19 +51,19 @@ vim.api.nvim_create_user_command('PioFixPaths', function()
   vim.pio.compile_commandsFix()
 end, {})
 
--- Pioinit2
-local pio_wiz = require('platformio.pioinit2')
-
--- Create a keybinding to trigger the wizard
-vim.keymap.set('n', '<leader>pi', function()
-  pio_wiz.launch()
-end, { desc = 'Run PIO Project Wizard' })
-
--- Alternatively, create a user command
-vim.api.nvim_create_user_command('PioWizard', function()
-  pio_wiz.launch()
-end, {})
-
+-- -- Pioinit2
+-- local pio_wiz = require('platformio.pioinit2')
+--
+-- -- Create a keybinding to trigger the wizard
+-- vim.keymap.set('n', '<leader>pi', function()
+--   pio_wiz.launch()
+-- end, { desc = 'Run PIO Project Wizard' })
+--
+-- -- Alternatively, create a user command
+-- vim.api.nvim_create_user_command('PioWizard', function()
+--   pio_wiz.launch()
+-- end, {})
+--
 ------------------------------------------------------
 local piolsserial = require('platformio.piolsserial')
 
