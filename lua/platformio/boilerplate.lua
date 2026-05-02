@@ -88,6 +88,10 @@ boilerplate['.clangd_config'] = {
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
+    "-std=gnu++17",
+    "-Wno-pragma-system-header-outside-header",
+    "-Wno-unknown-warning-option",
+    "-Wno-unused-includes" -- Equivalent to unused-includes suppression
     "--offset-encoding=utf-16",
     "--query-driver=%s"
   },
