@@ -123,7 +123,7 @@ function _G.get_clangd_config()
       end, _G.metadata.includes_toolchain), ", ")
 
       -- f_flags = '"-std=c++17", "-xc++"'
-      f_flags = string.format([["-std=c++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s, %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain, include_flags)
+      f_flags = string.format([["-std=gnu++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s, %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain, include_flags)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
