@@ -182,6 +182,10 @@ boilerplate['.clangd'] = {
   content = [[
 ---
 CompileFlags:
+  Add:
+    - "-xc++"
+    - "-std=gnu++17"
+    - "-Wno-pragma-system-header-outside-header"
   Remove: 
     - "-Wunknown-warning-option"
     - "-fno-tree-switch-conversion"
@@ -194,8 +198,6 @@ CompileFlags:
     - "-mabi=.*"
     - "-mcpu=.*"
     - "-fipa-pta.*"
-  Add:
-    - "-Wno-pragma-system-header-outside-header"
 Diagnostics:
   Suppress: 
     - "pp_file_not_found"
