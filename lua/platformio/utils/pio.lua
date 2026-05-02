@@ -538,7 +538,7 @@ function M.handlePioinitDb(result)
 
     _G.metadata.isBusy = true
     win_id = vim.misc.showMessage('************ Project Initializing ************')
-    if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float') end
+    if #M.queue > 0 then trm = term.ToggleTerminal(table.remove(M.queue, 1), 'float')end
   elseif result == 'PASS' then
     -- if commandPassed == 1 then
     -- elseif commandPassed == 2 then -- if you sned more than 2 commands you need this
