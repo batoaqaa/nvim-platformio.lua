@@ -155,6 +155,7 @@ keymap('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 ----------------------------------------------------------------------------------------
 -- INFO: Set mini lazy config
 ----------------------------------------------------------------------------------------
+-- stylua: ignore
 ---[[
 local function setup_xdg_paths()
   -- local isWindows = vim.fn.has('win32') == 1
@@ -169,29 +170,33 @@ local function setup_xdg_paths()
 
   -- 1. XDG_CONFIG_HOME (Settings/Configs)
   if not vim.env.XDG_CONFIG_HOME then
-    local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local')) or isMac and (home .. '/Library/Preferences') or (home .. '/.config')
+    local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
+              or isMac and (home .. '/Library/Preferences')
+              or (home .. '/.config')
     vim.env.XDG_CONFIG_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 2. XDG_DATA_HOME (Large data/Databases)
   if not vim.env.XDG_DATA_HOME then
     local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
-      or isMac and (home .. '/Library/Application Support')
-      or (home .. '/.local/share')
+              or isMac and (home .. '/Library/Application Support')
+              or (home .. '/.local/share')
     vim.env.XDG_DATA_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 3. XDG_STATE_HOME (Logs/History/Persistent State)
   if not vim.env.XDG_STATE_HOME then
     local path = isWindows and (vim.env.LOCALAPPDATA or (home .. '/AppData/Local'))
-      or isMac and (home .. '/Library/Application Support')
-      or (home .. '/.local/state')
+              or isMac and (home .. '/Library/Application Support')
+              or (home .. '/.local/state')
     vim.env.XDG_STATE_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 
   -- 4. XDG_CACHE_HOME (Temporary/Disposable data)
   if not vim.env.XDG_CACHE_HOME then
-    local path = isWindows and (vim.env.TEMP or (home .. '/AppData/Local/Temp')) or isMac and (home .. '/Library/Caches') or (home .. '/.cache')
+    local path = isWindows and (vim.env.TEMP or (home .. '/AppData/Local/Temp'))
+              or isMac and (home .. '/Library/Caches')
+              or (home .. '/.cache')
     vim.env.XDG_CACHE_HOME = normalize(vim.fs.joinpath(path, app_name))
   end
 end
