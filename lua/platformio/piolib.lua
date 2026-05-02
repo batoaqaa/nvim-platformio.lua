@@ -64,7 +64,7 @@ local function pick_library(json_data)
         -- local command = 'pio pkg install --library "' .. pkg_name .. '"'
         -- command = command .. ' && pio run -t compiledb'
 
-        local pio = require('platformio.utils.pio')
+        local pio = require('platformio.pio.upkeep')
         pio.run_sequence({
             cmnds = {'pio pkg install --library "' .. pkg_name .. '"'},
             cb = pio.handlePiolib

@@ -44,7 +44,7 @@
 --   end,
 -- })
 vim.misc = require('platformio.utils.misc')
-vim.pio = require('platformio.utils.pio')
+vim.pio = require('platformio.pio.upkeep')
 
 -- INFO: fix paths in compile_commands.json
 vim.api.nvim_create_user_command('PioFixPaths', function()
@@ -82,7 +82,7 @@ end, {})
 -- Piorun
 vim.api.nvim_create_user_command('Piorun', function(opts)
   local args = opts.args
-  require('platformio.piorun').piorun({ args })
+  require('platformio.piocommands').piorun({ args })
 end, {
   nargs = '?',
   complete = function(_, _, _)
@@ -152,6 +152,7 @@ end, {})
 ------------------------------------------------------
 
 -- require('telescope').load_extension('ui-select')
+-- stylua: ignore
 -- INFO: List ToggleTerminals
 vim.api.nvim_create_user_command('PioTermList', function()
   local telescope = require('telescope')
@@ -219,12 +220,8 @@ vim.api.nvim_create_user_command('PioTermList', function()
       local win_open = win_type == '' or win_type == 'popup'
       if chosen.term.window and (win_open and vim.api.nvim_win_get_buf(chosen.term.window) == chosen.term.bufnr) then
         vim.api.nvim_set_current_win(chosen.term.window)
-      else
-        chosen.term:open()
-      end
+      else chosen.term:open() end
       vim.api.nvim_echo({ { 'Switched to PIO terminal: ' .. chosen.termtype, 'Normal' } }, true, {})
-    else
-      vim.api.nvim_echo({ { 'No PIO terminal window selected.', 'Normal' } }, true, {})
-    end
+    else vim.api.nvim_echo({ { 'No PIO terminal window selected.', 'Normal' } }, true, {}) end
   end)
 end, {})

@@ -220,7 +220,7 @@ function M.fetch_metadata(callback, env, from, attempts)
 
 
       if cok and apply_metadata(decoded, current_checksum) then
-        local metadata = require('platformio.metadata')
+        local metadata = require('platformio.pio.metadata')
         metadata.save_project_config(msg)
         vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
         -- if callback then vim.schedule(callback) end
@@ -551,7 +551,7 @@ function M.handlePioinitDb(result)
       vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init+db: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      local pio_refresh = require('platformio.pio_setup').pio_refresh
+      local pio_refresh = require('platformio.pio.watcher').pio_refresh
       pio_refresh(function()
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)
@@ -613,7 +613,7 @@ function M.handlePioinit(result)
       -- local clean_msg = string.format('\27[G\27[2K\27[33m%s\27[0m', msg)
       -- vim.api.nvim_chan_send(trm.job_id, clean_msg)
 
-      local pio_refresh = require('platformio.pio_setup').pio_refresh
+      local pio_refresh = require('platformio.pio.watcher').pio_refresh
       pio_refresh(function()
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
         boilerplate_gen([[.clangd]], _G.metadata.core_dir)

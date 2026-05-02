@@ -2,8 +2,6 @@ M = {}
 
 M.core_dir = ''
 
-local uv = vim.loop
-
 local boilerplate = {}
 
 -- INFO: main.cpp
@@ -59,8 +57,6 @@ lib_ldf_mode = chain   ;Library dependencies Finder ldf
 
 ]],
   content = function(self)
-    -- local pio = require('platformio.utils.pio')
-    -- return string.format(self.template, require('platformio.utils.pio').get_pio_dir('core'))
     return string.format(self.template, M.core_dir)
   end,
 }
