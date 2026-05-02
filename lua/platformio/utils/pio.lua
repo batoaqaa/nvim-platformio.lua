@@ -517,6 +517,7 @@ M.run_sequence = function(tasks)
 end
 
 local trm
+local win_id
 ------------------------------------------------------
 -- Handle after pioinit execution
 -- =============================================================================
@@ -535,6 +536,8 @@ function M.handlePioinitDb(result)
     -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
     -- boilerplate_gen([[.clangd]], vim.fs.joinpath(vim.env.XDG_CONFIG_HOME, 'clangd'), 'config.yaml')
 
+    _G.metadata.isBusy = true
+    win_id = vim.misc.showMessage('************ Project Initializing ************')
     if #M.queue > 0 then term.ToggleTerminal(table.remove(M.queue, 1), 'float') end
   elseif result == 'PASS' then
     -- if commandPassed == 1 then
@@ -548,23 +551,27 @@ function M.handlePioinitDb(result)
       vim.notify('PIO init+db:  pass ' .. commandPassed, vim.log.levels.INFO)
       vim.notify('PIO init+db: Done', vim.log.levels.INFO)
       vim.misc.gitignore_lsp_configs('compile_commands.json')
-      local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-      boilerplate_gen([[.clangd]], _G.metadata.core_dir)
-
       local pio_refresh = require('platformio.pio_setup').pio_refresh
-      pio_refresh(function() clangdRestart() end, 'PIO init+db: ')
+      pio_refresh(function()
+        _G.metadata.isBusy = false
+        local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        vim.misc.closeMessage(win_id)
+        clangdRestart()
+        -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
+      end, 'PIO init+db: ')
     end)
     M.queue = {}
     term.stdout_callback = nil
     _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
     _G.metadata.isBusy = false
   end
 end
 
-local win_id
 
 ----------------------------------------------------
 -- Handle after pioinit execution

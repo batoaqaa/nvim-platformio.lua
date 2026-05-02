@@ -47,12 +47,12 @@ local function finalize_setup()
   local sample_flag = wizard_data.sample == 'Yes' and ' --sample-code' or ''
   local init_cmd = string.format('pio project init --ide vim --board %s -O "framework=%s"%s', wizard_data.board_id, wizard_data.framework, sample_flag)
 
-  -- local db_cmd = string.format('pio run -t compiledb -e %s', wizard_data.board_id)
-  -- local commands = { init_cmd, db_cmd }
-  -- local final_cb = pio.handlePioinitDb
+  local db_cmd = string.format('pio run -t compiledb -e %s', wizard_data.board_id)
+  local commands = { init_cmd, db_cmd }
+  local final_cb = pio.handlePioinitDb
 
-  local commands = { init_cmd }
-  local final_cb = pio.handlePioinit
+  -- local commands = { init_cmd }
+  -- local final_cb = pio.handlePioinit
 
   notify('Starting project setup for ' .. wizard_data.board_id .. '...')
   pio.run_sequence({ cmnds = commands, cb = final_cb })
