@@ -81,7 +81,7 @@ local config_path = vim.fs.joinpath(vim.uv.cwd(), '.project_config.json')
 -- local misc = vim.misc
 --INFO:
 -- 3. Save Logic (Uses sha256 for stability)
-function M.save_project_config(quiet)
+function M.save_project_config(from)
   -- 1. Generate the formatted string directly, jsonFormat already returns a string!
   local ok, pretty_json = pcall(vim.misc.jsonFormat, _pio_metadata)
 
@@ -98,11 +98,9 @@ function M.save_project_config(quiet)
 
     if status then
       last_saved_hash = current_hash
-      if not quiet then
-        vim.notify('PIO save config: success', vim.log.levels.INFO, { title = 'PlatformIO' })
-      end
+      vim.notify(from .. 'save config: success', vim.log.levels.INFO, { title = 'PlatformIO' })
     else
-      vim.notify('PIO save config: failed==> ' .. (err or 'unknown error'), vim.log.levels.ERROR)
+      vim.notify(from .. 'save config: failed==> ' .. (err or 'unknown error'), vim.log.levels.ERROR)
     end
   end
 end

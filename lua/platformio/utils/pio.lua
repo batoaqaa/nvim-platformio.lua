@@ -221,7 +221,7 @@ function M.fetch_metadata(callback, env, from, attempts)
 
       if cok and apply_metadata(decoded, current_checksum) then
         local metadata = require('platformio.metadata')
-        metadata.save_project_config()
+        metadata.save_project_config(msg)
         vim.notify(msg .. 'Metadata synced from cache', vim.log.levels.INFO)
         -- if callback then vim.schedule(callback) end
 
@@ -229,7 +229,7 @@ function M.fetch_metadata(callback, env, from, attempts)
           vim.schedule(callback)
         else
           -- If it's not a function, just do nothing or print a debug message
-          print("Debug: callback was " .. type(callback))
+          print(msg .." Debug; callback was " .. type(callback))
         end
 
         return true
