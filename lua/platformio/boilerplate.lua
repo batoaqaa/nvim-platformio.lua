@@ -88,11 +88,6 @@ boilerplate['.clangd_config'] = {
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
-    "-xc++",
-    "-std=gnu++17",
-    "-Wno-pragma-system-header-outside-header",
-    "-Wno-unknown-warning-option",
-    "-Wno-unused-includes" -- Equivalent to unused-includes suppression
     "--offset-encoding=utf-16",
     "--query-driver=%s"
   },
@@ -187,7 +182,11 @@ boilerplate['.clangd'] = {
 ---
 CompileFlags:
   Add:
+    - "-xc++"
+    - "-std=gnu++17"
     - "-Wno-pragma-system-header-outside-header"
+    - "-Wno-unknown-warning-option"
+    - "-Wno-unused-includes"
   Remove: 
     - "-Wunknown-warning-option"
     - "-fno-tree-switch-conversion"
