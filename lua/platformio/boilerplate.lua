@@ -181,36 +181,28 @@ boilerplate['.clangd'] = {
   -- template = [[
   content = [[
 CompileFlags:
-  Add:
-    - "-xc++"
-    - "-std=c++17"
-  Remove:
-    # Exact matches
+  Remove: 
+    - "-fno-tree-switch-conversion"
     - "-fno-fat-lto-objects"
     - "-fno-canonical-system-headers"
-    - "-fno-tree-switch-conversion"
     - "-mtext-section-literals"
     - "-mlong-calls"
     - "-fstrict-volatile-bitfields"
-    # REGEX matches (Supported in your version 22.1.1)
     - "-march=.*"
     - "-mabi=.*"
     - "-mcpu=.*"
     - "-fipa-pta.*"
-    - "-free.*"
 
 Diagnostics:
-  Suppress:
+  Suppress: 
+    - "unused-includes"
     - "pragma_system_header_ignored"
     - "pp_file_not_found"
     - "pp_file_not_found_angled_not_fatal"
     - "pp_including_mainfile_in_preamble"
     - "misc-definitions-in-headers"
-    - "misc-unused-using-decls"
-    - "unused-includes"
   ClangTidy:
     Remove: ["readability-*", "modernize-*", "bugprone-*", "cert-err58-cpp"]
-
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot

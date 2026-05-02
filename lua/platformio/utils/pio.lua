@@ -607,7 +607,7 @@ function M.handlePioinit(result)
       local pio_refresh = require('platformio.pio_setup').pio_refresh
       pio_refresh(function()
         local boilerplate_gen = require('platformio.boilerplate').boilerplate_gen
-        -- boilerplate_gen([[.clangd]], _G.metadata.core_dir)
+        boilerplate_gen([[.clangd]], _G.metadata.core_dir)
         clangdRestart()
         vim.misc.closeMessage(win_id)
         -- term.ToggleTerminal('echo "************ project Initialization success ************"', 'float')
