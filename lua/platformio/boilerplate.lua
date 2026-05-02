@@ -199,11 +199,12 @@ CompileFlags:
 
 Diagnostics:
   Suppress: 
-    - "unused-includes"
-    - "pragma_system_header_ignored"
     - "pp_file_not_found"
     - "pp_file_not_found_angled_not_fatal"
+    - "pp_included_file_not_found"
     - "pp_including_mainfile_in_preamble"
+    - "unused-includes"
+    - "pragma_system_header_ignored"
     - "misc-definitions-in-headers"
   ClangTidy:
     Remove: ["readability-*", "modernize-*", "bugprone-*", "cert-err58-cpp"]
