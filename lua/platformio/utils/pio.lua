@@ -563,12 +563,11 @@ function M.handlePioinitDb(result)
     end)
     M.queue = {}
     term.stdout_callback = nil
-    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
+    _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
-    _G.metadata.isBusy = false
   end
 end
 
@@ -626,14 +625,12 @@ function M.handlePioinit(result)
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
-    _G.metadata.isBusy = false
   elseif result == 'FAIL' then
     _G.metadata.isBusy = false
     vim.misc.closeMessage(win_id)
     M.queue = {}
     term.stdout_callback = nil
     trm:close()
-    _G.metadata.isBusy = false
   end
 end
 
