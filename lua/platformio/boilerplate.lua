@@ -175,13 +175,13 @@ boilerplate['.clangd'] = {
   read = false,
   --     - "-std=c++17"
   -- - "-std=gnu++17"
+  -- - "-xc++"
+  -- - "-std=gnu++17"
   -- template = [[
   content = [[
 ---
 CompileFlags:
   Add:
-    - "-xc++"
-    - "-std=gnu++17"
     - "-Wno-pragma-system-header-outside-header"
   Remove: 
     - "-Wunknown-warning-option"

@@ -106,7 +106,7 @@ function _G.get_clangd_config()
   if not new_root_dir then return end
 
   -- 1. Safe defaults (Standard clangd behavior)
-  local f_flags, q_driver = '', '--query-driver=**'
+  local f_flags, q_driver = [["-std=c++17", "-xc++"]], '--query-driver=**'
 
   -- 2. Run your toolchain detection
   if _G.metadata and _G.metadata.cc_compiler and  _G.metadata.cc_compiler ~= '' then
