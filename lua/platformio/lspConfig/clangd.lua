@@ -107,6 +107,7 @@ function _G.get_clangd_config()
 
   -- 1. Safe defaults (Standard clangd behavior)
   local f_flags, q_driver = '', '--query-driver=**'
+  local clangdFile = vim.misc.joinPath(vim.uv.cwd(), '.clangd')
 
   -- 2. Run your toolchain detection
   if _G.metadata and _G.metadata.cc_compiler and  _G.metadata.cc_compiler ~= '' then
@@ -125,12 +126,16 @@ function _G.get_clangd_config()
 
   -- 3. Format your template string
   local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  -- local formatted_str = string.format(table_config or '', q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
+  local formatted_str = string.format(table_config or '', clangdFile, q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
   -- local formatted_str = string.format(table_config or '', q_driver, '', vim.misc.normalizePath(new_root_dir))
-  local formatted_str = string.format(table_config or '', q_driver, '', vim.g.platformioRootDir)
+  -- local formatted_str = string.format(table_config or '', q_driver, '', vim.g.platformioRootDir)
 
   -- 4. Load the config table
   local cok, clangd_config = pcall(function() return load('return ' .. formatted_str)() end)
+
+  local formated = vim.misc.jsonFormat(clangd_config)
+  local file = vim.misc.joinPath(vim.uv.cwd(), 'clangd_config.json')
+  vim.misc.writeFile(file, formated, {})
 
   if cok and clangd_config then
     -- print(vim.inspect(clangd_config))

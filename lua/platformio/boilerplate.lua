@@ -76,6 +76,7 @@ boilerplate['.clangd_config'] = {
     "--all-scopes-completion",
     "--background-index",
     "--clang-tidy",
+    "--config-file=%s"
     "--compile_args_from=filesystem",
     "--enable-config",
     "--completion-parse=always",
