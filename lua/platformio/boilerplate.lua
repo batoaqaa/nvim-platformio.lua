@@ -185,89 +185,32 @@ CompileFlags:
     - "-xc++"
     - "-std=c++17"
   Remove:
-    - "pp_file_not_found"
-    - "pp_file_not_found_angled_not_fatal" 
-    - "-Winclude-next-outside-header"
+    # Exact matches
     - "-fno-fat-lto-objects"
-    - "-fno%%-fat%%-lto%%-objects"
-    - "-fno%%-canonical%%-system%%-headers"
-    - "-misc-definitions-in-headers"
+    - "-fno-canonical-system-headers"
     - "-fno-tree-switch-conversion"
     - "-mtext-section-literals"
     - "-mlong-calls"
-    - "-mlongcalls"
     - "-fstrict-volatile-bitfields"
-    - "-free*"
-    - "-fipa-pta*"
-    - "-march=*"
-    - "-mabi=*"
-    - "-mcpu=*"
+    # REGEX matches (Supported in your version 22.1.1)
+    - "-march=.*"
+    - "-mabi=.*"
+    - "-mcpu=.*"
+    - "-fipa-pta.*"
+    - "-free.*"
+
 Diagnostics:
   Suppress:
     - "pragma_system_header_ignored"
-    - "misc-definitions-in-headers"
-    - "pp_including_mainfile_in_preamble"
-    - "misc-unused-using-decls"
-    - "unused-includes"
-  ClangTidy:
-    Remove:
-      - "readability-*"
-      - "cert-err58-cpp"
-      - "llvmlibc-*"
-      - "fuchsia-*"
-      - "hicpp-avoid-c-arrays"
-      - "cppcoreguidelines-*"
-      - "llvm-*"
-      - "google-*"
-      - "bugprone-*"
-      - "hicpp-vararg"
-      - "modernize-*"
----
-# This section targets external library files specifically
-If:
-  PathMatch: [.*\.platformio/packages/.*]
-CompileFlags:
-  Add:
-    - "-xc++"
-    - "-std=c++17"
-  Remove:
     - "pp_file_not_found"
-    - "pp_file_not_found_angled_not_fatal" 
-    - "-Winclude-next-outside-header"
-    - "-fno-fat-lto-objects"
-    - "-fno%%-fat%%-lto%%-objects"
-    - "-fno%%-canonical%%-system%%-headers"
-    - "-misc-definitions-in-headers"
-    - "-fno-tree-switch-conversion"
-    - "-mtext-section-literals"
-    - "-mlong-calls"
-    - "-mlongcalls"
-    - "-fstrict-volatile-bitfields"
-    - "-free*"
-    - "-fipa-pta*"
-    - "-march=*"
-    - "-mabi=*"
-    - "-mcpu=*"
-Diagnostics:
-  Suppress:
-    - "pragma_system_header_ignored"
-    - "misc-definitions-in-headers"
+    - "pp_file_not_found_angled_not_fatal"
     - "pp_including_mainfile_in_preamble"
+    - "misc-definitions-in-headers"
     - "misc-unused-using-decls"
     - "unused-includes"
   ClangTidy:
-    Remove:
-      - "readability-*"
-      - "cert-err58-cpp"
-      - "llvmlibc-*"
-      - "fuchsia-*"
-      - "hicpp-avoid-c-arrays"
-      - "cppcoreguidelines-*"
-      - "llvm-*"
-      - "google-*"
-      - "bugprone-*"
-      - "hicpp-vararg"
-      - "modernize-*"
+    Remove: ["readability-*", "modernize-*", "bugprone-*", "cert-err58-cpp"]
+
 ]],
   -- content = function(self)
   --   local sysroot = '--sysroot=' .. _G.metadata.sysroot
@@ -276,6 +219,52 @@ Diagnostics:
   -- end,
 }
 
+-- # This section targets external library files specifically
+---
+-- If:
+--   PathMatch: [.*\.platformio/packages/.*]
+-- CompileFlags:
+--   Add:
+--     - "-xc++"
+--     - "-std=c++17"
+--   Remove:
+--     - "pp_file_not_found"
+--     - "pp_file_not_found_angled_not_fatal"
+--     - "-Winclude-next-outside-header"
+--     - "-fno-fat-lto-objects"
+--     - "-fno%%-fat%%-lto%%-objects"
+--     - "-fno%%-canonical%%-system%%-headers"
+--     - "-misc-definitions-in-headers"
+--     - "-fno-tree-switch-conversion"
+--     - "-mtext-section-literals"
+--     - "-mlong-calls"
+--     - "-mlongcalls"
+--     - "-fstrict-volatile-bitfields"
+--     - "-free*"
+--     - "-fipa-pta*"
+--     - "-march=*"
+--     - "-mabi=*"
+--     - "-mcpu=*"
+-- Diagnostics:
+--   Suppress:
+--     - "pragma_system_header_ignored"
+--     - "misc-definitions-in-headers"
+--     - "pp_including_mainfile_in_preamble"
+--     - "misc-unused-using-decls"
+--     - "unused-includes"
+--   ClangTidy:
+--     Remove:
+--       - "readability-*"
+--       - "cert-err58-cpp"
+--       - "llvmlibc-*"
+--       - "fuchsia-*"
+--       - "hicpp-avoid-c-arrays"
+--       - "cppcoreguidelines-*"
+--       - "llvm-*"
+--       - "google-*"
+--       - "bugprone-*"
+--       - "hicpp-vararg"
+--       - "modernize-*"
 -- INFO: .clang-format
 boilerplate['.clang-format'] = {
   rewrite = false,
