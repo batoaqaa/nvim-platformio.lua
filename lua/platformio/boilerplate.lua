@@ -185,6 +185,8 @@ CompileFlags:
   Add:
     - "-xc++"
     - "-std=gnu++17"
+    - "-x"
+    - "c++-header"
   Remove: 
     - "-fno-tree-switch-conversion"
     - "-fno-fat-lto-objects"
