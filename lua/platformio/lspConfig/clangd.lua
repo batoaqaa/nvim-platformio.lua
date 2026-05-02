@@ -107,15 +107,14 @@ function _G.get_clangd_config()
 
   -- 1. Safe defaults (Standard clangd behavior)
   local f_flags, q_driver = '', '--query-driver=**'
-  local clangdFile = vim.misc.joinPath(vim.uv.cwd(), '.clangd')
 
   -- 2. Run your toolchain detection
   if _G.metadata and _G.metadata.cc_compiler and  _G.metadata.cc_compiler ~= '' then
     if _G.metadata.triplet and _G.metadata.triplet ~= '' then
       -- local include_flags = table.concat(_G.metadata.fallbackFlags, ", ")
       local includes_toolchain = table.concat(_G.metadata.includes_toolchain, ", ")
-      f_flags = '"-std=c++17", "-xc++"'
-      -- f_flags = string.format([["-std=c++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain)
+      -- f_flags = '"-std=c++17", "-xc++"'
+      f_flags = string.format([["-std=c++17", "-xc++", "-D__cplusplus=201703L", "--target=%s", "--sysroot=%s", %s]], _G.metadata.triplet, _G.metadata.sysroot, includes_toolchain)
       -- f_flags = string.format('"--sysroot=%s"', _G.metadata.sysroot)
       -- f_flags = string.format([["--sysroot=%s", %s]], _G.metadata.sysroot, include_flags)
 
@@ -126,7 +125,6 @@ function _G.get_clangd_config()
 
   -- 3. Format your template string
   local table_config = boilerplate_gen([[.clangd_config]], vim.g.platformioRootDir)
-  -- local formatted_str = string.format(table_config or '', clangdFile, q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
   local formatted_str = string.format(table_config or '', q_driver, f_flags, vim.misc.normalizePath(new_root_dir))
   -- local formatted_str = string.format(table_config or '', q_driver, '', vim.misc.normalizePath(new_root_dir))
   -- local formatted_str = string.format(table_config or '', q_driver, '', vim.g.platformioRootDir)
