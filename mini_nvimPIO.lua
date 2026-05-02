@@ -622,8 +622,8 @@ local pioConfig = {
   -- menu_name = "PlatformIO", -- replace this menu name to your convenience
   -- debug = false,
 }
-local pok, platformio = pcall(require, 'platformio')
+local pok, nvimpio = pcall(require, 'nvimpio')
 if pok then
   -- print("here" .. vim.inspect(pioConfig))
-  platformio.setup(pioConfig)
+  nvimpio.setup(pioConfig)
 end
