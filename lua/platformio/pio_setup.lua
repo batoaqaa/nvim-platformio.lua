@@ -66,7 +66,7 @@ function M.run_compiledb(target)
   -- })
 
   -- if env and env ~= '' then
-    vim.notify('PIO platformio.ini change: update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
+    vim.notify('PIO platformio.ini change: compiledb update ...', vim.log.levels.INFO, { title = 'PlatformIO' })
     -- vim.schedule(function()
     vim.system({ 'pio', 'run', '-t', 'compiledb', '-s', '-e', env }, { text = true }, function(obj)
       -- vim.system({ 'pio', 'run', '-t', 'compiledb' }, { detach = true, text = true }, function(obj)
@@ -79,7 +79,7 @@ function M.run_compiledb(target)
           vim.schedule(function ()
             M.pio_refresh(function()
               clangdRestart()
-              vim.notify('PIO platformio.ini change: Update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
+              vim.notify('PIO platformio.ini change: compiledb update Success', vim.log.levels.INFO, { title = 'PlatformIO' })
             end, 'PIO platformio.ini  change: ')
           end)
         else
