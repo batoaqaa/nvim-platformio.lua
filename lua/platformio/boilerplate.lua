@@ -183,7 +183,6 @@ boilerplate['.clangd'] = {
 CompileFlags:
   Add:
     - "-xc++"
-    - "-std=c++17"
   Remove: 
     - "-fno-tree-switch-conversion"
     - "-fno-fat-lto-objects"
