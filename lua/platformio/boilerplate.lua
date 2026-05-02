@@ -33,7 +33,7 @@ platforms_dir = ${platformio.core_dir}/platforms
 packages_dir = ${platformio.core_dir}/packages
 ;libdeps_dir = ./external_libs
 
-default_envs = 
+default_envs =
 ;default_envs = uno, nodemcu
 
 ;--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ framework = arduino
 upload_speed = 115200
 monitor_speed = 9600
 
-monitor_rts = 1	  ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
+monitor_rts = 1   ; 1 combination to reset esp32c6 (Table 32.3-2. CDC-ACM Settings with RTS and DTR)
 monitor_dtr = 0   ; 0 // pio dev mon --rts=0 --dtr=0 then pio dev mon --rts=1 dtr=0
 
 extra_scripts =
@@ -114,7 +114,6 @@ boilerplate['.clangd_config'] = {
   }
 }
 ]],
-  -- compilationDatabasePath = %q,
 }
 -- CompileFlags:
 --   Add:
@@ -169,14 +168,10 @@ boilerplate['.clangd_config'] = {
 --     File: .clangd_index
 
 -- INFO: .clangd
--- boilerplate['.clangd'] = {
+-- boilerplate['.clangd']
 boilerplate['.clangd'] = {
   rewrite = false,
   read = false,
-  --     - "-std=c++17"
-  -- - "-std=gnu++17"
-  -- - "-xc++"
-  -- - "-std=gnu++17"
   -- template = [[
   content = [[
 ---
@@ -217,52 +212,6 @@ Diagnostics:
   -- end,
 }
 
--- # This section targets external library files specifically
----
--- If:
---   PathMatch: [.*\.platformio/packages/.*]
--- CompileFlags:
---   Add:
---     - "-xc++"
---     - "-std=c++17"
---   Remove:
---     - "pp_file_not_found"
---     - "pp_file_not_found_angled_not_fatal"
---     - "-Winclude-next-outside-header"
---     - "-fno-fat-lto-objects"
---     - "-fno%%-fat%%-lto%%-objects"
---     - "-fno%%-canonical%%-system%%-headers"
---     - "-misc-definitions-in-headers"
---     - "-fno-tree-switch-conversion"
---     - "-mtext-section-literals"
---     - "-mlong-calls"
---     - "-mlongcalls"
---     - "-fstrict-volatile-bitfields"
---     - "-free*"
---     - "-fipa-pta*"
---     - "-march=*"
---     - "-mabi=*"
---     - "-mcpu=*"
--- Diagnostics:
---   Suppress:
---     - "pragma_system_header_ignored"
---     - "misc-definitions-in-headers"
---     - "pp_including_mainfile_in_preamble"
---     - "misc-unused-using-decls"
---     - "unused-includes"
---   ClangTidy:
---     Remove:
---       - "readability-*"
---       - "cert-err58-cpp"
---       - "llvmlibc-*"
---       - "fuchsia-*"
---       - "hicpp-avoid-c-arrays"
---       - "cppcoreguidelines-*"
---       - "llvm-*"
---       - "google-*"
---       - "bugprone-*"
---       - "hicpp-vararg"
---       - "modernize-*"
 -- INFO: .clang-format
 boilerplate['.clang-format'] = {
   rewrite = false,
