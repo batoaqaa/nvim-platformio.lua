@@ -88,6 +88,7 @@ boilerplate['.clangd_config'] = {
     "--pretty",
     "--ranking-model=decision_forest",
     "--sync",
+    "-xc++",
     "-std=gnu++17",
     "-Wno-pragma-system-header-outside-header",
     "-Wno-unknown-warning-option",
