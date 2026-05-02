@@ -566,13 +566,14 @@ end
 
 local win_id
 -- if current_checksum == meta.last_projectChecksum then
-local current_checksum = _G.metadata.last_projectChecksum or ''
+local current_checksum = ''
 
 ----------------------------------------------------
 -- Handle after pioinit execution
 -- stylua: ignore
 function M.handlePioinit(result)
   if result == 'INIT' then
+    current_checksum = _G.metadata.last_projectChecksum
     local boilerplate = require('platformio.boilerplate')
     local boilerplate_gen = boilerplate.boilerplate_gen
 
