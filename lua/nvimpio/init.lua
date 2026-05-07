@@ -225,6 +225,7 @@ function M.setup(user_config)
 
   M.piomenu(M.config)
 
+  vim.g.platformioRootDir = vim.uv.cwd()
   vim.schedule(function()
     require('nvimpio.pio.watcher').init()
   end)
