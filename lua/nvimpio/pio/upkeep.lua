@@ -509,6 +509,7 @@ M.run_sequence = function(tasks)
   callBack = tasks.cb -- 1. Save the callback in a local variable
 
   commandPassed = 1
+  require('nvimpio.pio.metadata')
   _G.metadata.isBusy = true
 
   term.stdout_callback = M.stdoutcallback
