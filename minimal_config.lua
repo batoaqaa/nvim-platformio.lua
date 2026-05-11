@@ -15,13 +15,13 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
     'https://github.com/folke/lazy.nvim.git',
     '--branch=stable',
     lazypath,
+
   })
 end
 
 vim.opt.rtp:prepend(lazypath)
 
-local plugins = {
-  {
+local plugins ={{
     'anurag3301/nvim-platformio.lua',
 
     -- Dependencies are lazy-loaded by default unless specified otherwise.
