@@ -116,4 +116,30 @@ clangd_source                                          *platformio-clangd_source
     Try both methods and choose the one that works best for your setup. I am
     also open to suggestions to further improve clangd support.
 
+picker_backend                                            *platformio-picker*
+    The plugin uses a picker abstraction for interactive selection flows used
+    by `:Pioinit` and `:Piolib`. This keeps command logic separate from UI so
+    different picker UIs can be used without changing command behavior.
+
+    Set this in `setup()`:
+      >lua
+        require('platformio').setup({
+          picker_backend = 'auto',
+        })
+      <
+
+    Allowed values:
+    - `auto`
+          Default. Tries Telescope backend first. If Telescope is unavailable,
+          falls back to `vim.ui.select` backend.
+
+    - `telescope`
+          Force Telescope picker backend. If Telescope backend cannot be loaded,
+          plugin falls back to `vim.ui.select` as a safety fallback.
+
+    - `ui_select`
+          Force `vim.ui.select` backend. This works with Neovim built-in
+          `vim.ui.select` or any plugin that overrides it (for example,
+          telescope-ui-select, dressing.nvim, snacks picker adapters, etc.).
+
 vim:tw=78:sw=4:ts=8:ft=help:norl:noet:

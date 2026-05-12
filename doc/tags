@@ -9,5 +9,6 @@
 PlatformIO	platformio.txt	/*PlatformIO*
 platformio-clangd_source	platformio.txt	/*platformio-clangd_source*
 platformio-configuration	platformio.txt	/*platformio-configuration*
+platformio-picker	platformio.txt	/*platformio-picker*
 platformio-usage	platformio.txt	/*platformio-usage*
 platformio.lua	platformio.txt	/*platformio.lua*

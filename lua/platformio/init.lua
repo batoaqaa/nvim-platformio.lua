@@ -5,6 +5,7 @@ M.config = {
   menu_name = 'PlatformIO',
   debug = false,
   clangd_source = 'ccls',
+  picker_backend = 'auto',
 
   menu_bindings = {
     { node = 'item', desc = '[L]ist terminals', shortcut = 'l', command = 'PioTermList' },
@@ -160,6 +161,7 @@ function M.setup(user_config)
       menu_bindings = true,
       debug = true,
       clangd_source = true,
+      picker_backend = true,
     }
     local err = false
     for key, value in pairs(user_config or {}) do
@@ -186,6 +188,14 @@ function M.setup(user_config)
         )
         user_config.clangd_source = M.config.clangd_source
       end
+    end
+    if user_config.picker_backend and user_config.picker_backend ~= 'auto' and user_config.picker_backend ~= 'telescope' and user_config.picker_backend ~= 'ui_select' then
+      vim.api.nvim_echo(
+        { { 'Invalid picker backend {allowed "auto", "telescope" or "ui_select"} (default "' .. M.config.picker_backend .. '" will be used)', 'ErrorMsg' } },
+        true,
+        {}
+      )
+      user_config.picker_backend = M.config.picker_backend
     end
 
     if not err then -- if no error, merge user_config to M.config
