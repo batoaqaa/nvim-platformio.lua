@@ -37,12 +37,14 @@ return {
 
   -- Dependencies are lazy-loaded by default unless specified otherwise.
   dependencies = {
-    { 'akinsho/toggleterm.nvim' },
     { 'nvim-telescope/telescope.nvim' },
     { 'nvim-telescope/telescope-ui-select.nvim' },
     { 'nvim-lua/plenary.nvim' },
     { 'folke/which-key.nvim' },
     { 'nvim-treesitter/nvim-treesitter' }
+
+    -- install picker based on your likeing
+    { 'akinsho/toggleterm.nvim' },
   },
 }
 ```
@@ -53,6 +55,7 @@ return {
 vim.g.pioConfig ={
   lsp = 'clangd',           -- value: clangd | ccls 
   clangd_source = 'ccls',    -- value: ccls | compiledb, For detailed explation check :help platformio-clangd_source
+  picker_backend = 'auto',   -- value: auto | telescope | ui_select, default: auto, check :help platformio-picker
   menu_key = '<leader>\\',  -- replace this menu key  to your convenience
   debug = false             -- enable debug messages
 } 
